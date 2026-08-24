@@ -31,8 +31,8 @@ func NewProfileRepository(db postgres.Database, log *slog.Logger) bootstrap.Prof
 }
 
 func (pr profileRepository) Save(ctx context.Context, p bootstrap.Profile) (bootstrap.Profile, error) {
-	q := `INSERT INTO profiles (id, domain_id, name, description, content_format, content_type, content_template, defaults, binding_slots, version, created_at, updated_at)
-		  VALUES (:id, :domain_id, :name, :description, :content_format, :content_type, :content_template, :defaults, :binding_slots, :version, :created_at, :updated_at)`
+	q := `INSERT INTO profiles (id, workspace_id, name, description, content_format, content_type, content_template, defaults, binding_slots, version, created_at, updated_at)
+		  VALUES (:id, :workspace_id, :name, :description, :content_format, :content_type, :content_template, :defaults, :binding_slots, :version, :created_at, :updated_at)`
 
 	now := time.Now().UTC()
 	p.CreatedAt = now
@@ -50,11 +50,11 @@ func (pr profileRepository) Save(ctx context.Context, p bootstrap.Profile) (boot
 	return p, nil
 }
 
-func (pr profileRepository) RetrieveByID(ctx context.Context, domainID, id string) (bootstrap.Profile, error) {
-	q := `SELECT id, domain_id, name, description, content_format, content_type, content_template, defaults, binding_slots, version, created_at, updated_at
-		  FROM profiles WHERE id = :id AND domain_id = :domain_id`
+func (pr profileRepository) RetrieveByID(ctx context.Context, workspaceID, id string) (bootstrap.Profile, error) {
+	q := `SELECT id, workspace_id, name, description, content_format, content_type, content_template, defaults, binding_slots, version, created_at, updated_at
+		  FROM profiles WHERE id = :id AND workspace_id = :workspace_id`
 
-	rows, err := pr.db.NamedQueryContext(ctx, q, dbProfile{ID: id, DomainID: domainID})
+	rows, err := pr.db.NamedQueryContext(ctx, q, dbProfile{ID: id, WorkspaceID: workspaceID})
 	if err != nil {
 		return bootstrap.Profile{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
@@ -71,10 +71,10 @@ func (pr profileRepository) RetrieveByID(ctx context.Context, domainID, id strin
 	return toProfile(dbp)
 }
 
-func (pr profileRepository) RetrieveAll(ctx context.Context, domainID string, offset, limit uint64, name string) (bootstrap.ProfilesPage, error) {
-	dbPage := dbProfilesPage{DomainID: domainID, Offset: offset, Limit: limit, Name: name}
+func (pr profileRepository) RetrieveAll(ctx context.Context, workspaceID string, offset, limit uint64, name string) (bootstrap.ProfilesPage, error) {
+	dbPage := dbProfilesPage{WorkspaceID: workspaceID, Offset: offset, Limit: limit, Name: name}
 	pageQuery := profilesPageQuery(dbPage)
-	q := fmt.Sprintf(`SELECT id, domain_id, name, description, content_format, content_type, content_template, defaults, binding_slots, version, created_at, updated_at
+	q := fmt.Sprintf(`SELECT id, workspace_id, name, description, content_format, content_type, content_template, defaults, binding_slots, version, created_at, updated_at
 		  FROM profiles %s`, pageQuery)
 	q = applyProfilesOrdering(q)
 	q = fmt.Sprintf(`%s LIMIT :limit OFFSET :offset`, q)
@@ -114,16 +114,16 @@ func (pr profileRepository) RetrieveAll(ctx context.Context, domainID string, of
 }
 
 type dbProfilesPage struct {
-	DomainID string `db:"domain_id"`
-	Offset   uint64 `db:"offset"`
-	Limit    uint64 `db:"limit"`
-	Name     string `db:"name"`
+	WorkspaceID string `db:"workspace_id"`
+	Offset      uint64 `db:"offset"`
+	Limit       uint64 `db:"limit"`
+	Name        string `db:"name"`
 }
 
 func profilesPageQuery(pm dbProfilesPage) string {
 	var query []string
-	if pm.DomainID != "" {
-		query = append(query, "domain_id = :domain_id")
+	if pm.WorkspaceID != "" {
+		query = append(query, "workspace_id = :workspace_id")
 	}
 	if pm.Name != "" {
 		query = append(query, "name ILIKE '%' || :name || '%'")
@@ -167,8 +167,8 @@ func (pr profileRepository) Update(ctx context.Context, p bootstrap.Profile) (bo
 	}
 
 	q := fmt.Sprintf(`UPDATE profiles SET %s version = version + 1, updated_at = :updated_at
-		  WHERE id = :id AND domain_id = :domain_id
-		  RETURNING id, domain_id, name, description, content_format, content_type, content_template, defaults, binding_slots, version, created_at, updated_at`,
+		  WHERE id = :id AND workspace_id = :workspace_id
+		  RETURNING id, workspace_id, name, description, content_format, content_type, content_template, defaults, binding_slots, version, created_at, updated_at`,
 		upq)
 
 	p.UpdatedAt = time.Now().UTC()
@@ -194,18 +194,31 @@ func (pr profileRepository) Update(ctx context.Context, p bootstrap.Profile) (bo
 	return toProfile(updated)
 }
 
-func (pr profileRepository) Delete(ctx context.Context, domainID, id string) error {
-	q := `DELETE FROM profiles WHERE id = :id AND domain_id = :domain_id`
-	if _, err := pr.db.NamedExecContext(ctx, q, dbProfile{ID: id, DomainID: domainID}); err != nil {
+func (pr profileRepository) Delete(ctx context.Context, workspaceID, id string) error {
+	q := `DELETE FROM profiles WHERE id = :id AND workspace_id = :workspace_id`
+	res, err := pr.db.NamedExecContext(ctx, q, dbProfile{ID: id, WorkspaceID: workspaceID})
+	if err != nil {
 		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
+
+	cnt, err := res.RowsAffected()
+	if err != nil {
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
+	}
+
+	// Matching no row means the profile does not exist in this workspace;
+	// see the equivalent guard in configRepository.Remove.
+	if cnt == 0 {
+		return repoerr.ErrNotFound
+	}
+
 	return nil
 }
 
 // dbProfile is the database representation of a Profile.
 type dbProfile struct {
 	ID              string         `db:"id"`
-	DomainID        string         `db:"domain_id"`
+	WorkspaceID     string         `db:"workspace_id"`
 	Name            string         `db:"name"`
 	Description     sql.NullString `db:"description"`
 	ContentFormat   string         `db:"content_format"`
@@ -229,7 +242,7 @@ func toDBProfile(p bootstrap.Profile) (dbProfile, error) {
 	}
 	return dbProfile{
 		ID:              p.ID,
-		DomainID:        p.DomainID,
+		WorkspaceID:     p.WorkspaceID,
 		Name:            p.Name,
 		Description:     nullString(p.Description),
 		ContentFormat:   string(p.ContentFormat),
@@ -246,7 +259,7 @@ func toDBProfile(p bootstrap.Profile) (dbProfile, error) {
 func toProfile(dbp dbProfile) (bootstrap.Profile, error) {
 	p := bootstrap.Profile{
 		ID:            dbp.ID,
-		DomainID:      dbp.DomainID,
+		WorkspaceID:   dbp.WorkspaceID,
 		Name:          dbp.Name,
 		ContentFormat: bootstrap.ContentFormat(dbp.ContentFormat),
 		ContentType:   bootstrap.ContentType(dbp.ContentType),

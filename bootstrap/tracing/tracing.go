@@ -28,7 +28,7 @@ func New(svc bootstrap.Service, tracer trace.Tracer) bootstrap.Service {
 func (tm *tracingMiddleware) Add(ctx context.Context, session smqauthn.Session, token string, cfg bootstrap.Config) (bootstrap.Config, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_register_user", trace.WithAttributes(
 		attribute.String("config_id", cfg.ID),
-		attribute.String("domain_id ", cfg.DomainID),
+		attribute.String("workspace_id ", cfg.WorkspaceID),
 		attribute.String("name", cfg.Name),
 		attribute.String("external_id", cfg.ExternalID),
 		attribute.String("content", cfg.Content),
@@ -55,7 +55,7 @@ func (tm *tracingMiddleware) Update(ctx context.Context, session smqauthn.Sessio
 		attribute.String("name", cfg.Name),
 		attribute.String("content", cfg.Content),
 		attribute.String("config_id", cfg.ID),
-		attribute.String("domain_id ", cfg.DomainID),
+		attribute.String("workspace_id ", cfg.WorkspaceID),
 	))
 	defer span.End()
 
@@ -133,7 +133,7 @@ func (tm *tracingMiddleware) DisableConfig(ctx context.Context, session smqauthn
 func (tm *tracingMiddleware) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_create_profile", trace.WithAttributes(
 		attribute.String("name", p.Name),
-		attribute.String("domain_id", p.DomainID),
+		attribute.String("workspace_id", p.WorkspaceID),
 	))
 	defer span.End()
 	return tm.svc.CreateProfile(ctx, session, p)

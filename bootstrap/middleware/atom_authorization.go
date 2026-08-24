@@ -25,7 +25,7 @@ type atomAuthorizationMiddleware struct {
 }
 
 func (am *atomAuthorizationMiddleware) tenant(ctx context.Context, session authn.Session, action string) error {
-	return atom.Authorize(ctx, am.authorizer, session, action, policies.DomainType, session.DomainID, policies.DomainType)
+	return atom.Authorize(ctx, am.authorizer, session, action, policies.WorkspaceType, session.WorkspaceID, policies.WorkspaceType)
 }
 
 func (am *atomAuthorizationMiddleware) resource(ctx context.Context, session authn.Session, action, id, kind string) error {
@@ -61,7 +61,9 @@ func (am *atomAuthorizationMiddleware) UpdateCert(ctx context.Context, session a
 }
 
 func (am *atomAuthorizationMiddleware) List(ctx context.Context, session authn.Session, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
-	if err := am.tenant(ctx, session, "write"); err != nil {
+	// Listing reads; requiring tenant write would make the read-only role
+	// that holds the registered tenant "list" capability unable to use it.
+	if err := am.tenant(ctx, session, "list"); err != nil {
 		return bootstrap.ConfigsPage{}, err
 	}
 	return am.Service.List(ctx, session, filter, offset, limit)
@@ -110,7 +112,8 @@ func (am *atomAuthorizationMiddleware) UpdateProfile(ctx context.Context, sessio
 }
 
 func (am *atomAuthorizationMiddleware) ListProfiles(ctx context.Context, session authn.Session, offset, limit uint64, name string) (bootstrap.ProfilesPage, error) {
-	if err := am.tenant(ctx, session, "write"); err != nil {
+	// See List: this reads, so it checks the tenant "list" capability.
+	if err := am.tenant(ctx, session, "list"); err != nil {
 		return bootstrap.ProfilesPage{}, err
 	}
 	return am.Service.ListProfiles(ctx, session, offset, limit, name)
@@ -134,7 +137,11 @@ func (am *atomAuthorizationMiddleware) AssignProfile(ctx context.Context, sessio
 }
 
 func (am *atomAuthorizationMiddleware) BindResources(ctx context.Context, session authn.Session, token, configID string, bindings []bootstrap.BindingRequest) error {
-	if err := am.tenant(ctx, session, "write"); err != nil {
+	// Rewriting an enrollment's bindings is a write to that enrollment, so it
+	// is checked per config exactly as RefreshBindings is. A tenant-wide check
+	// alone would let a principal denied write on this specific config still
+	// replace its bindings.
+	if err := am.resource(ctx, session, "write", configID, atom.KindBootstrapConfig); err != nil {
 		return err
 	}
 	return am.Service.BindResources(ctx, session, token, configID, bindings)

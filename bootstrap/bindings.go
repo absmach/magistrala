@@ -66,9 +66,9 @@ type RenderContext struct {
 
 // DeviceContext holds enrollment identity fields available inside templates.
 type DeviceContext struct {
-	ID         string
-	ExternalID string
-	DomainID   string
+	ID          string
+	ExternalID  string
+	WorkspaceID string
 }
 
 // BindingContext holds the resolved resource data available inside templates

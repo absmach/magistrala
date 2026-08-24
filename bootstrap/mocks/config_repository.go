@@ -43,8 +43,8 @@ func (_m *ConfigRepository) EXPECT() *ConfigRepository_Expecter {
 }
 
 // AssignProfile provides a mock function for the type ConfigRepository
-func (_mock *ConfigRepository) AssignProfile(ctx context.Context, domainID string, id string, profileID string) error {
-	ret := _mock.Called(ctx, domainID, id, profileID)
+func (_mock *ConfigRepository) AssignProfile(ctx context.Context, workspaceID string, id string, profileID string) error {
+	ret := _mock.Called(ctx, workspaceID, id, profileID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AssignProfile")
@@ -52,7 +52,7 @@ func (_mock *ConfigRepository) AssignProfile(ctx context.Context, domainID strin
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
-		r0 = returnFunc(ctx, domainID, id, profileID)
+		r0 = returnFunc(ctx, workspaceID, id, profileID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -66,14 +66,14 @@ type ConfigRepository_AssignProfile_Call struct {
 
 // AssignProfile is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
+//   - workspaceID string
 //   - id string
 //   - profileID string
-func (_e *ConfigRepository_Expecter) AssignProfile(ctx interface{}, domainID interface{}, id interface{}, profileID interface{}) *ConfigRepository_AssignProfile_Call {
-	return &ConfigRepository_AssignProfile_Call{Call: _e.mock.On("AssignProfile", ctx, domainID, id, profileID)}
+func (_e *ConfigRepository_Expecter) AssignProfile(ctx interface{}, workspaceID interface{}, id interface{}, profileID interface{}) *ConfigRepository_AssignProfile_Call {
+	return &ConfigRepository_AssignProfile_Call{Call: _e.mock.On("AssignProfile", ctx, workspaceID, id, profileID)}
 }
 
-func (_c *ConfigRepository_AssignProfile_Call) Run(run func(ctx context.Context, domainID string, id string, profileID string)) *ConfigRepository_AssignProfile_Call {
+func (_c *ConfigRepository_AssignProfile_Call) Run(run func(ctx context.Context, workspaceID string, id string, profileID string)) *ConfigRepository_AssignProfile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -106,14 +106,14 @@ func (_c *ConfigRepository_AssignProfile_Call) Return(err error) *ConfigReposito
 	return _c
 }
 
-func (_c *ConfigRepository_AssignProfile_Call) RunAndReturn(run func(ctx context.Context, domainID string, id string, profileID string) error) *ConfigRepository_AssignProfile_Call {
+func (_c *ConfigRepository_AssignProfile_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, id string, profileID string) error) *ConfigRepository_AssignProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ChangeStatus provides a mock function for the type ConfigRepository
-func (_mock *ConfigRepository) ChangeStatus(ctx context.Context, domainID string, id string, status bootstrap.Status) error {
-	ret := _mock.Called(ctx, domainID, id, status)
+func (_mock *ConfigRepository) ChangeStatus(ctx context.Context, workspaceID string, id string, status bootstrap.Status) error {
+	ret := _mock.Called(ctx, workspaceID, id, status)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ChangeStatus")
@@ -121,7 +121,7 @@ func (_mock *ConfigRepository) ChangeStatus(ctx context.Context, domainID string
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, bootstrap.Status) error); ok {
-		r0 = returnFunc(ctx, domainID, id, status)
+		r0 = returnFunc(ctx, workspaceID, id, status)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -135,14 +135,14 @@ type ConfigRepository_ChangeStatus_Call struct {
 
 // ChangeStatus is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
+//   - workspaceID string
 //   - id string
 //   - status bootstrap.Status
-func (_e *ConfigRepository_Expecter) ChangeStatus(ctx interface{}, domainID interface{}, id interface{}, status interface{}) *ConfigRepository_ChangeStatus_Call {
-	return &ConfigRepository_ChangeStatus_Call{Call: _e.mock.On("ChangeStatus", ctx, domainID, id, status)}
+func (_e *ConfigRepository_Expecter) ChangeStatus(ctx interface{}, workspaceID interface{}, id interface{}, status interface{}) *ConfigRepository_ChangeStatus_Call {
+	return &ConfigRepository_ChangeStatus_Call{Call: _e.mock.On("ChangeStatus", ctx, workspaceID, id, status)}
 }
 
-func (_c *ConfigRepository_ChangeStatus_Call) Run(run func(ctx context.Context, domainID string, id string, status bootstrap.Status)) *ConfigRepository_ChangeStatus_Call {
+func (_c *ConfigRepository_ChangeStatus_Call) Run(run func(ctx context.Context, workspaceID string, id string, status bootstrap.Status)) *ConfigRepository_ChangeStatus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -175,14 +175,14 @@ func (_c *ConfigRepository_ChangeStatus_Call) Return(err error) *ConfigRepositor
 	return _c
 }
 
-func (_c *ConfigRepository_ChangeStatus_Call) RunAndReturn(run func(ctx context.Context, domainID string, id string, status bootstrap.Status) error) *ConfigRepository_ChangeStatus_Call {
+func (_c *ConfigRepository_ChangeStatus_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, id string, status bootstrap.Status) error) *ConfigRepository_ChangeStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Remove provides a mock function for the type ConfigRepository
-func (_mock *ConfigRepository) Remove(ctx context.Context, domainID string, id string) error {
-	ret := _mock.Called(ctx, domainID, id)
+func (_mock *ConfigRepository) Remove(ctx context.Context, workspaceID string, id string) error {
+	ret := _mock.Called(ctx, workspaceID, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Remove")
@@ -190,7 +190,7 @@ func (_mock *ConfigRepository) Remove(ctx context.Context, domainID string, id s
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = returnFunc(ctx, domainID, id)
+		r0 = returnFunc(ctx, workspaceID, id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -204,13 +204,13 @@ type ConfigRepository_Remove_Call struct {
 
 // Remove is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
+//   - workspaceID string
 //   - id string
-func (_e *ConfigRepository_Expecter) Remove(ctx interface{}, domainID interface{}, id interface{}) *ConfigRepository_Remove_Call {
-	return &ConfigRepository_Remove_Call{Call: _e.mock.On("Remove", ctx, domainID, id)}
+func (_e *ConfigRepository_Expecter) Remove(ctx interface{}, workspaceID interface{}, id interface{}) *ConfigRepository_Remove_Call {
+	return &ConfigRepository_Remove_Call{Call: _e.mock.On("Remove", ctx, workspaceID, id)}
 }
 
-func (_c *ConfigRepository_Remove_Call) Run(run func(ctx context.Context, domainID string, id string)) *ConfigRepository_Remove_Call {
+func (_c *ConfigRepository_Remove_Call) Run(run func(ctx context.Context, workspaceID string, id string)) *ConfigRepository_Remove_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -238,26 +238,35 @@ func (_c *ConfigRepository_Remove_Call) Return(err error) *ConfigRepository_Remo
 	return _c
 }
 
-func (_c *ConfigRepository_Remove_Call) RunAndReturn(run func(ctx context.Context, domainID string, id string) error) *ConfigRepository_Remove_Call {
+func (_c *ConfigRepository_Remove_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, id string) error) *ConfigRepository_Remove_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RetrieveAll provides a mock function for the type ConfigRepository
-func (_mock *ConfigRepository) RetrieveAll(ctx context.Context, domainID string, filter bootstrap.Filter, offset uint64, limit uint64) bootstrap.ConfigsPage {
-	ret := _mock.Called(ctx, domainID, filter, offset, limit)
+func (_mock *ConfigRepository) RetrieveAll(ctx context.Context, workspaceID string, filter bootstrap.Filter, offset uint64, limit uint64) (bootstrap.ConfigsPage, error) {
+	ret := _mock.Called(ctx, workspaceID, filter, offset, limit)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveAll")
 	}
 
 	var r0 bootstrap.ConfigsPage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, bootstrap.Filter, uint64, uint64) (bootstrap.ConfigsPage, error)); ok {
+		return returnFunc(ctx, workspaceID, filter, offset, limit)
+	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, bootstrap.Filter, uint64, uint64) bootstrap.ConfigsPage); ok {
-		r0 = returnFunc(ctx, domainID, filter, offset, limit)
+		r0 = returnFunc(ctx, workspaceID, filter, offset, limit)
 	} else {
 		r0 = ret.Get(0).(bootstrap.ConfigsPage)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, bootstrap.Filter, uint64, uint64) error); ok {
+		r1 = returnFunc(ctx, workspaceID, filter, offset, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // ConfigRepository_RetrieveAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RetrieveAll'
@@ -267,15 +276,15 @@ type ConfigRepository_RetrieveAll_Call struct {
 
 // RetrieveAll is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
+//   - workspaceID string
 //   - filter bootstrap.Filter
 //   - offset uint64
 //   - limit uint64
-func (_e *ConfigRepository_Expecter) RetrieveAll(ctx interface{}, domainID interface{}, filter interface{}, offset interface{}, limit interface{}) *ConfigRepository_RetrieveAll_Call {
-	return &ConfigRepository_RetrieveAll_Call{Call: _e.mock.On("RetrieveAll", ctx, domainID, filter, offset, limit)}
+func (_e *ConfigRepository_Expecter) RetrieveAll(ctx interface{}, workspaceID interface{}, filter interface{}, offset interface{}, limit interface{}) *ConfigRepository_RetrieveAll_Call {
+	return &ConfigRepository_RetrieveAll_Call{Call: _e.mock.On("RetrieveAll", ctx, workspaceID, filter, offset, limit)}
 }
 
-func (_c *ConfigRepository_RetrieveAll_Call) Run(run func(ctx context.Context, domainID string, filter bootstrap.Filter, offset uint64, limit uint64)) *ConfigRepository_RetrieveAll_Call {
+func (_c *ConfigRepository_RetrieveAll_Call) Run(run func(ctx context.Context, workspaceID string, filter bootstrap.Filter, offset uint64, limit uint64)) *ConfigRepository_RetrieveAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -308,12 +317,12 @@ func (_c *ConfigRepository_RetrieveAll_Call) Run(run func(ctx context.Context, d
 	return _c
 }
 
-func (_c *ConfigRepository_RetrieveAll_Call) Return(configsPage bootstrap.ConfigsPage) *ConfigRepository_RetrieveAll_Call {
-	_c.Call.Return(configsPage)
+func (_c *ConfigRepository_RetrieveAll_Call) Return(configsPage bootstrap.ConfigsPage, err error) *ConfigRepository_RetrieveAll_Call {
+	_c.Call.Return(configsPage, err)
 	return _c
 }
 
-func (_c *ConfigRepository_RetrieveAll_Call) RunAndReturn(run func(ctx context.Context, domainID string, filter bootstrap.Filter, offset uint64, limit uint64) bootstrap.ConfigsPage) *ConfigRepository_RetrieveAll_Call {
+func (_c *ConfigRepository_RetrieveAll_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, filter bootstrap.Filter, offset uint64, limit uint64) (bootstrap.ConfigsPage, error)) *ConfigRepository_RetrieveAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -385,8 +394,8 @@ func (_c *ConfigRepository_RetrieveByExternalID_Call) RunAndReturn(run func(ctx 
 }
 
 // RetrieveByID provides a mock function for the type ConfigRepository
-func (_mock *ConfigRepository) RetrieveByID(ctx context.Context, domainID string, id string) (bootstrap.Config, error) {
-	ret := _mock.Called(ctx, domainID, id)
+func (_mock *ConfigRepository) RetrieveByID(ctx context.Context, workspaceID string, id string) (bootstrap.Config, error) {
+	ret := _mock.Called(ctx, workspaceID, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveByID")
@@ -395,15 +404,15 @@ func (_mock *ConfigRepository) RetrieveByID(ctx context.Context, domainID string
 	var r0 bootstrap.Config
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (bootstrap.Config, error)); ok {
-		return returnFunc(ctx, domainID, id)
+		return returnFunc(ctx, workspaceID, id)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) bootstrap.Config); ok {
-		r0 = returnFunc(ctx, domainID, id)
+		r0 = returnFunc(ctx, workspaceID, id)
 	} else {
 		r0 = ret.Get(0).(bootstrap.Config)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = returnFunc(ctx, domainID, id)
+		r1 = returnFunc(ctx, workspaceID, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -417,13 +426,13 @@ type ConfigRepository_RetrieveByID_Call struct {
 
 // RetrieveByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
+//   - workspaceID string
 //   - id string
-func (_e *ConfigRepository_Expecter) RetrieveByID(ctx interface{}, domainID interface{}, id interface{}) *ConfigRepository_RetrieveByID_Call {
-	return &ConfigRepository_RetrieveByID_Call{Call: _e.mock.On("RetrieveByID", ctx, domainID, id)}
+func (_e *ConfigRepository_Expecter) RetrieveByID(ctx interface{}, workspaceID interface{}, id interface{}) *ConfigRepository_RetrieveByID_Call {
+	return &ConfigRepository_RetrieveByID_Call{Call: _e.mock.On("RetrieveByID", ctx, workspaceID, id)}
 }
 
-func (_c *ConfigRepository_RetrieveByID_Call) Run(run func(ctx context.Context, domainID string, id string)) *ConfigRepository_RetrieveByID_Call {
+func (_c *ConfigRepository_RetrieveByID_Call) Run(run func(ctx context.Context, workspaceID string, id string)) *ConfigRepository_RetrieveByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -451,7 +460,7 @@ func (_c *ConfigRepository_RetrieveByID_Call) Return(config bootstrap.Config, er
 	return _c
 }
 
-func (_c *ConfigRepository_RetrieveByID_Call) RunAndReturn(run func(ctx context.Context, domainID string, id string) (bootstrap.Config, error)) *ConfigRepository_RetrieveByID_Call {
+func (_c *ConfigRepository_RetrieveByID_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, id string) (bootstrap.Config, error)) *ConfigRepository_RetrieveByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -580,8 +589,8 @@ func (_c *ConfigRepository_Update_Call) RunAndReturn(run func(ctx context.Contex
 }
 
 // UpdateCert provides a mock function for the type ConfigRepository
-func (_mock *ConfigRepository) UpdateCert(ctx context.Context, domainID string, id string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error) {
-	ret := _mock.Called(ctx, domainID, id, clientCert, clientKey, caCert)
+func (_mock *ConfigRepository) UpdateCert(ctx context.Context, workspaceID string, id string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error) {
+	ret := _mock.Called(ctx, workspaceID, id, clientCert, clientKey, caCert)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateCert")
@@ -590,15 +599,15 @@ func (_mock *ConfigRepository) UpdateCert(ctx context.Context, domainID string, 
 	var r0 bootstrap.Config
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) (bootstrap.Config, error)); ok {
-		return returnFunc(ctx, domainID, id, clientCert, clientKey, caCert)
+		return returnFunc(ctx, workspaceID, id, clientCert, clientKey, caCert)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) bootstrap.Config); ok {
-		r0 = returnFunc(ctx, domainID, id, clientCert, clientKey, caCert)
+		r0 = returnFunc(ctx, workspaceID, id, clientCert, clientKey, caCert)
 	} else {
 		r0 = ret.Get(0).(bootstrap.Config)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string, string) error); ok {
-		r1 = returnFunc(ctx, domainID, id, clientCert, clientKey, caCert)
+		r1 = returnFunc(ctx, workspaceID, id, clientCert, clientKey, caCert)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -612,16 +621,16 @@ type ConfigRepository_UpdateCert_Call struct {
 
 // UpdateCert is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
+//   - workspaceID string
 //   - id string
 //   - clientCert string
 //   - clientKey string
 //   - caCert string
-func (_e *ConfigRepository_Expecter) UpdateCert(ctx interface{}, domainID interface{}, id interface{}, clientCert interface{}, clientKey interface{}, caCert interface{}) *ConfigRepository_UpdateCert_Call {
-	return &ConfigRepository_UpdateCert_Call{Call: _e.mock.On("UpdateCert", ctx, domainID, id, clientCert, clientKey, caCert)}
+func (_e *ConfigRepository_Expecter) UpdateCert(ctx interface{}, workspaceID interface{}, id interface{}, clientCert interface{}, clientKey interface{}, caCert interface{}) *ConfigRepository_UpdateCert_Call {
+	return &ConfigRepository_UpdateCert_Call{Call: _e.mock.On("UpdateCert", ctx, workspaceID, id, clientCert, clientKey, caCert)}
 }
 
-func (_c *ConfigRepository_UpdateCert_Call) Run(run func(ctx context.Context, domainID string, id string, clientCert string, clientKey string, caCert string)) *ConfigRepository_UpdateCert_Call {
+func (_c *ConfigRepository_UpdateCert_Call) Run(run func(ctx context.Context, workspaceID string, id string, clientCert string, clientKey string, caCert string)) *ConfigRepository_UpdateCert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -664,7 +673,7 @@ func (_c *ConfigRepository_UpdateCert_Call) Return(config bootstrap.Config, err 
 	return _c
 }
 
-func (_c *ConfigRepository_UpdateCert_Call) RunAndReturn(run func(ctx context.Context, domainID string, id string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error)) *ConfigRepository_UpdateCert_Call {
+func (_c *ConfigRepository_UpdateCert_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, id string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error)) *ConfigRepository_UpdateCert_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -28,8 +28,8 @@ const (
 )
 
 var (
-	encKey   = []byte("12345678910111213141516171819202")
-	domainID = testsutil.GenerateUUID(&testing.T{})
+	encKey      = []byte("12345678910111213141516171819202")
+	workspaceID = testsutil.GenerateUUID(&testing.T{})
 
 	config = bootstrap.Config{
 		ID:          testsutil.GenerateUUID(&testing.T{}),
@@ -56,7 +56,11 @@ func newService() bootstrap.Service {
 	resolver = new(mocks.BindingResolver)
 	renderer = new(mocks.Renderer)
 	idp := uuid.NewMock()
-	return bootstrap.New(boot, profileRepo, bindingStore, resolver, renderer, sdk, encKey, idp)
+	svc, err := bootstrap.New(boot, profileRepo, bindingStore, nil, resolver, renderer, sdk, encKey, "primary", idp)
+	if err != nil {
+		panic(fmt.Sprintf("failed to build test service: %s", err))
+	}
+	return svc
 }
 
 func TestAdd(t *testing.T) {
@@ -66,43 +70,43 @@ func TestAdd(t *testing.T) {
 	neID.ID = "non-existent"
 
 	cases := []struct {
-		desc     string
-		config   bootstrap.Config
-		token    string
-		session  smqauthn.Session
-		userID   string
-		domainID string
-		saveErr  error
-		err      error
+		desc        string
+		config      bootstrap.Config
+		token       string
+		session     smqauthn.Session
+		userID      string
+		workspaceID string
+		saveErr     error
+		err         error
 	}{
 		{
-			desc:     "add a new config",
-			config:   config,
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			err:      nil,
+			desc:        "add a new config",
+			config:      config,
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			err:         nil,
 		},
 		{
-			desc:     "add a config with an invalid ID",
-			config:   neID,
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			err:      nil,
+			desc:        "add a config with an invalid ID",
+			config:      neID,
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			err:         nil,
 		},
 		{
-			desc:     "add empty config",
-			config:   bootstrap.Config{},
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
+			desc:        "add empty config",
+			config:      bootstrap.Config{},
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			tc.session = smqauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
+			tc.session = smqauthn.Session{UserID: tc.userID, WorkspaceID: tc.workspaceID, WorkspaceUserID: validID}
 			repoCall3 := boot.On("Save", context.Background(), mock.Anything).Return(mock.Anything, tc.saveErr)
 			_, err := svc.Add(context.Background(), tc.session, tc.token, tc.config)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -131,8 +135,8 @@ func TestView(t *testing.T) {
 			desc:         "view an existing config",
 			configID:     config.ID,
 			userID:       validID,
-			clientDomain: domainID,
-			domain:       domainID,
+			clientDomain: workspaceID,
+			domain:       workspaceID,
 			token:        validToken,
 			err:          nil,
 		},
@@ -140,8 +144,8 @@ func TestView(t *testing.T) {
 			desc:         "view a non-existing config",
 			configID:     unknown,
 			userID:       validID,
-			clientDomain: domainID,
-			domain:       domainID,
+			clientDomain: workspaceID,
+			domain:       workspaceID,
 			token:        validToken,
 			retrieveErr:  svcerr.ErrNotFound,
 			err:          svcerr.ErrNotFound,
@@ -160,7 +164,7 @@ func TestView(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			tc.session = smqauthn.Session{UserID: tc.userID, DomainID: tc.domain, DomainUserID: validID}
+			tc.session = smqauthn.Session{UserID: tc.userID, WorkspaceID: tc.domain, WorkspaceUserID: validID}
 			repoCall := boot.On("RetrieveByID", context.Background(), tc.clientDomain, tc.configID).Return(config, tc.retrieveErr)
 			_, err := svc.View(context.Background(), tc.session, tc.configID)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -189,54 +193,54 @@ func TestUpdate(t *testing.T) {
 	nonExisting.ID = unknown
 
 	cases := []struct {
-		desc      string
-		config    bootstrap.Config
-		token     string
-		session   smqauthn.Session
-		userID    string
-		domainID  string
-		updateErr error
-		err       error
+		desc        string
+		config      bootstrap.Config
+		token       string
+		session     smqauthn.Session
+		userID      string
+		workspaceID string
+		updateErr   error
+		err         error
 	}{
 		{
-			desc:     "update a config with status Created",
-			config:   modifiedCreated,
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			err:      nil,
+			desc:        "update a config with status Created",
+			config:      modifiedCreated,
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			err:         nil,
 		},
 		{
-			desc:     "update a config render_context",
-			config:   modifiedRenderContext,
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			err:      nil,
+			desc:        "update a config render_context",
+			config:      modifiedRenderContext,
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			err:         nil,
 		},
 		{
-			desc:      "update a non-existing config",
-			config:    nonExisting,
-			token:     validToken,
-			userID:    validID,
-			domainID:  domainID,
-			updateErr: svcerr.ErrNotFound,
-			err:       svcerr.ErrNotFound,
+			desc:        "update a non-existing config",
+			config:      nonExisting,
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			updateErr:   svcerr.ErrNotFound,
+			err:         svcerr.ErrNotFound,
 		},
 		{
-			desc:      "update a config with update error",
-			config:    c,
-			token:     validToken,
-			userID:    validID,
-			domainID:  domainID,
-			updateErr: svcerr.ErrUpdateEntity,
-			err:       svcerr.ErrUpdateEntity,
+			desc:        "update a config with update error",
+			config:      c,
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			updateErr:   svcerr.ErrUpdateEntity,
+			err:         svcerr.ErrUpdateEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			tc.session = smqauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
+			tc.session = smqauthn.Session{UserID: tc.userID, WorkspaceID: tc.workspaceID, WorkspaceUserID: validID}
 			repoCall := boot.On("Update", context.Background(), mock.Anything).Return(tc.updateErr)
 			err := svc.Update(context.Background(), tc.session, tc.config)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -255,7 +259,7 @@ func TestUpdateCert(t *testing.T) {
 		token           string
 		session         smqauthn.Session
 		userID          string
-		domainID        string
+		workspaceID     string
 		configID        string
 		clientCert      string
 		clientKey       string
@@ -267,21 +271,21 @@ func TestUpdateCert(t *testing.T) {
 		err             error
 	}{
 		{
-			desc:       "update certs for the valid config",
-			userID:     validID,
-			domainID:   domainID,
-			configID:   c.ID,
-			clientCert: "newCert",
-			clientKey:  "newKey",
-			caCert:     "newCert",
-			token:      validToken,
+			desc:        "update certs for the valid config",
+			userID:      validID,
+			workspaceID: workspaceID,
+			configID:    c.ID,
+			clientCert:  "newCert",
+			clientKey:   "newKey",
+			caCert:      "newCert",
+			token:       validToken,
 			expectedConfig: bootstrap.Config{
 				Name:        c.Name,
 				ExternalID:  c.ExternalID,
 				ExternalKey: c.ExternalKey,
 				Content:     c.Content,
 				Status:      c.Status,
-				DomainID:    c.DomainID,
+				WorkspaceID: c.WorkspaceID,
 				ID:          c.ID,
 				ClientCert:  "newCert",
 				CACert:      "newCert",
@@ -292,7 +296,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:           "update cert for a non-existing config",
 			userID:         validID,
-			domainID:       domainID,
+			workspaceID:    workspaceID,
 			configID:       "empty",
 			clientCert:     "newCert",
 			clientKey:      "newKey",
@@ -306,7 +310,7 @@ func TestUpdateCert(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			tc.session = smqauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
+			tc.session = smqauthn.Session{UserID: tc.userID, WorkspaceID: tc.workspaceID, WorkspaceUserID: validID}
 			repoCall := boot.On("UpdateCert", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.expectedConfig, tc.updateErr)
 			cfg, err := svc.UpdateCert(context.Background(), tc.session, tc.configID, tc.clientCert, tc.clientKey, tc.caCert)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -340,7 +344,7 @@ func TestList(t *testing.T) {
 		token       string
 		session     smqauthn.Session
 		userID      string
-		domainID    string
+		workspaceID string
 		retrieveErr error
 		err         error
 	}{
@@ -352,26 +356,26 @@ func TestList(t *testing.T) {
 				Limit:   10,
 				Configs: saved[0:10],
 			},
-			filter:   bootstrap.Filter{},
-			token:    validToken,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
-			userID:   validID,
-			domainID: domainID,
-			offset:   0,
-			limit:    10,
-			err:      nil,
+			filter:      bootstrap.Filter{},
+			token:       validToken,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID, SuperAdmin: true},
+			userID:      validID,
+			workspaceID: workspaceID,
+			offset:      0,
+			limit:       10,
+			err:         nil,
 		},
 		{
-			desc:     "list configs with failed super admin check",
-			config:   bootstrap.ConfigsPage{},
-			filter:   bootstrap.Filter{},
-			token:    validID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
-			userID:   validID,
-			domainID: domainID,
-			offset:   0,
-			limit:    10,
-			err:      nil,
+			desc:        "list configs with failed super admin check",
+			config:      bootstrap.ConfigsPage{},
+			filter:      bootstrap.Filter{},
+			token:       validID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID},
+			userID:      validID,
+			workspaceID: workspaceID,
+			offset:      0,
+			limit:       10,
+			err:         nil,
 		},
 		{
 			desc: "list configs successfully as domain admin",
@@ -381,14 +385,14 @@ func TestList(t *testing.T) {
 				Limit:   10,
 				Configs: saved[0:10],
 			},
-			filter:   bootstrap.Filter{},
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
-			offset:   0,
-			limit:    10,
-			err:      nil,
+			filter:      bootstrap.Filter{},
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID, SuperAdmin: true},
+			offset:      0,
+			limit:       10,
+			err:         nil,
 		},
 		{
 			desc: "list configs successfully as non admin",
@@ -398,14 +402,14 @@ func TestList(t *testing.T) {
 				Limit:   10,
 				Configs: saved[0:10],
 			},
-			filter:   bootstrap.Filter{},
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
-			offset:   0,
-			limit:    10,
-			err:      nil,
+			filter:      bootstrap.Filter{},
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID},
+			offset:      0,
+			limit:       10,
+			err:         nil,
 		},
 		{
 			desc: "list configs with specified name as super admin",
@@ -415,14 +419,14 @@ func TestList(t *testing.T) {
 				Limit:   100,
 				Configs: saved[95:96],
 			},
-			filter:   bootstrap.Filter{PartialMatch: map[string]string{"name": "95"}},
-			token:    validToken,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
-			userID:   validID,
-			domainID: domainID,
-			offset:   0,
-			limit:    100,
-			err:      nil,
+			filter:      bootstrap.Filter{PartialMatch: map[string]string{"name": "95"}},
+			token:       validToken,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID, SuperAdmin: true},
+			userID:      validID,
+			workspaceID: workspaceID,
+			offset:      0,
+			limit:       100,
+			err:         nil,
 		},
 		{
 			desc: "list configs with specified name as domain admin",
@@ -432,14 +436,14 @@ func TestList(t *testing.T) {
 				Limit:   100,
 				Configs: saved[95:96],
 			},
-			filter:   bootstrap.Filter{PartialMatch: map[string]string{"name": "95"}},
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
-			offset:   0,
-			limit:    100,
-			err:      nil,
+			filter:      bootstrap.Filter{PartialMatch: map[string]string{"name": "95"}},
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID, SuperAdmin: true},
+			offset:      0,
+			limit:       100,
+			err:         nil,
 		},
 		{
 			desc: "list configs with specified name as non admin",
@@ -449,14 +453,14 @@ func TestList(t *testing.T) {
 				Limit:   100,
 				Configs: saved[95:96],
 			},
-			filter:   bootstrap.Filter{PartialMatch: map[string]string{"name": "95"}},
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
-			offset:   0,
-			limit:    100,
-			err:      nil,
+			filter:      bootstrap.Filter{PartialMatch: map[string]string{"name": "95"}},
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID},
+			offset:      0,
+			limit:       100,
+			err:         nil,
 		},
 		{
 			desc: "list last page as super admin",
@@ -466,14 +470,14 @@ func TestList(t *testing.T) {
 				Limit:   10,
 				Configs: saved[95:],
 			},
-			filter:   bootstrap.Filter{},
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
-			offset:   95,
-			limit:    10,
-			err:      nil,
+			filter:      bootstrap.Filter{},
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID, SuperAdmin: true},
+			offset:      95,
+			limit:       10,
+			err:         nil,
 		},
 		{
 			desc: "list last page as domain admin",
@@ -483,14 +487,14 @@ func TestList(t *testing.T) {
 				Limit:   10,
 				Configs: saved[95:],
 			},
-			filter:   bootstrap.Filter{},
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
-			offset:   95,
-			limit:    10,
-			err:      nil,
+			filter:      bootstrap.Filter{},
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID, SuperAdmin: true},
+			offset:      95,
+			limit:       10,
+			err:         nil,
 		},
 		{
 			desc: "list last page as non admin",
@@ -500,14 +504,14 @@ func TestList(t *testing.T) {
 				Limit:   10,
 				Configs: saved[95:],
 			},
-			filter:   bootstrap.Filter{},
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
-			offset:   95,
-			limit:    10,
-			err:      nil,
+			filter:      bootstrap.Filter{},
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID},
+			offset:      95,
+			limit:       10,
+			err:         nil,
 		},
 		{
 			desc: "list configs with Active status as super admin",
@@ -517,14 +521,14 @@ func TestList(t *testing.T) {
 				Limit:   20,
 				Configs: []bootstrap.Config{saved[41]},
 			},
-			filter:   bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.Active.String()}},
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
-			offset:   35,
-			limit:    20,
-			err:      nil,
+			filter:      bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.Active.String()}},
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID, SuperAdmin: true},
+			offset:      35,
+			limit:       20,
+			err:         nil,
 		},
 		{
 			desc: "list configs with Active status as domain admin",
@@ -534,14 +538,14 @@ func TestList(t *testing.T) {
 				Limit:   20,
 				Configs: []bootstrap.Config{saved[41]},
 			},
-			filter:   bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.Active.String()}},
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
-			offset:   35,
-			limit:    20,
-			err:      nil,
+			filter:      bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.Active.String()}},
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID, SuperAdmin: true},
+			offset:      35,
+			limit:       20,
+			err:         nil,
 		},
 		{
 			desc: "list configs with Active status as non admin",
@@ -551,26 +555,26 @@ func TestList(t *testing.T) {
 				Limit:   20,
 				Configs: []bootstrap.Config{saved[41]},
 			},
-			filter:   bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.Active.String()}},
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
-			offset:   35,
-			limit:    20,
-			err:      nil,
+			filter:      bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.Active.String()}},
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID},
+			offset:      35,
+			limit:       20,
+			err:         nil,
 		},
 		{
-			desc:     "list configs with empty result",
-			config:   bootstrap.ConfigsPage{},
-			filter:   bootstrap.Filter{},
-			offset:   0,
-			limit:    10,
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
-			err:      nil,
+			desc:        "list configs with empty result",
+			config:      bootstrap.ConfigsPage{},
+			filter:      bootstrap.Filter{},
+			offset:      0,
+			limit:       10,
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID},
+			err:         nil,
 		},
 	}
 
@@ -592,45 +596,45 @@ func TestRemove(t *testing.T) {
 
 	c := config
 	cases := []struct {
-		desc      string
-		id        string
-		token     string
-		session   smqauthn.Session
-		userID    string
-		domainID  string
-		removeErr error
-		err       error
+		desc        string
+		id          string
+		token       string
+		session     smqauthn.Session
+		userID      string
+		workspaceID string
+		removeErr   error
+		err         error
 	}{
 		{
-			desc:     "remove an existing config",
-			id:       c.ID,
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			err:      nil,
+			desc:        "remove an existing config",
+			id:          c.ID,
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			err:         nil,
 		},
 		{
-			desc:     "remove removed config",
-			id:       c.ID,
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			err:      nil,
+			desc:        "remove removed config",
+			id:          c.ID,
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			err:         nil,
 		},
 		{
-			desc:      "remove a config with failed remove",
-			id:        c.ID,
-			token:     validToken,
-			userID:    validID,
-			domainID:  domainID,
-			removeErr: svcerr.ErrRemoveEntity,
-			err:       svcerr.ErrRemoveEntity,
+			desc:        "remove a config with failed remove",
+			id:          c.ID,
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			removeErr:   svcerr.ErrRemoveEntity,
+			err:         svcerr.ErrRemoveEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			tc.session = smqauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
+			tc.session = smqauthn.Session{UserID: tc.userID, WorkspaceID: tc.workspaceID, WorkspaceUserID: validID}
 			repoCall := boot.On("Remove", context.Background(), mock.Anything, mock.Anything).Return(tc.removeErr)
 			err := svc.Remove(context.Background(), tc.session, tc.id)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -654,7 +658,7 @@ func TestEnableConfig(t *testing.T) {
 		id          string
 		session     smqauthn.Session
 		userID      string
-		domainID    string
+		workspaceID string
 		retrieveErr error
 		statusErr   error
 		err         error
@@ -664,41 +668,41 @@ func TestEnableConfig(t *testing.T) {
 			config:      c,
 			id:          unknown,
 			userID:      validID,
-			domainID:    domainID,
+			workspaceID: workspaceID,
 			retrieveErr: svcerr.ErrNotFound,
 			err:         svcerr.ErrNotFound,
 		},
 		{
-			desc:     "enable inactive config",
-			config:   inactiveConfig,
-			id:       c.ID,
-			userID:   validID,
-			domainID: domainID,
-			err:      nil,
+			desc:        "enable inactive config",
+			config:      inactiveConfig,
+			id:          c.ID,
+			userID:      validID,
+			workspaceID: workspaceID,
+			err:         nil,
 		},
 		{
-			desc:     "enable already active config",
-			config:   activeConfig,
-			id:       c.ID,
-			userID:   validID,
-			domainID: domainID,
-			err:      nil,
+			desc:        "enable already active config",
+			config:      activeConfig,
+			id:          c.ID,
+			userID:      validID,
+			workspaceID: workspaceID,
+			err:         nil,
 		},
 		{
-			desc:      "enable with repo error",
-			config:    inactiveConfig,
-			id:        c.ID,
-			userID:    validID,
-			domainID:  domainID,
-			statusErr: svcerr.ErrUpdateEntity,
-			err:       svcerr.ErrUpdateEntity,
+			desc:        "enable with repo error",
+			config:      inactiveConfig,
+			id:          c.ID,
+			userID:      validID,
+			workspaceID: workspaceID,
+			statusErr:   svcerr.ErrUpdateEntity,
+			err:         svcerr.ErrUpdateEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			tc.session = smqauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
-			repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(tc.config, tc.retrieveErr)
+			tc.session = smqauthn.Session{UserID: tc.userID, WorkspaceID: tc.workspaceID, WorkspaceUserID: validID}
+			repoCall := boot.On("RetrieveByID", context.Background(), tc.workspaceID, tc.id).Return(tc.config, tc.retrieveErr)
 			repoCall1 := boot.On("ChangeStatus", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.statusErr)
 			_, err := svc.EnableConfig(context.Background(), tc.session, tc.id)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -723,7 +727,7 @@ func TestDisableConfig(t *testing.T) {
 		id          string
 		session     smqauthn.Session
 		userID      string
-		domainID    string
+		workspaceID string
 		retrieveErr error
 		statusErr   error
 		err         error
@@ -733,41 +737,41 @@ func TestDisableConfig(t *testing.T) {
 			config:      c,
 			id:          unknown,
 			userID:      validID,
-			domainID:    domainID,
+			workspaceID: workspaceID,
 			retrieveErr: svcerr.ErrNotFound,
 			err:         svcerr.ErrNotFound,
 		},
 		{
-			desc:     "disable active config",
-			config:   activeConfig,
-			id:       c.ID,
-			userID:   validID,
-			domainID: domainID,
-			err:      nil,
+			desc:        "disable active config",
+			config:      activeConfig,
+			id:          c.ID,
+			userID:      validID,
+			workspaceID: workspaceID,
+			err:         nil,
 		},
 		{
-			desc:     "disable already inactive config",
-			config:   inactiveConfig,
-			id:       c.ID,
-			userID:   validID,
-			domainID: domainID,
-			err:      nil,
+			desc:        "disable already inactive config",
+			config:      inactiveConfig,
+			id:          c.ID,
+			userID:      validID,
+			workspaceID: workspaceID,
+			err:         nil,
 		},
 		{
-			desc:      "disable with repo error",
-			config:    activeConfig,
-			id:        c.ID,
-			userID:    validID,
-			domainID:  domainID,
-			statusErr: svcerr.ErrUpdateEntity,
-			err:       svcerr.ErrUpdateEntity,
+			desc:        "disable with repo error",
+			config:      activeConfig,
+			id:          c.ID,
+			userID:      validID,
+			workspaceID: workspaceID,
+			statusErr:   svcerr.ErrUpdateEntity,
+			err:         svcerr.ErrUpdateEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			tc.session = smqauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
-			repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(tc.config, tc.retrieveErr)
+			tc.session = smqauthn.Session{UserID: tc.userID, WorkspaceID: tc.workspaceID, WorkspaceUserID: validID}
+			repoCall := boot.On("RetrieveByID", context.Background(), tc.workspaceID, tc.id).Return(tc.config, tc.retrieveErr)
 			repoCall1 := boot.On("ChangeStatus", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.statusErr)
 			_, err := svc.DisableConfig(context.Background(), tc.session, tc.id)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -780,7 +784,7 @@ func TestDisableConfig(t *testing.T) {
 func TestAssignProfile(t *testing.T) {
 	profile := bootstrap.Profile{
 		ID:            testsutil.GenerateUUID(t),
-		DomainID:      domainID,
+		WorkspaceID:   workspaceID,
 		Name:          "gateway-profile",
 		ContentFormat: bootstrap.ContentFormatGoTemplate,
 		Version:       1,
@@ -821,13 +825,13 @@ func TestAssignProfile(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			svc := newService()
-			session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
+			session := smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID}
 
-			prCall := profileRepo.On("RetrieveByID", context.Background(), domainID, tc.profileID).Return(profile, tc.retrieveErr)
+			prCall := profileRepo.On("RetrieveByID", context.Background(), workspaceID, tc.profileID).Return(profile, tc.retrieveErr)
 
 			var assignCall *mock.Call
 			if tc.expectAssign {
-				assignCall = boot.On("AssignProfile", context.Background(), domainID, tc.configID, tc.profileID).Return(tc.assignErr)
+				assignCall = boot.On("AssignProfile", context.Background(), workspaceID, tc.configID, tc.profileID).Return(tc.assignErr)
 			}
 
 			err := svc.AssignProfile(context.Background(), session, tc.configID, tc.profileID)
@@ -842,7 +846,7 @@ func TestAssignProfile(t *testing.T) {
 }
 
 func TestCreateProfile(t *testing.T) {
-	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
+	session := smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID}
 
 	validProfile := bootstrap.Profile{
 		Name:          "test-profile",
@@ -941,7 +945,7 @@ func TestCreateProfile(t *testing.T) {
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
 			if tc.err == nil {
 				assert.NotEmpty(t, saved.ID, fmt.Sprintf("%s: expected non-empty profile ID\n", tc.desc))
-				assert.Equal(t, domainID, saved.DomainID, fmt.Sprintf("%s: expected domain ID %s got %s\n", tc.desc, domainID, saved.DomainID))
+				assert.Equal(t, workspaceID, saved.WorkspaceID, fmt.Sprintf("%s: expected domain ID %s got %s\n", tc.desc, workspaceID, saved.WorkspaceID))
 				assert.Equal(t, tc.wantFormat, saved.ContentFormat, fmt.Sprintf("%s: expected %s format\n", tc.desc, tc.wantFormat))
 				assert.Equal(t, tc.wantContentType, saved.ContentType, fmt.Sprintf("%s: expected %s content type\n", tc.desc, tc.wantContentType))
 				assert.Equal(t, 1, saved.Version, fmt.Sprintf("%s: expected version 1\n", tc.desc))
@@ -952,11 +956,11 @@ func TestCreateProfile(t *testing.T) {
 }
 
 func TestViewProfile(t *testing.T) {
-	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
+	session := smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID}
 
 	profile := bootstrap.Profile{
 		ID:            testsutil.GenerateUUID(t),
-		DomainID:      domainID,
+		WorkspaceID:   workspaceID,
 		Name:          "view-profile",
 		ContentFormat: bootstrap.ContentFormatGoTemplate,
 		Version:       1,
@@ -983,7 +987,7 @@ func TestViewProfile(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			svc := newService()
-			prCall := profileRepo.On("RetrieveByID", context.Background(), domainID, tc.profileID).Return(profile, tc.retrieveErr)
+			prCall := profileRepo.On("RetrieveByID", context.Background(), workspaceID, tc.profileID).Return(profile, tc.retrieveErr)
 			got, err := svc.ViewProfile(context.Background(), session, tc.profileID)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
 			if tc.err == nil {
@@ -995,11 +999,11 @@ func TestViewProfile(t *testing.T) {
 }
 
 func TestUpdateProfile(t *testing.T) {
-	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
+	session := smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID}
 
 	validProfile := bootstrap.Profile{
 		ID:            testsutil.GenerateUUID(t),
-		DomainID:      domainID,
+		WorkspaceID:   workspaceID,
 		Name:          "updated-profile",
 		ContentFormat: bootstrap.ContentFormatGoTemplate,
 	}
@@ -1076,11 +1080,11 @@ func TestUpdateProfile(t *testing.T) {
 }
 
 func TestListProfiles(t *testing.T) {
-	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
+	session := smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID}
 
 	profiles := []bootstrap.Profile{
-		{ID: testsutil.GenerateUUID(t), DomainID: domainID, Name: "p1", ContentFormat: bootstrap.ContentFormatGoTemplate, Version: 1},
-		{ID: testsutil.GenerateUUID(t), DomainID: domainID, Name: "p2", ContentFormat: bootstrap.ContentFormatGoTemplate, Version: 1},
+		{ID: testsutil.GenerateUUID(t), WorkspaceID: workspaceID, Name: "p1", ContentFormat: bootstrap.ContentFormatGoTemplate, Version: 1},
+		{ID: testsutil.GenerateUUID(t), WorkspaceID: workspaceID, Name: "p2", ContentFormat: bootstrap.ContentFormatGoTemplate, Version: 1},
 	}
 	page := bootstrap.ProfilesPage{Total: 2, Offset: 0, Limit: 10, Profiles: profiles}
 	filteredPage := bootstrap.ProfilesPage{Total: 1, Offset: 0, Limit: 10, Profiles: profiles[:1]}
@@ -1116,7 +1120,7 @@ func TestListProfiles(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			svc := newService()
-			listCall := profileRepo.On("RetrieveAll", context.Background(), domainID, tc.offset, tc.limit, tc.name).Return(tc.page, tc.listErr)
+			listCall := profileRepo.On("RetrieveAll", context.Background(), workspaceID, tc.offset, tc.limit, tc.name).Return(tc.page, tc.listErr)
 			got, err := svc.ListProfiles(context.Background(), session, tc.offset, tc.limit, tc.name)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
 			if tc.err == nil {
@@ -1128,7 +1132,7 @@ func TestListProfiles(t *testing.T) {
 }
 
 func TestDeleteProfile(t *testing.T) {
-	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
+	session := smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID}
 	profileID := testsutil.GenerateUUID(t)
 
 	cases := []struct {
@@ -1152,7 +1156,7 @@ func TestDeleteProfile(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			svc := newService()
-			deleteCall := profileRepo.On("Delete", context.Background(), domainID, tc.profileID).Return(tc.deleteErr)
+			deleteCall := profileRepo.On("Delete", context.Background(), workspaceID, tc.profileID).Return(tc.deleteErr)
 			err := svc.DeleteProfile(context.Background(), session, tc.profileID)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
 			deleteCall.Unset()
@@ -1161,12 +1165,12 @@ func TestDeleteProfile(t *testing.T) {
 }
 
 func TestBindResources(t *testing.T) {
-	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
+	session := smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID}
 
 	profile := bootstrap.Profile{
-		ID:       testsutil.GenerateUUID(t),
-		DomainID: domainID,
-		Name:     "bind-profile",
+		ID:          testsutil.GenerateUUID(t),
+		WorkspaceID: workspaceID,
+		Name:        "bind-profile",
 		BindingSlots: []bootstrap.BindingSlot{
 			{Name: "mqtt", Type: "client", Required: true},
 			{Name: "commands", Type: "channel", Required: true},
@@ -1174,24 +1178,24 @@ func TestBindResources(t *testing.T) {
 	}
 
 	channelProfile := bootstrap.Profile{
-		ID:       testsutil.GenerateUUID(t),
-		DomainID: domainID,
-		Name:     "channel-profile",
+		ID:          testsutil.GenerateUUID(t),
+		WorkspaceID: workspaceID,
+		Name:        "channel-profile",
 		BindingSlots: []bootstrap.BindingSlot{
 			{Name: "data", Type: "channel", Required: true},
 		},
 	}
 
 	cfg := bootstrap.Config{
-		ID:        config.ID,
-		DomainID:  domainID,
-		ProfileID: profile.ID,
+		ID:          config.ID,
+		WorkspaceID: workspaceID,
+		ProfileID:   profile.ID,
 	}
 
 	channelCfg := bootstrap.Config{
-		ID:        config.ID,
-		DomainID:  domainID,
-		ProfileID: channelProfile.ID,
+		ID:          config.ID,
+		WorkspaceID: workspaceID,
+		ProfileID:   channelProfile.ID,
 	}
 
 	snapshot := bootstrap.BindingSnapshot{
@@ -1294,8 +1298,8 @@ func TestBindResources(t *testing.T) {
 				activeCfg = channelCfg
 				activeProfile = channelProfile
 			}
-			boot.On("RetrieveByID", context.Background(), domainID, tc.configID).Return(activeCfg, tc.cfgErr)
-			profileRepo.On("RetrieveByID", context.Background(), domainID, activeProfile.ID).Return(activeProfile, tc.prErr)
+			boot.On("RetrieveByID", context.Background(), workspaceID, tc.configID).Return(activeCfg, tc.cfgErr)
+			profileRepo.On("RetrieveByID", context.Background(), workspaceID, activeProfile.ID).Return(activeProfile, tc.prErr)
 			resolver.On("Resolve", context.Background(), mock.Anything).Return(tc.snapshots, tc.resolveErr)
 			bindingStore.On("Save", context.Background(), tc.configID, mock.Anything).Return(tc.saveErr)
 
@@ -1306,7 +1310,7 @@ func TestBindResources(t *testing.T) {
 }
 
 func TestListBindings(t *testing.T) {
-	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
+	session := smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID}
 
 	snapshots := []bootstrap.BindingSnapshot{
 		{ConfigID: config.ID, Slot: "mqtt", Type: "client", ResourceID: validID, Snapshot: map[string]any{"id": validID}},
@@ -1342,7 +1346,7 @@ func TestListBindings(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			svc := newService()
-			boot.On("RetrieveByID", context.Background(), domainID, tc.configID).Return(config, tc.cfgErr)
+			boot.On("RetrieveByID", context.Background(), workspaceID, tc.configID).Return(config, tc.cfgErr)
 			bindingStore.On("Retrieve", context.Background(), tc.configID).Return(tc.bindings, tc.retrieveErr)
 
 			got, err := svc.ListBindings(context.Background(), session, tc.configID)
@@ -1355,21 +1359,21 @@ func TestListBindings(t *testing.T) {
 }
 
 func TestRefreshBindings(t *testing.T) {
-	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
+	session := smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID}
 
 	profile := bootstrap.Profile{
-		ID:       testsutil.GenerateUUID(t),
-		DomainID: domainID,
-		Name:     "refresh-profile",
+		ID:          testsutil.GenerateUUID(t),
+		WorkspaceID: workspaceID,
+		Name:        "refresh-profile",
 		BindingSlots: []bootstrap.BindingSlot{
 			{Name: "mqtt", Type: "client", Required: true},
 		},
 	}
 
 	cfg := bootstrap.Config{
-		ID:        config.ID,
-		DomainID:  domainID,
-		ProfileID: profile.ID,
+		ID:          config.ID,
+		WorkspaceID: workspaceID,
+		ProfileID:   profile.ID,
 	}
 
 	existing := []bootstrap.BindingSnapshot{
@@ -1449,8 +1453,8 @@ func TestRefreshBindings(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			svc := newService()
-			boot.On("RetrieveByID", context.Background(), domainID, tc.configID).Return(cfg, tc.cfgErr)
-			profileRepo.On("RetrieveByID", context.Background(), domainID, profile.ID).Return(profile, tc.prErr)
+			boot.On("RetrieveByID", context.Background(), workspaceID, tc.configID).Return(cfg, tc.cfgErr)
+			profileRepo.On("RetrieveByID", context.Background(), workspaceID, profile.ID).Return(profile, tc.prErr)
 			bindingStore.On("Retrieve", context.Background(), tc.configID).Return(tc.existing, tc.retrieveErr)
 			resolver.On("Resolve", context.Background(), mock.Anything).Return(tc.snapshots, tc.resolveErr)
 			bindingStore.On("Save", context.Background(), tc.configID, mock.Anything).Return(tc.saveErr)

@@ -391,7 +391,7 @@ func renderPreviewEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			}
 		}
 
-		cfg.DomainID = session.DomainID
+		cfg.WorkspaceID = session.WorkspaceID
 		cfg.ProfileID = p.ID
 		if cfg.RenderContext == nil {
 			cfg.RenderContext = req.RenderContext

@@ -51,9 +51,9 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader b
 
 	r := chi.NewRouter()
 
-	r.Route("/{domainID}/clients", func(r chi.Router) {
+	r.Route("/{workspaceID}/clients", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-			r.Use(authn.WithOptions(smqauthn.WithDomainCheck(true)).Middleware())
+			r.Use(authn.WithOptions(smqauthn.WithWorkspaceCheck(true)).Middleware())
 			r.Route("/configs", func(r chi.Router) {
 				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 					addEndpoint(svc),
@@ -107,7 +107,7 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader b
 
 		// Profile and enrollment binding endpoints.
 		r.Route("/bootstrap", func(r chi.Router) {
-			r.Use(authn.WithOptions(smqauthn.WithDomainCheck(true)).Middleware())
+			r.Use(authn.WithOptions(smqauthn.WithWorkspaceCheck(true)).Middleware())
 
 			r.Route("/profiles", func(r chi.Router) {
 				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(

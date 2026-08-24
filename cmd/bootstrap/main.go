@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/url"
 	"os"
+	"strings"
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
@@ -46,15 +47,21 @@ const (
 )
 
 type config struct {
-	LogLevel          string  `env:"MG_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
-	DBEncryptionKey   string  `env:"MG_BOOTSTRAP_DB_ENCRYPTION_KEY"    envDefault:"12345678910111213141516171819202"`
-	DBEncryptionKeyID string  `env:"MG_BOOTSTRAP_DB_ENCRYPTION_KEY_ID" envDefault:"primary"`
-	ESConsumerName    string  `env:"MG_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
-	JaegerURL         url.URL `env:"MG_JAEGER_URL"                envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry     bool    `env:"MG_SEND_TELEMETRY"            envDefault:"true"`
-	InstanceID        string  `env:"MG_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
-	ESURL             string  `env:"MG_ES_URL"                    envDefault:"nats://localhost:4222"`
-	TraceRatio        float64 `env:"MG_JAEGER_TRACE_RATIO"        envDefault:"1.0"`
+	LogLevel string `env:"MG_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
+	// Deliberately has no default: it seals every enrollment's bootstrap root
+	// key at rest, so a built-in value would make every deployment that did
+	// not override it decryptable from this source file.
+	DBEncryptionKey   string `env:"MG_BOOTSTRAP_DB_ENCRYPTION_KEY,required"`
+	DBEncryptionKeyID string `env:"MG_BOOTSTRAP_DB_ENCRYPTION_KEY_ID" envDefault:"primary"`
+	// Retired keys, as "<keyID>:<key>" pairs, kept readable across a
+	// rotation. Format: MG_BOOTSTRAP_DB_ENCRYPTION_PREVIOUS_KEYS=old:<32b>,older:<32b>
+	DBEncryptionPreviousKeys []string `env:"MG_BOOTSTRAP_DB_ENCRYPTION_PREVIOUS_KEYS" envSeparator:","`
+	ESConsumerName           string   `env:"MG_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
+	JaegerURL                url.URL  `env:"MG_JAEGER_URL"                envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry            bool     `env:"MG_SEND_TELEMETRY"            envDefault:"true"`
+	InstanceID               string   `env:"MG_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
+	ESURL                    string   `env:"MG_ES_URL"                    envDefault:"nats://localhost:4222"`
+	TraceRatio               float64  `env:"MG_JAEGER_TRACE_RATIO"        envDefault:"1.0"`
 }
 
 func main() {
@@ -160,16 +167,18 @@ func newService(ctx context.Context, atomClient *atom.Client, database pgclient.
 	repoProfile := bootstrappg.NewProfileRepository(database, logger)
 	repoBindings := bootstrappg.NewBindingRepository(database, logger)
 	repoChallenges := bootstrappg.NewBootstrapChallengeRepository(database)
-	if _, err := bootstrap.NewSecretCipher([]byte(cfg.DBEncryptionKey), cfg.DBEncryptionKeyID); err != nil {
-		return nil, err
-	}
 
 	sdk := mgsdk.NewSDK(mgsdk.Config{})
 	idp := uuid.New()
 	resolver := bootstrap.NewAtomResolver(atomClient)
 	renderer := bootstrap.NewRenderer()
 
-	svc := bootstrap.NewWithChallenges(
+	previousKeys, err := parsePreviousKeys(cfg.DBEncryptionPreviousKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	svc, err := bootstrap.New(
 		repoConfig,
 		repoProfile,
 		repoBindings,
@@ -180,7 +189,11 @@ func newService(ctx context.Context, atomClient *atom.Client, database pgclient.
 		[]byte(cfg.DBEncryptionKey),
 		cfg.DBEncryptionKeyID,
 		idp,
+		previousKeys...,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("init Bootstrap service: %w", err)
+	}
 	if err := bootstrap.ReconcileAtom(ctx, svc, atomClient); err != nil {
 		return nil, fmt.Errorf("reconcile Bootstrap Atom projections: %w", err)
 	}
@@ -199,4 +212,23 @@ func newService(ctx context.Context, atomClient *atom.Client, database pgclient.
 	svc = tracing.New(svc, tracer)
 
 	return svc, nil
+}
+
+// parsePreviousKeys turns "<keyID>:<key>" entries into retired encryption
+// keys. They let the service open secrets sealed before a key rotation while
+// new writes use the active key.
+func parsePreviousKeys(entries []string) ([]bootstrap.PreviousKey, error) {
+	var keys []bootstrap.PreviousKey
+	for _, entry := range entries {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
+		}
+		id, key, found := strings.Cut(entry, ":")
+		if !found {
+			return nil, fmt.Errorf("invalid previous encryption key %q: expected <keyID>:<key>", entry)
+		}
+		keys = append(keys, bootstrap.PreviousKey{ID: strings.TrimSpace(id), Key: []byte(key)})
+	}
+	return keys, nil
 }

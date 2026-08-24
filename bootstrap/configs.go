@@ -8,7 +8,7 @@ import "context"
 // Config represents a bootstrap enrollment.
 type Config struct {
 	ID                  string         `json:"id"`
-	DomainID            string         `json:"domain_id,omitempty"`
+	WorkspaceID         string         `json:"workspace_id,omitempty"`
 	Name                string         `json:"name,omitempty"`
 	ClientCert          string         `json:"client_cert,omitempty"`
 	ClientKey           string         `json:"client_key,omitempty"`
@@ -51,11 +51,13 @@ type ConfigRepository interface {
 
 	// RetrieveByID retrieves the Config having the provided identifier, that is owned
 	// by the specified user.
-	RetrieveByID(ctx context.Context, domainID, id string) (Config, error)
+	RetrieveByID(ctx context.Context, workspaceID, id string) (Config, error)
 
-	// RetrieveAll retrieves a subset of Configs that belong to the given domain,
-	// with given filter parameters.
-	RetrieveAll(ctx context.Context, domainID string, filter Filter, offset, limit uint64) ConfigsPage
+	// RetrieveAll retrieves a subset of Configs that belong to the given
+	// workspace, with given filter parameters. A non-nil error is returned
+	// to indicate operation failure, so that a lookup failure is never
+	// mistaken for an empty workspace.
+	RetrieveAll(ctx context.Context, workspaceID string, filter Filter, offset, limit uint64) (ConfigsPage, error)
 
 	// RetrieveByExternalID returns Config for given external ID.
 	RetrieveByExternalID(ctx context.Context, externalID string) (Config, error)
@@ -65,16 +67,16 @@ type ConfigRepository interface {
 	Update(ctx context.Context, cfg Config) error
 
 	// AssignProfile sets the profile reference for the given Config.
-	AssignProfile(ctx context.Context, domainID, id, profileID string) error
+	AssignProfile(ctx context.Context, workspaceID, id, profileID string) error
 
-	// UpdateCerts updates and returns an existing Config certificate and domainID.
+	// UpdateCerts updates and returns an existing Config certificate and workspaceID.
 	// A non-nil error is returned to indicate operation failure.
-	UpdateCert(ctx context.Context, domainID, id, clientCert, clientKey, caCert string) (Config, error)
+	UpdateCert(ctx context.Context, workspaceID, id, clientCert, clientKey, caCert string) (Config, error)
 
 	// Remove removes the Config having the provided identifier, that is owned
 	// by the specified user.
-	Remove(ctx context.Context, domainID, id string) error
+	Remove(ctx context.Context, workspaceID, id string) error
 
 	// ChangeStatus changes the Status of the Config owned by the specific user.
-	ChangeStatus(ctx context.Context, domainID, id string, status Status) error
+	ChangeStatus(ctx context.Context, workspaceID, id string, status Status) error
 }

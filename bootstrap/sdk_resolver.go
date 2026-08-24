@@ -30,7 +30,7 @@ func (r *sdkResolver) Resolve(ctx context.Context, req ResolveRequest) ([]Bindin
 	var snapshots []BindingSnapshot
 
 	for _, br := range req.Requested {
-		snap, err := r.resolveOne(ctx, req.Enrollment.DomainID, req.Token, br)
+		snap, err := r.resolveOne(ctx, req.Enrollment.WorkspaceID, req.Token, br)
 		if err != nil {
 			return nil, err
 		}
@@ -40,19 +40,19 @@ func (r *sdkResolver) Resolve(ctx context.Context, req ResolveRequest) ([]Bindin
 	return snapshots, nil
 }
 
-func (r *sdkResolver) resolveOne(ctx context.Context, domainID, token string, br BindingRequest) (BindingSnapshot, error) {
+func (r *sdkResolver) resolveOne(ctx context.Context, workspaceID, token string, br BindingRequest) (BindingSnapshot, error) {
 	switch br.Type {
 	case "client":
-		return r.resolveClient(ctx, domainID, token, br)
+		return r.resolveClient(ctx, workspaceID, token, br)
 	case "channel":
-		return r.resolveChannel(ctx, domainID, token, br)
+		return r.resolveChannel(ctx, workspaceID, token, br)
 	default:
 		return BindingSnapshot{}, fmt.Errorf("unsupported binding type %q", br.Type)
 	}
 }
 
-func (r *sdkResolver) resolveClient(ctx context.Context, domainID, token string, br BindingRequest) (BindingSnapshot, error) {
-	client, sdkErr := r.sdk.Client(ctx, br.ResourceID, domainID, token)
+func (r *sdkResolver) resolveClient(ctx context.Context, workspaceID, token string, br BindingRequest) (BindingSnapshot, error) {
+	client, sdkErr := r.sdk.Client(ctx, br.ResourceID, workspaceID, token)
 	if sdkErr != nil {
 		return BindingSnapshot{}, errors.Wrap(svcerr.ErrNotFound,
 			fmt.Errorf("client %q not found: %s", br.ResourceID, sdkErr))
@@ -65,8 +65,8 @@ func (r *sdkResolver) resolveClient(ctx context.Context, domainID, token string,
 	if client.Credentials.Identity != "" {
 		snapshot["identity"] = client.Credentials.Identity
 	}
-	if client.DomainID != "" {
-		snapshot["domain_id"] = client.DomainID
+	if client.WorkspaceID != "" {
+		snapshot["workspace_id"] = client.WorkspaceID
 	}
 
 	secret := map[string]any{}
@@ -84,8 +84,8 @@ func (r *sdkResolver) resolveClient(ctx context.Context, domainID, token string,
 	}, nil
 }
 
-func (r *sdkResolver) resolveChannel(ctx context.Context, domainID, token string, br BindingRequest) (BindingSnapshot, error) {
-	channel, sdkErr := r.sdk.Channel(ctx, br.ResourceID, domainID, token)
+func (r *sdkResolver) resolveChannel(ctx context.Context, workspaceID, token string, br BindingRequest) (BindingSnapshot, error) {
+	channel, sdkErr := r.sdk.Channel(ctx, br.ResourceID, workspaceID, token)
 	if sdkErr != nil {
 		return BindingSnapshot{}, errors.Wrap(svcerr.ErrNotFound,
 			fmt.Errorf("channel %q not found: %s", br.ResourceID, sdkErr))
@@ -98,8 +98,8 @@ func (r *sdkResolver) resolveChannel(ctx context.Context, domainID, token string
 	if channel.Route != "" {
 		snapshot["topic"] = channel.Route
 	}
-	if channel.DomainID != "" {
-		snapshot["domain_id"] = channel.DomainID
+	if channel.WorkspaceID != "" {
+		snapshot["workspace_id"] = channel.WorkspaceID
 	}
 	if channel.Metadata != nil {
 		snapshot["metadata"] = channel.Metadata

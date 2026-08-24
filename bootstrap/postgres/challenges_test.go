@@ -22,7 +22,7 @@ func TestBootstrapChallengeRepositoryConsumeOnce(t *testing.T) {
 
 	configID := uuid.Must(uuid.NewV4()).String()
 	_, err := configRepo.Save(ctx, bootstrap.Config{
-		ID: configID, DomainID: uuid.Must(uuid.NewV4()).String(),
+		ID: configID, WorkspaceID: uuid.Must(uuid.NewV4()).String(),
 		ExternalID: uuid.Must(uuid.NewV4()).String(), ExternalKey: "encrypted-key",
 		BootstrapKeyVersion: 2, Status: bootstrap.Active,
 	})
@@ -55,7 +55,7 @@ func TestBootstrapChallengeRepositoryRejectsExpiredConsume(t *testing.T) {
 
 	configID := uuid.Must(uuid.NewV4()).String()
 	_, err := configRepo.Save(ctx, bootstrap.Config{
-		ID: configID, DomainID: uuid.Must(uuid.NewV4()).String(),
+		ID: configID, WorkspaceID: uuid.Must(uuid.NewV4()).String(),
 		ExternalID: uuid.Must(uuid.NewV4()).String(), ExternalKey: "encrypted-key",
 		BootstrapKeyVersion: 1, Status: bootstrap.Active,
 	})

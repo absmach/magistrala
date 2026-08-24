@@ -63,11 +63,8 @@ func (ce configEvent) Encode() (map[string]any, error) {
 	if ce.ID != "" {
 		val["config_id"] = ce.ID
 	}
-	if ce.Content != "" {
-		val["content"] = ce.Content
-	}
-	if ce.DomainID != "" {
-		val["domain_id"] = ce.DomainID
+	if ce.WorkspaceID != "" {
+		val["workspace_id"] = ce.WorkspaceID
 	}
 	if ce.Name != "" {
 		val["name"] = ce.Name
@@ -75,17 +72,15 @@ func (ce configEvent) Encode() (map[string]any, error) {
 	if ce.ExternalID != "" {
 		val["external_id"] = ce.ExternalID
 	}
+	// Certificates are public material and stay on the event. The private
+	// key and the config content do not: content is the rendered profile,
+	// which interpolates decrypted binding secrets, and both would otherwise
+	// reach every consumer of the bootstrap event stream in the clear.
 	if ce.ClientCert != "" {
 		val["client_cert"] = ce.ClientCert
 	}
-	if ce.ClientKey != "" {
-		val["client_key"] = ce.ClientKey
-	}
 	if ce.CACert != "" {
 		val["ca_cert"] = ce.CACert
-	}
-	if ce.Content != "" {
-		val["content"] = ce.Content
 	}
 
 	return val, nil
@@ -120,7 +115,7 @@ func (rce listConfigsEvent) Encode() (map[string]any, error) {
 	}
 
 	if len(rce.partialMatch) > 0 {
-		val["full_match"] = rce.partialMatch
+		val["partial_match"] = rce.partialMatch
 	}
 	return val, nil
 }
@@ -141,11 +136,8 @@ func (be bootstrapEvent) Encode() (map[string]any, error) {
 	if be.ID != "" {
 		val["config_id"] = be.ID
 	}
-	if be.Content != "" {
-		val["content"] = be.Content
-	}
-	if be.DomainID != "" {
-		val["domain_id"] = be.DomainID
+	if be.WorkspaceID != "" {
+		val["workspace_id"] = be.WorkspaceID
 	}
 	if be.Name != "" {
 		val["name"] = be.Name
@@ -153,17 +145,13 @@ func (be bootstrapEvent) Encode() (map[string]any, error) {
 	if be.ExternalID != "" {
 		val["external_id"] = be.ExternalID
 	}
+	// See configEvent.Encode: the rendered content and the device private
+	// key are deliberately not published.
 	if be.ClientCert != "" {
 		val["client_cert"] = be.ClientCert
 	}
-	if be.ClientKey != "" {
-		val["client_key"] = be.ClientKey
-	}
 	if be.CACert != "" {
 		val["ca_cert"] = be.CACert
-	}
-	if be.Content != "" {
-		val["content"] = be.Content
 	}
 	return val, nil
 }
@@ -193,15 +181,15 @@ func (e disableConfigEvent) Encode() (map[string]any, error) {
 type updateCertEvent struct {
 	configID   string
 	clientCert string
-	clientKey  string
 	caCert     string
 }
 
 func (uce updateCertEvent) Encode() (map[string]any, error) {
+	// clientKey is the device private key and is never published; see
+	// configEvent.Encode.
 	return map[string]any{
 		"config_id":   uce.configID,
 		"client_cert": uce.clientCert,
-		"client_key":  uce.clientKey,
 		"ca_cert":     uce.caCert,
 		"operation":   certUpdate,
 	}, nil
@@ -219,8 +207,8 @@ func (pe profileEvent) Encode() (map[string]any, error) {
 	if pe.ID != "" {
 		val["profile_id"] = pe.ID
 	}
-	if pe.DomainID != "" {
-		val["domain_id"] = pe.DomainID
+	if pe.WorkspaceID != "" {
+		val["workspace_id"] = pe.WorkspaceID
 	}
 	if pe.Name != "" {
 		val["name"] = pe.Name

@@ -175,9 +175,9 @@ func buildRenderContext(profile Profile, enrollment Config, bindings []BindingSn
 
 	return RenderContext{
 		Device: DeviceContext{
-			ID:         enrollment.ID,
-			ExternalID: enrollment.ExternalID,
-			DomainID:   enrollment.DomainID,
+			ID:          enrollment.ID,
+			ExternalID:  enrollment.ExternalID,
+			WorkspaceID: enrollment.WorkspaceID,
 		},
 		Vars:     vars,
 		Bindings: bctx,

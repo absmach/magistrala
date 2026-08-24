@@ -250,7 +250,7 @@ func atomProjectionError(operation, id string, err error) error {
 func configProjection(cfg Config) atom.Resource {
 	res := atom.ResourceFromFields(atom.ObjectFields{
 		ID: cfg.ID, Kind: atom.KindBootstrapConfig, Name: cfg.Name,
-		TenantID: cfg.DomainID, Status: cfg.Status.String(),
+		TenantID: cfg.WorkspaceID, Status: cfg.Status.String(),
 	})
 	// Only non-secret relationship metadata is projected. External identifiers,
 	// keys, certificates, rendered content and render context stay in PostgreSQL.
@@ -263,7 +263,7 @@ func configProjection(cfg Config) atom.Resource {
 func profileProjection(p Profile) atom.Resource {
 	return atom.ResourceFromFields(atom.ObjectFields{
 		ID: p.ID, Kind: atom.KindBootstrapProfile, Name: p.Name,
-		TenantID: p.DomainID, Description: p.Description,
+		TenantID: p.WorkspaceID, Description: p.Description,
 		CreatedAt: p.CreatedAt, UpdatedAt: p.UpdatedAt,
 		Metadata: map[string]any{
 			"content_format": p.ContentFormat,

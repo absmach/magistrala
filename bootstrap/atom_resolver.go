@@ -33,9 +33,9 @@ func (r *atomResolver) Resolve(ctx context.Context, req ResolveRequest) ([]Bindi
 		var err error
 		switch binding.Type {
 		case "client":
-			snapshot, err = r.entity(ctx, req.Enrollment.DomainID, binding)
+			snapshot, err = r.entity(ctx, req.Enrollment.WorkspaceID, binding)
 		case "channel":
-			snapshot, err = r.resource(ctx, req.Enrollment.DomainID, binding)
+			snapshot, err = r.resource(ctx, req.Enrollment.WorkspaceID, binding)
 		default:
 			err = fmt.Errorf("unsupported binding type %q", binding.Type)
 		}
@@ -52,7 +52,7 @@ func (r *atomResolver) entity(ctx context.Context, tenantID string, binding Bind
 	if err != nil || entity.TenantID != tenantID || entity.Kind != "device" {
 		return BindingSnapshot{}, errors.Wrap(svcerr.ErrNotFound, fmt.Errorf("client %q not found in tenant", binding.ResourceID))
 	}
-	values := map[string]any{"id": entity.ID, "name": entity.Name, "domain_id": entity.TenantID}
+	values := map[string]any{"id": entity.ID, "name": entity.Name, "workspace_id": entity.TenantID}
 	copyStringAttribute(values, entity.Attributes, "identity")
 	copyStringAttribute(values, entity.Attributes, "route")
 	return BindingSnapshot{Slot: binding.Slot, Type: binding.Type, ResourceID: binding.ResourceID, Snapshot: values, UpdatedAt: time.Now().UTC()}, nil
@@ -63,7 +63,7 @@ func (r *atomResolver) resource(ctx context.Context, tenantID string, binding Bi
 	if err != nil || resource.TenantID != tenantID || resource.Kind != atom.KindChannel {
 		return BindingSnapshot{}, errors.Wrap(svcerr.ErrNotFound, fmt.Errorf("channel %q not found in tenant", binding.ResourceID))
 	}
-	values := map[string]any{"id": resource.ID, "name": resource.Name, "domain_id": resource.TenantID}
+	values := map[string]any{"id": resource.ID, "name": resource.Name, "workspace_id": resource.TenantID}
 	copyStringAttribute(values, resource.Attributes, "route")
 	copyStringAttribute(values, resource.Attributes, "topic")
 	return BindingSnapshot{Slot: binding.Slot, Type: binding.Type, ResourceID: binding.ResourceID, Snapshot: values, UpdatedAt: time.Now().UTC()}, nil

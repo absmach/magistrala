@@ -39,11 +39,11 @@ func (p *recordingProjector) DeleteResource(_ context.Context, id string) error 
 
 func TestAtomProjectionDoesNotLeakBootstrapSecrets(t *testing.T) {
 	ctx := context.Background()
-	session := authn.Session{DomainID: "tenant-1"}
+	session := authn.Session{WorkspaceID: "tenant-1"}
 	input := bootstrap.Config{ExternalID: "serial-1", ExternalKey: "factory-secret", ClientKey: "private-key", Content: "rendered-secret"}
 	saved := input
 	saved.ID = "config-1"
-	saved.DomainID = session.DomainID
+	saved.WorkspaceID = session.WorkspaceID
 	saved.Name = "device enrollment"
 
 	underlying := mocks.NewService(t)
@@ -66,10 +66,10 @@ func TestAtomProjectionDoesNotLeakBootstrapSecrets(t *testing.T) {
 
 func TestAtomProjectionFailuresAreReturned(t *testing.T) {
 	ctx := context.Background()
-	session := authn.Session{DomainID: "tenant-1"}
+	session := authn.Session{WorkspaceID: "tenant-1"}
 	projectionErr := stderrors.New("atom unavailable")
-	config := bootstrap.Config{ID: "config-1", DomainID: session.DomainID, Name: "enrollment"}
-	profile := bootstrap.Profile{ID: "profile-1", DomainID: session.DomainID, Name: "profile"}
+	config := bootstrap.Config{ID: "config-1", WorkspaceID: session.WorkspaceID, Name: "enrollment"}
+	profile := bootstrap.Profile{ID: "profile-1", WorkspaceID: session.WorkspaceID, Name: "profile"}
 
 	t.Run("add", func(t *testing.T) {
 		underlying := mocks.NewService(t)
@@ -137,8 +137,8 @@ func TestAtomProjectionFailuresAreReturned(t *testing.T) {
 
 func TestReconcileAtomBackfillsConfigsAndProfiles(t *testing.T) {
 	ctx := context.Background()
-	config := bootstrap.Config{ID: "config-1", DomainID: "tenant-1", Name: "enrollment"}
-	profile := bootstrap.Profile{ID: "profile-1", DomainID: "tenant-1", Name: "profile"}
+	config := bootstrap.Config{ID: "config-1", WorkspaceID: "tenant-1", Name: "enrollment"}
+	profile := bootstrap.Profile{ID: "profile-1", WorkspaceID: "tenant-1", Name: "profile"}
 	underlying := mocks.NewService(t)
 	underlying.EXPECT().List(ctx, authn.Session{}, bootstrap.Filter{}, uint64(0), uint64(100)).Return(bootstrap.ConfigsPage{
 		Total: 1, Configs: []bootstrap.Config{config},

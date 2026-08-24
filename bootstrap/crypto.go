@@ -6,9 +6,11 @@ package bootstrap
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"strings"
@@ -24,6 +26,16 @@ const databaseEnvelopeVersion = "dbv1"
 type SecretCipher struct {
 	masterKey []byte
 	keyID     string
+	// previous holds retired keys by ID. They are never used to seal, only
+	// to open envelopes written before a rotation.
+	previous map[string][]byte
+}
+
+// PreviousKey is a retired master key, kept so that secrets sealed under it
+// remain readable after the active key has been rotated.
+type PreviousKey struct {
+	ID  string
+	Key []byte
 }
 
 func (sc *SecretCipher) KeyID() string {
@@ -32,18 +44,53 @@ func (sc *SecretCipher) KeyID() string {
 
 // NewSecretCipher creates an at-rest secret cipher. Bootstrap deliberately
 // requires a 256-bit master key.
-func NewSecretCipher(masterKey []byte, keyID string) (*SecretCipher, error) {
+//
+// Rotation is performed by promoting the new key to (masterKey, keyID) and
+// passing the outgoing one as a PreviousKey: new writes use the active key
+// while existing envelopes stay readable. Without that, every secret sealed
+// under the old key ID would fail to open and the service would not start.
+func NewSecretCipher(masterKey []byte, keyID string, previous ...PreviousKey) (*SecretCipher, error) {
 	if len(masterKey) != 32 {
 		return nil, fmt.Errorf("database encryption key must contain exactly 32 bytes")
 	}
 	if strings.TrimSpace(keyID) == "" {
 		return nil, fmt.Errorf("database encryption key ID is required")
 	}
-	return &SecretCipher{masterKey: append([]byte(nil), masterKey...), keyID: keyID}, nil
+	sc := &SecretCipher{
+		masterKey: append([]byte(nil), masterKey...),
+		keyID:     keyID,
+		previous:  make(map[string][]byte, len(previous)),
+	}
+	for _, p := range previous {
+		id := strings.TrimSpace(p.ID)
+		if id == "" {
+			return nil, fmt.Errorf("previous database encryption key ID is required")
+		}
+		if len(p.Key) != 32 {
+			return nil, fmt.Errorf("previous database encryption key %q must contain exactly 32 bytes", id)
+		}
+		if id == keyID {
+			return nil, fmt.Errorf("previous database encryption key %q duplicates the active key ID", id)
+		}
+		if _, ok := sc.previous[id]; ok {
+			return nil, fmt.Errorf("duplicate previous database encryption key ID %q", id)
+		}
+		sc.previous[id] = append([]byte(nil), p.Key...)
+	}
+	return sc, nil
+}
+
+// masterKeyFor resolves the master key an envelope was sealed under.
+func (sc *SecretCipher) masterKeyFor(keyID string) ([]byte, bool) {
+	if keyID == sc.keyID {
+		return sc.masterKey, true
+	}
+	key, ok := sc.previous[keyID]
+	return key, ok
 }
 
 func (sc *SecretCipher) seal(purpose string, plain []byte, aad string) (string, error) {
-	aead, err := sc.aead(purpose)
+	aead, err := sc.aead(sc.masterKey, purpose)
 	if err != nil {
 		return "", err
 	}
@@ -64,14 +111,18 @@ func (sc *SecretCipher) seal(purpose string, plain []byte, aad string) (string, 
 
 func (sc *SecretCipher) open(purpose, envelope, aad string) ([]byte, error) {
 	parts := strings.Split(envelope, ".")
-	if len(parts) != 3 || parts[0] != databaseEnvelopeVersion || parts[1] != sc.keyID {
+	if len(parts) != 3 || parts[0] != databaseEnvelopeVersion {
 		return nil, fmt.Errorf("invalid database secret envelope")
+	}
+	masterKey, ok := sc.masterKeyFor(parts[1])
+	if !ok {
+		return nil, fmt.Errorf("database secret sealed under unknown key ID %q", parts[1])
 	}
 	payload, err := base64.RawURLEncoding.DecodeString(parts[2])
 	if err != nil {
 		return nil, fmt.Errorf("invalid database secret envelope: %w", err)
 	}
-	aead, err := sc.aead(purpose)
+	aead, err := sc.aead(masterKey, purpose)
 	if err != nil {
 		return nil, err
 	}
@@ -86,9 +137,9 @@ func (sc *SecretCipher) open(purpose, envelope, aad string) ([]byte, error) {
 	return plain, nil
 }
 
-func (sc *SecretCipher) aead(purpose string) (cipher.AEAD, error) {
+func (sc *SecretCipher) aead(masterKey []byte, purpose string) (cipher.AEAD, error) {
 	key := make([]byte, 32)
-	reader := hkdf.New(sha256.New, sc.masterKey, []byte("magistrala-bootstrap-db-v1"), []byte(purpose))
+	reader := hkdf.New(sha256.New, masterKey, []byte("magistrala-bootstrap-db-v1"), []byte(purpose))
 	if _, err := io.ReadFull(reader, key); err != nil {
 		return nil, err
 	}
@@ -100,9 +151,37 @@ func (sc *SecretCipher) aead(purpose string) (cipher.AEAD, error) {
 }
 
 func configSecretAAD(cfg Config) string {
-	return strings.Join([]string{"bootstrap-config", cfg.DomainID, cfg.ID, cfg.ExternalID}, ":")
+	return strings.Join([]string{"bootstrap-config", cfg.WorkspaceID, cfg.ID, cfg.ExternalID}, ":")
 }
 
 func snapshotSecretAAD(configID, slot string) string {
 	return strings.Join([]string{"bootstrap-binding-snapshot", configID, slot}, ":")
+}
+
+// decoyKeyVersionSpread bounds the synthetic key version handed to unknown or
+// disabled enrollments. Real versions start at 1 and advance on each external
+// key rotation, so decoys are drawn from the same low range.
+const decoyKeyVersionSpread = 4
+
+// decoyKeyVersion derives a stable, unpredictable key version for an external
+// ID that has no usable enrollment.
+//
+// The challenge endpoint is unauthenticated, so its answer must not reveal
+// whether an enrollment exists. Returning a constant version made any other
+// value proof of a real, rotated enrollment; deriving it from the external ID
+// under the service's own key removes that inference while keeping repeated
+// probes of the same ID consistent.
+//
+// This closes the response-content channel only. Distinguishing by response
+// time (the real path performs a challenge insert) is left to rate limiting
+// at the edge.
+func (bs bootstrapService) decoyKeyVersion(externalID string) uint64 {
+	if bs.dbCipher == nil {
+		return 1
+	}
+	mac := hmac.New(sha256.New, bs.dbCipher.masterKey)
+	mac.Write([]byte("bootstrap-decoy-key-version:"))
+	mac.Write([]byte(externalID))
+	sum := mac.Sum(nil)
+	return 1 + uint64(binary.BigEndian.Uint32(sum[:4])%decoyKeyVersionSpread)
 }

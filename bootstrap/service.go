@@ -144,23 +144,18 @@ type bootstrapService struct {
 	now        func() time.Time
 }
 
-// New returns new Bootstrap service.
+// New returns a new Bootstrap service.
+//
+// An unusable encryption key is reported here rather than deferred: without a
+// cipher the service constructs cleanly and then fails every enrollment write
+// at runtime.
+//
+// previousKeys carries retired encryption keys so that secrets sealed before
+// a key rotation remain readable; see NewSecretCipher.
+//
+// challenges may be nil for a deployment that does not serve device
+// bootstrap; the challenge and bootstrap endpoints then fail closed.
 func New(
-	configs ConfigRepository,
-	profiles ProfileRepository,
-	bindings BindingStore,
-	resolver BindingResolver,
-	renderer Renderer,
-	sdk mgsdk.SDK,
-	encKey []byte,
-	idp magistrala.IDProvider,
-) Service {
-	return NewWithChallenges(configs, profiles, bindings, nil, resolver, renderer, sdk, encKey, "primary", idp)
-}
-
-// NewWithChallenges returns a Bootstrap service with per-device challenge
-// authentication support.
-func NewWithChallenges(
 	configs ConfigRepository,
 	profiles ProfileRepository,
 	bindings BindingStore,
@@ -171,8 +166,12 @@ func NewWithChallenges(
 	encKey []byte,
 	encKeyID string,
 	idp magistrala.IDProvider,
-) Service {
-	dbCipher, _ := NewSecretCipher(encKey, encKeyID)
+	previousKeys ...PreviousKey,
+) (Service, error) {
+	dbCipher, err := NewSecretCipher(encKey, encKeyID, previousKeys...)
+	if err != nil {
+		return nil, err
+	}
 	return &bootstrapService{
 		configs:    configs,
 		profiles:   profiles,
@@ -184,7 +183,7 @@ func NewWithChallenges(
 		dbCipher:   dbCipher,
 		idProvider: idp,
 		now:        time.Now,
-	}
+	}, nil
 }
 
 func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, token string, cfg Config) (Config, error) {
@@ -194,9 +193,22 @@ func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, to
 	}
 
 	cfg.ID = id
-	cfg.DomainID = session.DomainID
+	cfg.WorkspaceID = session.WorkspaceID
 	cfg.Status = Active
 	cfg.BootstrapKeyVersion = 1
+	// The profile foreign key is workspace-agnostic, so an unvalidated
+	// ProfileID would let an enrollment reference another workspace's profile
+	// (rendering then fails forever with a 500) or a nonexistent one (which
+	// surfaces as a foreign-key violation rather than a bad request). Apply
+	// the same check AssignProfile makes.
+	if cfg.ProfileID != "" {
+		if bs.profiles == nil {
+			return Config{}, errors.Wrap(ErrAddBootstrap, errors.New("profile repository not configured"))
+		}
+		if _, err := bs.profiles.RetrieveByID(ctx, session.WorkspaceID, cfg.ProfileID); err != nil {
+			return Config{}, errors.Wrap(svcerr.ErrCreateEntity, err)
+		}
+	}
 	if cfg.ExternalKey == "" {
 		cfg.ExternalKey, err = generateBootstrapKey()
 		if err != nil {
@@ -229,7 +241,7 @@ func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, to
 }
 
 func (bs bootstrapService) View(ctx context.Context, session smqauthn.Session, id string) (Config, error) {
-	cfg, err := bs.configs.RetrieveByID(ctx, session.DomainID, id)
+	cfg, err := bs.configs.RetrieveByID(ctx, session.WorkspaceID, id)
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
@@ -237,12 +249,12 @@ func (bs bootstrapService) View(ctx context.Context, session smqauthn.Session, i
 }
 
 func (bs bootstrapService) Update(ctx context.Context, session smqauthn.Session, cfg Config) error {
-	cfg.DomainID = session.DomainID
+	cfg.WorkspaceID = session.WorkspaceID
 	if cfg.ExternalKey != "" {
 		if _, err := bootstrapKeyMaterial(cfg.ExternalKey); err != nil {
 			return errors.Wrap(ErrBootstrapKey, err)
 		}
-		stored, err := bs.configs.RetrieveByID(ctx, session.DomainID, cfg.ID)
+		stored, err := bs.configs.RetrieveByID(ctx, session.WorkspaceID, cfg.ID)
 		if err != nil {
 			return errors.Wrap(svcerr.ErrUpdateEntity, err)
 		}
@@ -263,7 +275,7 @@ func (bs bootstrapService) Update(ctx context.Context, session smqauthn.Session,
 }
 
 func (bs bootstrapService) UpdateCert(ctx context.Context, session smqauthn.Session, id, clientCert, clientKey, caCert string) (Config, error) {
-	cfg, err := bs.configs.UpdateCert(ctx, session.DomainID, id, clientCert, clientKey, caCert)
+	cfg, err := bs.configs.UpdateCert(ctx, session.WorkspaceID, id, clientCert, clientKey, caCert)
 	if err != nil {
 		return Config{}, errors.Wrap(errUpdateCert, err)
 	}
@@ -271,7 +283,10 @@ func (bs bootstrapService) UpdateCert(ctx context.Context, session smqauthn.Sess
 }
 
 func (bs bootstrapService) List(ctx context.Context, session smqauthn.Session, filter Filter, offset, limit uint64) (ConfigsPage, error) {
-	page := bs.configs.RetrieveAll(ctx, session.DomainID, filter, offset, limit)
+	page, err := bs.configs.RetrieveAll(ctx, session.WorkspaceID, filter, offset, limit)
+	if err != nil {
+		return ConfigsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
 	for i, cfg := range page.Configs {
 		decrypted, err := bs.decryptConfigExternalKeyForManagement(cfg, svcerr.ErrViewEntity)
 		if err != nil {
@@ -283,7 +298,7 @@ func (bs bootstrapService) List(ctx context.Context, session smqauthn.Session, f
 }
 
 func (bs bootstrapService) Remove(ctx context.Context, session smqauthn.Session, id string) error {
-	if err := bs.configs.Remove(ctx, session.DomainID, id); err != nil {
+	if err := bs.configs.Remove(ctx, session.WorkspaceID, id); err != nil {
 		return errors.Wrap(errRemoveBootstrap, err)
 	}
 	return nil
@@ -311,11 +326,16 @@ func (bs bootstrapService) IssueBootstrapChallenge(ctx context.Context, external
 		if !errors.Contains(err, repoerr.ErrNotFound) {
 			return BootstrapChallengeResponse{}, errors.Wrap(errIssueBootstrapChallenge, err)
 		}
+		response.KeyVersion = bs.decoyKeyVersion(externalID)
 		return response, nil
 	}
 	if cfg.Status == DisabledStatus || bs.challenges == nil {
 		// Unknown and disabled enrollments receive the same fake challenge
-		// response shape.
+		// response shape. The decoy key version is derived from the external
+		// ID under the server's key so it neither is constant (which would
+		// mark every non-1 answer as a real, rotated enrollment) nor varies
+		// between probes of the same ID.
+		response.KeyVersion = bs.decoyKeyVersion(externalID)
 		return response, nil
 	}
 	if cfg.BootstrapKeyVersion == 0 {
@@ -434,7 +454,7 @@ func (bs bootstrapService) renderBootstrapConfig(ctx context.Context, cfg Config
 		return Config{}, errors.Wrap(errRenderBootstrap, errors.New("profile rendering support not configured"))
 	}
 
-	profile, err := bs.profiles.RetrieveByID(ctx, cfg.DomainID, cfg.ProfileID)
+	profile, err := bs.profiles.RetrieveByID(ctx, cfg.WorkspaceID, cfg.ProfileID)
 	if err != nil {
 		return Config{}, errors.Wrap(errRenderBootstrap, err)
 	}
@@ -465,7 +485,7 @@ func (bs bootstrapService) renderBootstrapConfig(ctx context.Context, cfg Config
 }
 
 func (bs bootstrapService) EnableConfig(ctx context.Context, session smqauthn.Session, id string) (Config, error) {
-	cfg, err := bs.changeConfigStatus(ctx, session.DomainID, id, EnabledStatus)
+	cfg, err := bs.changeConfigStatus(ctx, session.WorkspaceID, id, EnabledStatus)
 	if err != nil {
 		return Config{}, errors.Wrap(errEnableConfig, err)
 	}
@@ -473,15 +493,15 @@ func (bs bootstrapService) EnableConfig(ctx context.Context, session smqauthn.Se
 }
 
 func (bs bootstrapService) DisableConfig(ctx context.Context, session smqauthn.Session, id string) (Config, error) {
-	cfg, err := bs.changeConfigStatus(ctx, session.DomainID, id, DisabledStatus)
+	cfg, err := bs.changeConfigStatus(ctx, session.WorkspaceID, id, DisabledStatus)
 	if err != nil {
 		return Config{}, errors.Wrap(errDisableConfig, err)
 	}
 	return cfg, nil
 }
 
-func (bs bootstrapService) changeConfigStatus(ctx context.Context, domainID, id string, status Status) (Config, error) {
-	cfg, err := bs.configs.RetrieveByID(ctx, domainID, id)
+func (bs bootstrapService) changeConfigStatus(ctx context.Context, workspaceID, id string, status Status) (Config, error) {
+	cfg, err := bs.configs.RetrieveByID(ctx, workspaceID, id)
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
@@ -492,7 +512,7 @@ func (bs bootstrapService) changeConfigStatus(ctx context.Context, domainID, id 
 	if cfg.Status == status {
 		return cfg, nil
 	}
-	if err := bs.configs.ChangeStatus(ctx, domainID, id, status); err != nil {
+	if err := bs.configs.ChangeStatus(ctx, workspaceID, id, status); err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 	cfg.Status = status
@@ -510,7 +530,7 @@ func (bs bootstrapService) CreateProfile(ctx context.Context, session smqauthn.S
 		return Profile{}, errors.Wrap(errCreateProfile, err)
 	}
 	p.ID = id
-	p.DomainID = session.DomainID
+	p.WorkspaceID = session.WorkspaceID
 	if p.ContentFormat == "" {
 		p.ContentFormat = ContentFormatJSON
 	}
@@ -538,7 +558,7 @@ func (bs bootstrapService) ViewProfile(ctx context.Context, session smqauthn.Ses
 	if bs.profiles == nil {
 		return Profile{}, errors.Wrap(errViewProfile, errors.New("profile repository not configured"))
 	}
-	p, err := bs.profiles.RetrieveByID(ctx, session.DomainID, profileID)
+	p, err := bs.profiles.RetrieveByID(ctx, session.WorkspaceID, profileID)
 	if err != nil {
 		return Profile{}, errors.Wrap(errViewProfile, err)
 	}
@@ -549,7 +569,7 @@ func (bs bootstrapService) UpdateProfile(ctx context.Context, session smqauthn.S
 	if bs.profiles == nil {
 		return Profile{}, errors.Wrap(errUpdateProfile, errors.New("profile repository not configured"))
 	}
-	p.DomainID = session.DomainID
+	p.WorkspaceID = session.WorkspaceID
 	if p.ContentType != "" && !validContentType(p.ContentType) {
 		return Profile{}, errors.Wrap(errUpdateProfile, errors.NewRequestError("unsupported profile content type"))
 	}
@@ -570,7 +590,7 @@ func (bs bootstrapService) ListProfiles(ctx context.Context, session smqauthn.Se
 	if bs.profiles == nil {
 		return ProfilesPage{}, errors.Wrap(errListProfiles, errors.New("profile repository not configured"))
 	}
-	page, err := bs.profiles.RetrieveAll(ctx, session.DomainID, offset, limit, name)
+	page, err := bs.profiles.RetrieveAll(ctx, session.WorkspaceID, offset, limit, name)
 	if err != nil {
 		return ProfilesPage{}, errors.Wrap(errListProfiles, err)
 	}
@@ -581,7 +601,7 @@ func (bs bootstrapService) DeleteProfile(ctx context.Context, session smqauthn.S
 	if bs.profiles == nil {
 		return errors.Wrap(errDeleteProfile, errors.New("profile repository not configured"))
 	}
-	if err := bs.profiles.Delete(ctx, session.DomainID, profileID); err != nil {
+	if err := bs.profiles.Delete(ctx, session.WorkspaceID, profileID); err != nil {
 		return errors.Wrap(errDeleteProfile, err)
 	}
 	return nil
@@ -594,10 +614,10 @@ func (bs bootstrapService) AssignProfile(ctx context.Context, session smqauthn.S
 		return errors.Wrap(errAssignProfile, errors.New("profile repository not configured"))
 	}
 	// Validate profile exists in domain.
-	if _, err := bs.profiles.RetrieveByID(ctx, session.DomainID, profileID); err != nil {
+	if _, err := bs.profiles.RetrieveByID(ctx, session.WorkspaceID, profileID); err != nil {
 		return errors.Wrap(errAssignProfile, err)
 	}
-	if err := bs.configs.AssignProfile(ctx, session.DomainID, configID, profileID); err != nil {
+	if err := bs.configs.AssignProfile(ctx, session.WorkspaceID, configID, profileID); err != nil {
 		return errors.Wrap(errAssignProfile, err)
 	}
 	return nil
@@ -609,11 +629,11 @@ func (bs bootstrapService) BindResources(ctx context.Context, session smqauthn.S
 	if bs.profiles == nil || bs.bindings == nil || bs.resolver == nil {
 		return errors.Wrap(errBindResources, errors.New("binding support not configured"))
 	}
-	cfg, err := bs.configs.RetrieveByID(ctx, session.DomainID, configID)
+	cfg, err := bs.configs.RetrieveByID(ctx, session.WorkspaceID, configID)
 	if err != nil {
 		return errors.Wrap(errBindResources, err)
 	}
-	profile, err := bs.profiles.RetrieveByID(ctx, session.DomainID, cfg.ProfileID)
+	profile, err := bs.profiles.RetrieveByID(ctx, session.WorkspaceID, cfg.ProfileID)
 	if err != nil {
 		return errors.Wrap(errBindResources, err)
 	}
@@ -645,7 +665,7 @@ func (bs bootstrapService) ListBindings(ctx context.Context, session smqauthn.Se
 	if bs.bindings == nil {
 		return nil, errors.Wrap(errListBindings, errors.New("binding support not configured"))
 	}
-	if _, err := bs.configs.RetrieveByID(ctx, session.DomainID, configID); err != nil {
+	if _, err := bs.configs.RetrieveByID(ctx, session.WorkspaceID, configID); err != nil {
 		return nil, errors.Wrap(errListBindings, err)
 	}
 	snapshots, err := bs.bindings.Retrieve(ctx, configID)
@@ -659,11 +679,11 @@ func (bs bootstrapService) RefreshBindings(ctx context.Context, session smqauthn
 	if bs.profiles == nil || bs.bindings == nil || bs.resolver == nil {
 		return errors.Wrap(errRefreshBinding, errors.New("binding support not configured"))
 	}
-	cfg, err := bs.configs.RetrieveByID(ctx, session.DomainID, configID)
+	cfg, err := bs.configs.RetrieveByID(ctx, session.WorkspaceID, configID)
 	if err != nil {
 		return errors.Wrap(errRefreshBinding, err)
 	}
-	profile, err := bs.profiles.RetrieveByID(ctx, session.DomainID, cfg.ProfileID)
+	profile, err := bs.profiles.RetrieveByID(ctx, session.WorkspaceID, cfg.ProfileID)
 	if err != nil {
 		return errors.Wrap(errRefreshBinding, err)
 	}

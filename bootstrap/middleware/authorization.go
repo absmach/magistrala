@@ -40,7 +40,7 @@ func AuthorizationMiddleware(svc bootstrap.Service, authz authz.Authorization) b
 }
 
 func (am *authorizationMiddleware) Add(ctx context.Context, session smqauthn.Session, token string, cfg bootstrap.Config) (bootstrap.Config, error) {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, createOperation, auth.AnyIDs); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, createOperation, auth.AnyIDs); err != nil {
 		return bootstrap.Config{}, err
 	}
 
@@ -48,7 +48,7 @@ func (am *authorizationMiddleware) Add(ctx context.Context, session smqauthn.Ses
 }
 
 func (am *authorizationMiddleware) View(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, viewOperation, id); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, viewOperation, id); err != nil {
 		return bootstrap.Config{}, err
 	}
 
@@ -56,7 +56,7 @@ func (am *authorizationMiddleware) View(ctx context.Context, session smqauthn.Se
 }
 
 func (am *authorizationMiddleware) Update(ctx context.Context, session smqauthn.Session, cfg bootstrap.Config) error {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, updateOperation, cfg.ID); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, updateOperation, cfg.ID); err != nil {
 		return err
 	}
 
@@ -64,7 +64,7 @@ func (am *authorizationMiddleware) Update(ctx context.Context, session smqauthn.
 }
 
 func (am *authorizationMiddleware) UpdateCert(ctx context.Context, session smqauthn.Session, id, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, updateCertOperation, id); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, updateCertOperation, id); err != nil {
 		return bootstrap.Config{}, err
 	}
 
@@ -75,7 +75,7 @@ func (am *authorizationMiddleware) List(ctx context.Context, session smqauthn.Se
 	if err := am.checkSuperAdmin(ctx, session); err == nil {
 		session.SuperAdmin = true
 	}
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.AdminPermission, policies.DomainType, session.DomainID, listOperation, auth.AnyIDs); err == nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.AdminPermission, policies.WorkspaceType, session.WorkspaceID, listOperation, auth.AnyIDs); err == nil {
 		session.SuperAdmin = true
 	}
 
@@ -83,7 +83,7 @@ func (am *authorizationMiddleware) List(ctx context.Context, session smqauthn.Se
 }
 
 func (am *authorizationMiddleware) Remove(ctx context.Context, session smqauthn.Session, id string) error {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, removeOperation, id); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, removeOperation, id); err != nil {
 		return err
 	}
 
@@ -99,7 +99,7 @@ func (am *authorizationMiddleware) Bootstrap(ctx context.Context, externalID str
 }
 
 func (am *authorizationMiddleware) EnableConfig(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, changeStateOperation, id); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, changeStateOperation, id); err != nil {
 		return bootstrap.Config{}, err
 	}
 
@@ -107,7 +107,7 @@ func (am *authorizationMiddleware) EnableConfig(ctx context.Context, session smq
 }
 
 func (am *authorizationMiddleware) DisableConfig(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, changeStateOperation, id); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, changeStateOperation, id); err != nil {
 		return bootstrap.Config{}, err
 	}
 
@@ -115,63 +115,63 @@ func (am *authorizationMiddleware) DisableConfig(ctx context.Context, session sm
 }
 
 func (am *authorizationMiddleware) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, createOperation, auth.AnyIDs); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, createOperation, auth.AnyIDs); err != nil {
 		return bootstrap.Profile{}, err
 	}
 	return am.svc.CreateProfile(ctx, session, p)
 }
 
 func (am *authorizationMiddleware) ViewProfile(ctx context.Context, session smqauthn.Session, profileID string) (bootstrap.Profile, error) {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, viewOperation, auth.AnyIDs); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, viewOperation, auth.AnyIDs); err != nil {
 		return bootstrap.Profile{}, err
 	}
 	return am.svc.ViewProfile(ctx, session, profileID)
 }
 
 func (am *authorizationMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, updateOperation, auth.AnyIDs); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, updateOperation, auth.AnyIDs); err != nil {
 		return bootstrap.Profile{}, err
 	}
 	return am.svc.UpdateProfile(ctx, session, p)
 }
 
 func (am *authorizationMiddleware) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64, name string) (bootstrap.ProfilesPage, error) {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, listOperation, auth.AnyIDs); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, listOperation, auth.AnyIDs); err != nil {
 		return bootstrap.ProfilesPage{}, err
 	}
 	return am.svc.ListProfiles(ctx, session, offset, limit, name)
 }
 
 func (am *authorizationMiddleware) DeleteProfile(ctx context.Context, session smqauthn.Session, profileID string) error {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, removeOperation, auth.AnyIDs); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, removeOperation, auth.AnyIDs); err != nil {
 		return err
 	}
 	return am.svc.DeleteProfile(ctx, session, profileID)
 }
 
 func (am *authorizationMiddleware) AssignProfile(ctx context.Context, session smqauthn.Session, configID, profileID string) error {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, updateOperation, configID); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, updateOperation, configID); err != nil {
 		return err
 	}
 	return am.svc.AssignProfile(ctx, session, configID, profileID)
 }
 
 func (am *authorizationMiddleware) BindResources(ctx context.Context, session smqauthn.Session, token, configID string, bindings []bootstrap.BindingRequest) error {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, updateOperation, configID); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, updateOperation, configID); err != nil {
 		return err
 	}
 	return am.svc.BindResources(ctx, session, token, configID, bindings)
 }
 
 func (am *authorizationMiddleware) ListBindings(ctx context.Context, session smqauthn.Session, configID string) ([]bootstrap.BindingSnapshot, error) {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, viewOperation, configID); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, viewOperation, configID); err != nil {
 		return nil, err
 	}
 	return am.svc.ListBindings(ctx, session, configID)
 }
 
 func (am *authorizationMiddleware) RefreshBindings(ctx context.Context, session smqauthn.Session, token, configID string) error {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, updateOperation, configID); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.WorkspaceUserID, policies.MembershipPermission, policies.WorkspaceType, session.WorkspaceID, updateOperation, configID); err != nil {
 		return err
 	}
 	return am.svc.RefreshBindings(ctx, session, token, configID)
@@ -193,9 +193,9 @@ func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session 
 	return nil
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, session smqauthn.Session, domain, subjType, subjKind, subj, perm, objType, obj, operation, entityID string) error {
+func (am *authorizationMiddleware) authorize(ctx context.Context, session smqauthn.Session, workspace, subjType, subjKind, subj, perm, objType, obj, operation, entityID string) error {
 	req := authz.PolicyReq{
-		Domain:      domain,
+		Workspace:   workspace,
 		SubjectType: subjType,
 		SubjectKind: subjKind,
 		Subject:     subj,
@@ -212,7 +212,7 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session smqaut
 			EntityID:   entityID,
 			EntityType: auth.BootstrapType.String(),
 			Operation:  operation,
-			Domain:     session.DomainID,
+			Workspace:  session.WorkspaceID,
 		}
 	}
 

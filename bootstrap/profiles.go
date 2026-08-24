@@ -54,7 +54,7 @@ func validContentType(contentType ContentType) bool {
 // Profile is a user-managed device configuration template.
 type Profile struct {
 	ID              string         `json:"id"`
-	DomainID        string         `json:"domain_id,omitempty"`
+	WorkspaceID     string         `json:"workspace_id,omitempty"`
 	Name            string         `json:"name"`
 	Description     string         `json:"description,omitempty"`
 	ContentFormat   ContentFormat  `json:"content_format"`
@@ -89,14 +89,14 @@ type ProfileRepository interface {
 	Save(ctx context.Context, p Profile) (Profile, error)
 
 	// RetrieveByID returns the Profile with the given ID inside the given domain.
-	RetrieveByID(ctx context.Context, domainID, id string) (Profile, error)
+	RetrieveByID(ctx context.Context, workspaceID, id string) (Profile, error)
 
 	// RetrieveAll returns a page of Profiles belonging to the given domain, optionally filtered by name.
-	RetrieveAll(ctx context.Context, domainID string, offset, limit uint64, name string) (ProfilesPage, error)
+	RetrieveAll(ctx context.Context, workspaceID string, offset, limit uint64, name string) (ProfilesPage, error)
 
 	// Update updates editable fields of the given Profile and returns the updated Profile.
 	Update(ctx context.Context, p Profile) (Profile, error)
 
 	// Delete removes the Profile with the given ID from the given domain.
-	Delete(ctx context.Context, domainID, id string) error
+	Delete(ctx context.Context, workspaceID, id string) error
 }

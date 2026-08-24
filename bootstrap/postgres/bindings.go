@@ -14,6 +14,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/postgres"
+	"github.com/lib/pq"
 )
 
 var _ bootstrap.BindingStore = (*bindingRepository)(nil)
@@ -28,20 +29,14 @@ func NewBindingRepository(db postgres.Database, log *slog.Logger) bootstrap.Bind
 	return &bindingRepository{db: db, log: log}
 }
 
+// Save replaces the complete set of bindings for a config: slots absent from
+// bindings are removed. Upserting only the submitted slots would leave an
+// omitted slot behind with its stale — possibly revoked — resource and
+// secret, which renderBootstrapConfig would keep handing to the device, and
+// would leave no way to unbind a slot at all.
 func (br bindingRepository) Save(ctx context.Context, configID string, bindings []bootstrap.BindingSnapshot) error {
-	if len(bindings) == 0 {
-		return nil
-	}
-	q := `INSERT INTO bindings (config_id, slot, type, resource_id, snapshot, secret_snapshot, updated_at)
-		  VALUES (:config_id, :slot, :type, :resource_id, :snapshot, :secret_snapshot, :updated_at)
-		  ON CONFLICT (config_id, slot) DO UPDATE SET
-		      type            = EXCLUDED.type,
-		      resource_id     = EXCLUDED.resource_id,
-		      snapshot        = EXCLUDED.snapshot,
-		      secret_snapshot = EXCLUDED.secret_snapshot,
-		      updated_at      = EXCLUDED.updated_at`
-
 	now := time.Now().UTC()
+	slots := make([]string, 0, len(bindings))
 	dbBindings := make([]dbBindingSnapshot, 0, len(bindings))
 	for _, b := range bindings {
 		b.ConfigID = configID
@@ -51,9 +46,46 @@ func (br bindingRepository) Save(ctx context.Context, configID string, bindings 
 			return errors.Wrap(repoerr.ErrCreateEntity, err)
 		}
 		dbBindings = append(dbBindings, dbb)
+		slots = append(slots, b.Slot)
 	}
 
-	if _, err := br.db.NamedExecContext(ctx, q, dbBindings); err != nil {
+	tx, err := br.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return errors.Wrap(repoerr.ErrCreateEntity, err)
+	}
+	defer func() {
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				br.log.Error(fmt.Sprintf("failed to rollback binding save: %s", rollbackErr))
+			}
+		}
+	}()
+
+	// Drop slots the caller did not send. pq array binding keeps this a
+	// single statement regardless of how many slots were submitted.
+	if _, err = tx.ExecContext(ctx,
+		`DELETE FROM bindings WHERE config_id = $1 AND NOT (slot = ANY($2))`,
+		configID, pq.Array(slots),
+	); err != nil {
+		return errors.Wrap(repoerr.ErrCreateEntity, err)
+	}
+
+	if len(dbBindings) > 0 {
+		q := `INSERT INTO bindings (config_id, slot, type, resource_id, snapshot, secret_snapshot, updated_at)
+			  VALUES (:config_id, :slot, :type, :resource_id, :snapshot, :secret_snapshot, :updated_at)
+			  ON CONFLICT (config_id, slot) DO UPDATE SET
+				  type            = EXCLUDED.type,
+				  resource_id     = EXCLUDED.resource_id,
+				  snapshot        = EXCLUDED.snapshot,
+				  secret_snapshot = EXCLUDED.secret_snapshot,
+				  updated_at      = EXCLUDED.updated_at`
+
+		if _, err = tx.NamedExecContext(ctx, q, dbBindings); err != nil {
+			return errors.Wrap(repoerr.ErrCreateEntity, err)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
 		return errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
 	return nil

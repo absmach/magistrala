@@ -25,15 +25,15 @@ func (r *deviceTestConfigRepository) Save(_ context.Context, cfg Config) (string
 	return cfg.ID, nil
 }
 
-func (r *deviceTestConfigRepository) RetrieveByID(_ context.Context, domainID, id string) (Config, error) {
-	if r.config.DomainID != domainID || r.config.ID != id {
+func (r *deviceTestConfigRepository) RetrieveByID(_ context.Context, workspaceID, id string) (Config, error) {
+	if r.config.WorkspaceID != workspaceID || r.config.ID != id {
 		return Config{}, repoerr.ErrNotFound
 	}
 	return r.config, nil
 }
 
-func (r *deviceTestConfigRepository) RetrieveAll(context.Context, string, Filter, uint64, uint64) ConfigsPage {
-	return ConfigsPage{}
+func (r *deviceTestConfigRepository) RetrieveAll(context.Context, string, Filter, uint64, uint64) (ConfigsPage, error) {
+	return ConfigsPage{}, nil
 }
 
 func (r *deviceTestConfigRepository) RetrieveByExternalID(_ context.Context, externalID string) (Config, error) {
@@ -112,7 +112,7 @@ func TestDeviceBootstrapChallengeProofAndReplayProtection(t *testing.T) {
 	externalKey := "key-20260721093505-20"
 	root := []byte(externalKey)
 	cfg := Config{
-		ID: "config-id", DomainID: "domain-id", ExternalID: "device-1",
+		ID: "config-id", WorkspaceID: "domain-id", ExternalID: "device-1",
 		ExternalKey: externalKey, BootstrapKeyVersion: 4, Content: `{"channels":["channel-1"]}`, Status: Active,
 	}
 	cipher, err := NewSecretCipher([]byte("12345678910111213141516171819202"), "primary")
@@ -122,11 +122,13 @@ func TestDeviceBootstrapChallengeProofAndReplayProtection(t *testing.T) {
 
 	configs := &deviceTestConfigRepository{config: cfg}
 	challenges := &deviceTestChallengeRepository{challenges: make(map[string]BootstrapChallenge)}
-	svc := NewWithChallenges(
+	svcIface, err := New(
 		configs, nil, nil, challenges, nil, nil, nil,
 		[]byte("12345678910111213141516171819202"), "primary",
 		deviceTestIDProvider{id: "challenge-id"},
-	).(*bootstrapService)
+	)
+	require.NoError(t, err)
+	svc := svcIface.(*bootstrapService)
 	svc.now = func() time.Time { return now }
 
 	challenge, err := svc.IssueBootstrapChallenge(ctx, cfg.ExternalID)
@@ -162,7 +164,7 @@ func TestDeviceBootstrapRejectsWrongProofWithoutConsumingChallenge(t *testing.T)
 	externalKey := "key-20260721093505-20"
 	root := []byte(externalKey)
 	cfg := Config{
-		ID: "config-id", DomainID: "domain-id", ExternalID: "device-1",
+		ID: "config-id", WorkspaceID: "domain-id", ExternalID: "device-1",
 		ExternalKey: externalKey, BootstrapKeyVersion: 1, Status: Active,
 	}
 	cipher, err := NewSecretCipher([]byte("12345678910111213141516171819202"), "primary")
@@ -170,11 +172,13 @@ func TestDeviceBootstrapRejectsWrongProofWithoutConsumingChallenge(t *testing.T)
 	cfg.ExternalKey, err = cipher.seal("config-external-key", []byte(externalKey), configSecretAAD(cfg))
 	require.NoError(t, err)
 	challenges := &deviceTestChallengeRepository{challenges: make(map[string]BootstrapChallenge)}
-	svc := NewWithChallenges(
+	svcIface, err := New(
 		&deviceTestConfigRepository{config: cfg}, nil, nil, challenges, nil, nil, nil,
 		[]byte("12345678910111213141516171819202"), "primary",
 		deviceTestIDProvider{id: "challenge-id"},
-	).(*bootstrapService)
+	)
+	require.NoError(t, err)
+	svc := svcIface.(*bootstrapService)
 	svc.now = func() time.Time { return now }
 
 	challenge, err := svc.IssueBootstrapChallenge(ctx, cfg.ExternalID)
@@ -199,12 +203,13 @@ func TestDeviceBootstrapRejectsWrongProofWithoutConsumingChallenge(t *testing.T)
 
 func TestAddGeneratesRecoverableDeviceKey(t *testing.T) {
 	configs := &deviceTestConfigRepository{}
-	svc := NewWithChallenges(
+	svc, err := New(
 		configs, nil, nil, nil, nil, nil, nil,
 		[]byte("12345678910111213141516171819202"), "primary",
 		deviceTestIDProvider{id: "config-id"},
 	)
-	session := smqauthn.Session{DomainID: "domain-id"}
+	require.NoError(t, err)
+	session := smqauthn.Session{WorkspaceID: "domain-id"}
 	created, err := svc.Add(context.Background(), session, "", Config{ExternalID: "device-1"})
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), created.BootstrapKeyVersion)
@@ -220,15 +225,16 @@ func TestAddGeneratesRecoverableDeviceKey(t *testing.T) {
 }
 
 func TestAddRejectsShortBootstrapKey(t *testing.T) {
-	svc := NewWithChallenges(
+	svc, err := New(
 		&deviceTestConfigRepository{}, nil, nil, nil, nil, nil, nil,
 		[]byte("12345678910111213141516171819202"), "primary",
 		deviceTestIDProvider{id: "config-id"},
 	)
+	require.NoError(t, err)
 
-	_, err := svc.Add(
+	_, err = svc.Add(
 		context.Background(),
-		smqauthn.Session{DomainID: "domain-id"},
+		smqauthn.Session{WorkspaceID: "domain-id"},
 		"",
 		Config{ExternalID: "device-1", ExternalKey: "123456789"},
 	)

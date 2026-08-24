@@ -209,6 +209,14 @@ func Migration() *migrate.MemoryMigrationSource {
 				},
 			},
 			{
+				// The legacy `state` column and the `status` column that
+				// replaces it use opposite encodings: State was
+				// Inactive = 0 / Active = 1, while Status is
+				// EnabledStatus = 0 / DisabledStatus = 1. Renaming the column
+				// without remapping its values would silently invert every
+				// stored row — locking out every whitelisted device and
+				// letting every deliberately non-whitelisted one bootstrap.
+				// The values are therefore flipped as part of the rename.
 				Id: "configs_13",
 				Up: []string{
 					`DO $$
@@ -223,6 +231,7 @@ func Migration() *migrate.MemoryMigrationSource {
 							WHERE table_name = 'configs' AND column_name = 'status'
 						) THEN
 							ALTER TABLE configs RENAME COLUMN state TO status;
+							UPDATE configs SET status = 1 - status WHERE status IN (0, 1);
 						END IF;
 					END $$`,
 				},
@@ -238,6 +247,7 @@ func Migration() *migrate.MemoryMigrationSource {
 							FROM information_schema.columns
 							WHERE table_name = 'configs' AND column_name = 'state'
 						) THEN
+							UPDATE configs SET status = 1 - status WHERE status IN (0, 1);
 							ALTER TABLE configs RENAME COLUMN status TO state;
 						END IF;
 					END $$`,
@@ -400,9 +410,21 @@ func Migration() *migrate.MemoryMigrationSource {
 			},
 			{
 				// Migration IDs in this legacy sequence are sorted
-				// lexicographically by sql-migrate. configs_9 therefore runs
-				// after configs_8 has renamed client_id to id, while also
-				// applying safely to databases that already ran configs_18.
+				// lexicographically by sql-migrate: an ID is ordered
+				// numerically only when it begins with digits, and
+				// "configs_N" does not. The effective order is therefore
+				// configs_1, configs_10..configs_19, configs_2..configs_9.
+				//
+				// configs_9 consequently runs after configs_8 has renamed
+				// client_id to id, while also applying safely to databases
+				// that already ran configs_18.
+				//
+				// Because of that ordering, a new migration must NOT be
+				// added as "configs_20": it would sort between configs_2 and
+				// configs_3 and run before the configs_4..configs_8 column
+				// renames it is likely to depend on. New migrations use the
+				// "configs_z<NN>" scheme below, which sorts after every
+				// "configs_<digit>" ID.
 				Id: "configs_9",
 				Up: []string{
 					`DO $$
@@ -422,6 +444,79 @@ func Migration() *migrate.MemoryMigrationSource {
 						DROP CONSTRAINT IF EXISTS bootstrap_challenges_config_id_fkey`,
 				},
 			},
+			{
+				// First migration of the "configs_z<NN>" sequence, which sorts
+				// after every legacy "configs_<digit>" ID (see configs_9).
+				//
+				// Renames the tenant column to match the platform-wide rename
+				// of domains to workspaces. Guarded so it applies both to a
+				// fresh database (where configs_5 and configs_10 have just
+				// created domain_id) and to a database upgraded from the
+				// pre-removal bootstrap service.
+				Id: "configs_z01",
+				Up: []string{
+					renameColumn("configs", "domain_id", "workspace_id"),
+					renameColumn("profiles", "domain_id", "workspace_id"),
+					renameIndex("idx_profiles_domain_id", "idx_profiles_workspace_id"),
+					renameIndex("configs_client_id_domain_id_key", "configs_client_id_workspace_id_key"),
+					renameConstraint("configs", "configs_name_domain_id_key", "configs_name_workspace_id_key"),
+				},
+				Down: []string{
+					renameConstraint("configs", "configs_name_workspace_id_key", "configs_name_domain_id_key"),
+					renameIndex("configs_client_id_workspace_id_key", "configs_client_id_domain_id_key"),
+					renameIndex("idx_profiles_workspace_id", "idx_profiles_domain_id"),
+					renameColumn("profiles", "workspace_id", "domain_id"),
+					renameColumn("configs", "workspace_id", "domain_id"),
+				},
+			},
 		},
 	}
+}
+
+// renameColumn builds an idempotent column rename: it runs only when the
+// source column is present and the target is not, so the migration is safe on
+// both freshly created and already-renamed databases.
+func renameColumn(table, from, to string) string {
+	return `DO $$
+		BEGIN
+			IF EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = '` + table + `' AND column_name = '` + from + `'
+			) AND NOT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = '` + table + `' AND column_name = '` + to + `'
+			) THEN
+				ALTER TABLE ` + table + ` RENAME COLUMN ` + from + ` TO ` + to + `;
+			END IF;
+		END $$`
+}
+
+// renameIndex builds an idempotent index rename, guarded the same way as
+// renameColumn.
+func renameIndex(from, to string) string {
+	return `DO $$
+		BEGIN
+			IF EXISTS (
+				SELECT 1 FROM pg_class WHERE relname = '` + from + `'
+			) AND NOT EXISTS (
+				SELECT 1 FROM pg_class WHERE relname = '` + to + `'
+			) THEN
+				ALTER INDEX ` + from + ` RENAME TO ` + to + `;
+			END IF;
+		END $$`
+}
+
+// renameConstraint builds an idempotent constraint rename, guarded the same
+// way as renameColumn.
+func renameConstraint(table, from, to string) string {
+	return `DO $$
+		BEGIN
+			IF EXISTS (
+				SELECT 1 FROM pg_constraint WHERE conname = '` + from + `'
+			) AND NOT EXISTS (
+				SELECT 1 FROM pg_constraint WHERE conname = '` + to + `'
+			) THEN
+				ALTER TABLE ` + table + ` RENAME CONSTRAINT ` + from + ` TO ` + to + `;
+			END IF;
+		END $$`
 }

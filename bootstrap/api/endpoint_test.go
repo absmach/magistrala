@@ -29,7 +29,7 @@ import (
 
 const (
 	validToken   = "validToken"
-	domainID     = "b4d7d79e-fd99-4c2b-ac09-524e43df6888"
+	workspaceID  = "b4d7d79e-fd99-4c2b-ac09-524e43df6888"
 	invalidToken = "invalid"
 	email        = "test@example.com"
 	unknown      = "unknown"
@@ -145,7 +145,7 @@ func TestAdd(t *testing.T) {
 	cases := []struct {
 		desc            string
 		req             string
-		domainID        string
+		workspaceID     string
 		token           string
 		session         smqauthn.Session
 		contentType     string
@@ -157,7 +157,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:            "add a config with invalid token",
 			req:             data,
-			domainID:        domainID,
+			workspaceID:     workspaceID,
 			token:           invalidToken,
 			contentType:     contentType,
 			status:          http.StatusUnauthorized,
@@ -168,7 +168,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a valid config",
 			req:         data,
-			domainID:    domainID,
+			workspaceID: workspaceID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusCreated,
@@ -178,7 +178,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with wrong content type",
 			req:         data,
-			domainID:    domainID,
+			workspaceID: workspaceID,
 			token:       validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
@@ -188,7 +188,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add an existing config",
 			req:         data,
-			domainID:    domainID,
+			workspaceID: workspaceID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -198,7 +198,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with wrong JSON",
 			req:         "{\"external_id\": 5}",
-			domainID:    domainID,
+			workspaceID: workspaceID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -207,7 +207,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with invalid request format",
 			req:         "}",
-			domainID:    domainID,
+			workspaceID: workspaceID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -217,7 +217,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with empty JSON",
 			req:         "{}",
-			domainID:    domainID,
+			workspaceID: workspaceID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -227,7 +227,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with an empty request",
 			req:         "",
-			domainID:    domainID,
+			workspaceID: workspaceID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -239,7 +239,7 @@ func TestAdd(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+				tc.session = smqauthn.Session{WorkspaceUserID: workspaceID + "_" + validID, UserID: validID, WorkspaceID: workspaceID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 
@@ -247,7 +247,7 @@ func TestAdd(t *testing.T) {
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPost,
-				url:         fmt.Sprintf("%s/%s/clients/configs", bs.URL, tc.domainID),
+				url:         fmt.Sprintf("%s/%s/clients/configs", bs.URL, tc.workspaceID),
 				contentType: tc.contentType,
 				token:       tc.token,
 				body:        strings.NewReader(tc.req),
@@ -332,14 +332,14 @@ func TestView(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+				tc.session = smqauthn.Session{WorkspaceUserID: workspaceID + "_" + validID, UserID: validID, WorkspaceID: workspaceID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := svc.On("View", mock.Anything, tc.session, tc.id).Return(c, tc.err)
 			req := testRequest{
 				client: bs.Client(),
 				method: http.MethodGet,
-				url:    fmt.Sprintf("%s/%s/clients/configs/%s", bs.URL, domainID, tc.id),
+				url:    fmt.Sprintf("%s/%s/clients/configs/%s", bs.URL, workspaceID, tc.id),
 				token:  tc.token,
 			}
 			res, err := req.make()
@@ -456,14 +456,14 @@ func TestUpdate(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+				tc.session = smqauthn.Session{WorkspaceUserID: workspaceID + "_" + validID, UserID: validID, WorkspaceID: workspaceID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := svc.On("Update", mock.Anything, tc.session, mock.Anything).Return(tc.err)
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPatch,
-				url:         fmt.Sprintf("%s/%s/clients/configs/%s", bs.URL, domainID, tc.id),
+				url:         fmt.Sprintf("%s/%s/clients/configs/%s", bs.URL, workspaceID, tc.id),
 				contentType: tc.contentType,
 				token:       tc.token,
 				body:        strings.NewReader(tc.req),
@@ -564,14 +564,14 @@ func TestUpdateCert(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+				tc.session = smqauthn.Session{WorkspaceUserID: workspaceID + "_" + validID, UserID: validID, WorkspaceID: workspaceID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := svc.On("UpdateCert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPatch,
-				url:         fmt.Sprintf("%s/%s/clients/configs/certs/%s", bs.URL, domainID, tc.id),
+				url:         fmt.Sprintf("%s/%s/clients/configs/certs/%s", bs.URL, workspaceID, tc.id),
 				contentType: tc.contentType,
 				token:       tc.token,
 				body:        strings.NewReader(tc.req),
@@ -593,7 +593,7 @@ func TestList(t *testing.T) {
 
 	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
-	path := fmt.Sprintf("%s/%s/%s", bs.URL, domainID, "clients/configs")
+	path := fmt.Sprintf("%s/%s/%s", bs.URL, workspaceID, "clients/configs")
 
 	c := newConfig()
 
@@ -822,7 +822,7 @@ func TestList(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+				tc.session = smqauthn.Session{WorkspaceUserID: workspaceID + "_" + validID, UserID: validID, WorkspaceID: workspaceID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := svc.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(bootstrap.ConfigsPage{Total: tc.res.Total, Offset: tc.res.Offset, Limit: tc.res.Limit}, tc.err)
@@ -905,14 +905,14 @@ func TestRemove(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+				tc.session = smqauthn.Session{WorkspaceUserID: workspaceID + "_" + validID, UserID: validID, WorkspaceID: workspaceID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := svc.On("Remove", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
 			req := testRequest{
 				client: bs.Client(),
 				method: http.MethodDelete,
-				url:    fmt.Sprintf("%s/%s/clients/configs/%s", bs.URL, domainID, tc.id),
+				url:    fmt.Sprintf("%s/%s/clients/configs/%s", bs.URL, workspaceID, tc.id),
 				token:  tc.token,
 			}
 			res, err := req.make()
@@ -987,7 +987,7 @@ func TestChangeStatus(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+				tc.session = smqauthn.Session{WorkspaceUserID: workspaceID + "_" + validID, UserID: validID, WorkspaceID: workspaceID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			methodName := "EnableConfig"
@@ -998,7 +998,7 @@ func TestChangeStatus(t *testing.T) {
 			req := testRequest{
 				client: bs.Client(),
 				method: http.MethodPost,
-				url:    fmt.Sprintf("%s/%s/clients/configs/%s/%s", bs.URL, domainID, tc.id, tc.action),
+				url:    fmt.Sprintf("%s/%s/clients/configs/%s/%s", bs.URL, workspaceID, tc.id, tc.action),
 				token:  tc.token,
 			}
 			res, err := req.make()
@@ -1014,7 +1014,7 @@ func TestUploadProfile(t *testing.T) {
 	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
 
-	session := smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+	session := smqauthn.Session{WorkspaceUserID: workspaceID + "_" + validID, UserID: validID, WorkspaceID: workspaceID}
 	saved := bootstrap.Profile{
 		ID:              testsutil.GenerateUUID(t),
 		Name:            "gateway",
@@ -1097,7 +1097,7 @@ func TestUploadProfile(t *testing.T) {
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPost,
-				url:         fmt.Sprintf("%s/%s/clients/bootstrap/profiles/upload", bs.URL, domainID),
+				url:         fmt.Sprintf("%s/%s/clients/bootstrap/profiles/upload", bs.URL, workspaceID),
 				contentType: tc.contentType,
 				token:       validToken,
 				body:        strings.NewReader(tc.body),
@@ -1116,12 +1116,12 @@ func TestListProfiles(t *testing.T) {
 	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
 
-	session := smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
-	path := fmt.Sprintf("%s/%s/clients/bootstrap/profiles", bs.URL, domainID)
+	session := smqauthn.Session{WorkspaceUserID: workspaceID + "_" + validID, UserID: validID, WorkspaceID: workspaceID}
+	path := fmt.Sprintf("%s/%s/clients/bootstrap/profiles", bs.URL, workspaceID)
 
 	profiles := []bootstrap.Profile{
-		{ID: testsutil.GenerateUUID(t), DomainID: domainID, Name: "gateway-profile"},
-		{ID: testsutil.GenerateUUID(t), DomainID: domainID, Name: "sensor-profile"},
+		{ID: testsutil.GenerateUUID(t), WorkspaceID: workspaceID, Name: "gateway-profile"},
+		{ID: testsutil.GenerateUUID(t), WorkspaceID: workspaceID, Name: "sensor-profile"},
 	}
 	fullPage := bootstrap.ProfilesPage{Total: 2, Offset: 0, Limit: 10, Profiles: profiles}
 	filteredPage := bootstrap.ProfilesPage{Total: 1, Offset: 0, Limit: 10, Profiles: profiles[:1]}
@@ -1193,7 +1193,7 @@ func TestProfileSlots(t *testing.T) {
 	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
 
-	session := smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+	session := smqauthn.Session{WorkspaceUserID: workspaceID + "_" + validID, UserID: validID, WorkspaceID: workspaceID}
 	profileID := testsutil.GenerateUUID(t)
 	slots := []bootstrap.BindingSlot{
 		{Name: "mqtt_client", Type: "client", Required: true, Fields: []string{"id", "secret"}},
@@ -1210,7 +1210,7 @@ func TestProfileSlots(t *testing.T) {
 	req := testRequest{
 		client: bs.Client(),
 		method: http.MethodGet,
-		url:    fmt.Sprintf("%s/%s/clients/bootstrap/profiles/%s/slots", bs.URL, domainID, profileID),
+		url:    fmt.Sprintf("%s/%s/clients/bootstrap/profiles/%s/slots", bs.URL, workspaceID, profileID),
 		token:  validToken,
 	}
 	res, err := req.make()
@@ -1232,7 +1232,7 @@ func TestRenderPreview(t *testing.T) {
 	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
 
-	session := smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+	session := smqauthn.Session{WorkspaceUserID: workspaceID + "_" + validID, UserID: validID, WorkspaceID: workspaceID}
 	profileID := testsutil.GenerateUUID(t)
 	configID := testsutil.GenerateUUID(t)
 	profile := bootstrap.Profile{
@@ -1244,9 +1244,9 @@ func TestRenderPreview(t *testing.T) {
 	}
 
 	storedConfig := bootstrap.Config{
-		ID:         configID,
-		ExternalID: "gw-001",
-		DomainID:   domainID,
+		ID:          configID,
+		ExternalID:  "gw-001",
+		WorkspaceID: workspaceID,
 		RenderContext: map[string]any{
 			"site": "warehouse-1",
 		},
@@ -1328,7 +1328,7 @@ func TestRenderPreview(t *testing.T) {
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPost,
-				url:         fmt.Sprintf("%s/%s/clients/bootstrap/profiles/%s/render-preview", bs.URL, domainID, profileID),
+				url:         fmt.Sprintf("%s/%s/clients/bootstrap/profiles/%s/render-preview", bs.URL, workspaceID, profileID),
 				contentType: contentType,
 				token:       validToken,
 				body:        strings.NewReader(tc.body),

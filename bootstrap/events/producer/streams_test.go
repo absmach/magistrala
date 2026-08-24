@@ -49,8 +49,8 @@ const (
 var (
 	encKey = []byte("12345678910111213141516171819202")
 
-	domainID = testsutil.GenerateUUID(&testing.T{})
-	validID  = testsutil.GenerateUUID(&testing.T{})
+	workspaceID = testsutil.GenerateUUID(&testing.T{})
+	validID     = testsutil.GenerateUUID(&testing.T{})
 
 	config = bootstrap.Config{
 		ID:          testsutil.GenerateUUID(&testing.T{}),
@@ -71,7 +71,8 @@ func newTestVariable(t *testing.T, redisURL string) testVariable {
 	boot := new(mocks.ConfigRepository)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
-	svc := bootstrap.New(boot, nil, nil, nil, nil, sdk, encKey, idp)
+	svc, err := bootstrap.New(boot, nil, nil, nil, nil, nil, sdk, encKey, "primary", idp)
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	publisher, err := store.NewPublisher(context.Background(), redisURL, "bootstrap-es-pub-test")
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	svc = producer.NewEventStoreMiddleware(svc, publisher)
@@ -89,48 +90,48 @@ func TestAdd(t *testing.T) {
 	tv := newTestVariable(t, redisURL)
 
 	cases := []struct {
-		desc     string
-		config   bootstrap.Config
-		token    string
-		session  smqauthn.Session
-		id       string
-		domainID string
-		saveErr  error
-		err      error
-		event    map[string]any
+		desc        string
+		config      bootstrap.Config
+		token       string
+		session     smqauthn.Session
+		id          string
+		workspaceID string
+		saveErr     error
+		err         error
+		event       map[string]any
 	}{
 		{
-			desc:     "create config successfully",
-			config:   config,
-			token:    validToken,
-			id:       validID,
-			domainID: domainID,
+			desc:        "create config successfully",
+			config:      config,
+			token:       validToken,
+			id:          validID,
+			workspaceID: workspaceID,
 			event: map[string]any{
-				"config_id":   "1",
-				"domain_id":   domainID,
-				"name":        config.Name,
-				"external_id": config.ExternalID,
-				"content":     config.Content,
-				"timestamp":   time.Now().Unix(),
-				"operation":   configCreate,
+				"config_id":    "1",
+				"workspace_id": workspaceID,
+				"name":         config.Name,
+				"external_id":  config.ExternalID,
+				"content":      config.Content,
+				"timestamp":    time.Now().Unix(),
+				"operation":    configCreate,
 			},
 			err: nil,
 		},
 		{
-			desc:     "create config with failed to save",
-			config:   config,
-			token:    validToken,
-			id:       validID,
-			domainID: domainID,
-			event:    nil,
-			saveErr:  svcerr.ErrCreateEntity,
-			err:      svcerr.ErrCreateEntity,
+			desc:        "create config with failed to save",
+			config:      config,
+			token:       validToken,
+			id:          validID,
+			workspaceID: workspaceID,
+			event:       nil,
+			saveErr:     svcerr.ErrCreateEntity,
+			err:         svcerr.ErrCreateEntity,
 		},
 	}
 
 	lastID := "0"
 	for _, tc := range cases {
-		tc.session = smqauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
+		tc.session = smqauthn.Session{UserID: validID, WorkspaceID: tc.workspaceID, WorkspaceUserID: validID}
 		repoCall := tv.boot.On("Save", context.Background(), mock.Anything).Return(mock.Anything, tc.saveErr)
 
 		_, err := tv.svc.Add(context.Background(), tc.session, tc.token, tc.config)
@@ -169,26 +170,26 @@ func TestView(t *testing.T) {
 		token       string
 		session     smqauthn.Session
 		id          string
-		domainID    string
+		workspaceID string
 		retrieveErr error
 		err         error
 		event       map[string]any
 	}{
 		{
-			desc:     "view successfully",
-			config:   config,
-			token:    validToken,
-			id:       validID,
-			domainID: domainID,
-			err:      nil,
+			desc:        "view successfully",
+			config:      config,
+			token:       validToken,
+			id:          validID,
+			workspaceID: workspaceID,
+			err:         nil,
 			event: map[string]any{
-				"config_id":   config.ID,
-				"domain_id":   config.DomainID,
-				"name":        config.Name,
-				"external_id": config.ExternalID,
-				"content":     config.Content,
-				"timestamp":   time.Now().Unix(),
-				"operation":   configView,
+				"config_id":    config.ID,
+				"workspace_id": config.WorkspaceID,
+				"name":         config.Name,
+				"external_id":  config.ExternalID,
+				"content":      config.Content,
+				"timestamp":    time.Now().Unix(),
+				"operation":    configView,
 			},
 		},
 		{
@@ -196,7 +197,7 @@ func TestView(t *testing.T) {
 			config:      nonExisting,
 			token:       validToken,
 			id:          validID,
-			domainID:    domainID,
+			workspaceID: workspaceID,
 			retrieveErr: svcerr.ErrViewEntity,
 			err:         svcerr.ErrViewEntity,
 			event:       nil,
@@ -205,8 +206,8 @@ func TestView(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		tc.session = smqauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
-		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.config.ID).Return(config, tc.retrieveErr)
+		tc.session = smqauthn.Session{UserID: validID, WorkspaceID: tc.workspaceID, WorkspaceUserID: validID}
+		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.workspaceID, tc.config.ID).Return(config, tc.retrieveErr)
 		_, err := tv.svc.View(context.Background(), tc.session, tc.config.ID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
@@ -244,51 +245,51 @@ func TestUpdate(t *testing.T) {
 	nonExisting.ID = unknownID
 
 	cases := []struct {
-		desc      string
-		config    bootstrap.Config
-		token     string
-		session   smqauthn.Session
-		id        string
-		domainID  string
-		updateErr error
-		err       error
-		event     map[string]any
+		desc        string
+		config      bootstrap.Config
+		token       string
+		session     smqauthn.Session
+		id          string
+		workspaceID string
+		updateErr   error
+		err         error
+		event       map[string]any
 	}{
 		{
-			desc:     "update config successfully",
-			config:   modified,
-			token:    validToken,
-			id:       validID,
-			domainID: domainID,
-			err:      nil,
+			desc:        "update config successfully",
+			config:      modified,
+			token:       validToken,
+			id:          validID,
+			workspaceID: workspaceID,
+			err:         nil,
 			event: map[string]any{
-				"name":        modified.Name,
-				"content":     modified.Content,
-				"timestamp":   time.Now().UnixNano(),
-				"operation":   configUpdate,
-				"external_id": modified.ExternalID,
-				"config_id":   modified.ID,
-				"domain_id":   domainID,
-				"status":      bootstrap.Disabled,
-				"occurred_at": time.Now().UnixNano(),
+				"name":         modified.Name,
+				"content":      modified.Content,
+				"timestamp":    time.Now().UnixNano(),
+				"operation":    configUpdate,
+				"external_id":  modified.ExternalID,
+				"config_id":    modified.ID,
+				"workspace_id": workspaceID,
+				"status":       bootstrap.Disabled,
+				"occurred_at":  time.Now().UnixNano(),
 			},
 		},
 		{
-			desc:      "update with failed update",
-			config:    nonExisting,
-			token:     validToken,
-			id:        validID,
-			domainID:  domainID,
-			updateErr: svcerr.ErrNotFound,
-			err:       svcerr.ErrNotFound,
-			event:     nil,
+			desc:        "update with failed update",
+			config:      nonExisting,
+			token:       validToken,
+			id:          validID,
+			workspaceID: workspaceID,
+			updateErr:   svcerr.ErrNotFound,
+			err:         svcerr.ErrNotFound,
+			event:       nil,
 		},
 	}
 
 	lastID := "0"
 	for _, tc := range cases {
-		tc.session = smqauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
-		retrieveCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.config.ID).Return(tc.config, nil)
+		tc.session = smqauthn.Session{UserID: validID, WorkspaceID: tc.workspaceID, WorkspaceUserID: validID}
+		retrieveCall := tv.boot.On("RetrieveByID", context.Background(), tc.workspaceID, tc.config.ID).Return(tc.config, nil)
 		repoCall := tv.boot.On("Update", context.Background(), mock.Anything).Return(tc.updateErr)
 		err := tv.svc.Update(context.Background(), tc.session, tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -320,29 +321,29 @@ func TestUpdateCert(t *testing.T) {
 	tv := newTestVariable(t, redisURL)
 
 	cases := []struct {
-		desc       string
-		configID   string
-		userID     string
-		domainID   string
-		token      string
-		session    smqauthn.Session
-		clientCert string
-		clientKey  string
-		caCert     string
-		updateErr  error
-		err        error
-		event      map[string]any
+		desc        string
+		configID    string
+		userID      string
+		workspaceID string
+		token       string
+		session     smqauthn.Session
+		clientCert  string
+		clientKey   string
+		caCert      string
+		updateErr   error
+		err         error
+		event       map[string]any
 	}{
 		{
-			desc:       "update cert successfully",
-			configID:   config.ID,
-			userID:     validID,
-			domainID:   domainID,
-			token:      validToken,
-			clientCert: "clientCert",
-			clientKey:  "clientKey",
-			caCert:     "caCert",
-			err:        nil,
+			desc:        "update cert successfully",
+			configID:    config.ID,
+			userID:      validID,
+			workspaceID: workspaceID,
+			token:       validToken,
+			clientCert:  "clientCert",
+			clientKey:   "clientKey",
+			caCert:      "caCert",
+			err:         nil,
 			event: map[string]any{
 				"client_cert": "clientCert",
 				"client_key":  "clientKey",
@@ -351,60 +352,60 @@ func TestUpdateCert(t *testing.T) {
 			},
 		},
 		{
-			desc:       "update cert with failed update",
-			configID:   "clientID",
-			token:      validToken,
-			userID:     validID,
-			domainID:   domainID,
-			clientCert: "clientCert",
-			clientKey:  "clientKey",
-			caCert:     "caCert",
-			updateErr:  svcerr.ErrNotFound,
-			err:        svcerr.ErrNotFound,
-			event:      nil,
+			desc:        "update cert with failed update",
+			configID:    "clientID",
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			clientCert:  "clientCert",
+			clientKey:   "clientKey",
+			caCert:      "caCert",
+			updateErr:   svcerr.ErrNotFound,
+			err:         svcerr.ErrNotFound,
+			event:       nil,
 		},
 		{
-			desc:       "update cert with empty client certificate",
-			configID:   config.ID,
-			token:      validToken,
-			userID:     validID,
-			domainID:   domainID,
-			clientCert: "",
-			clientKey:  "clientKey",
-			caCert:     "caCert",
-			err:        nil,
-			event:      nil,
+			desc:        "update cert with empty client certificate",
+			configID:    config.ID,
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			clientCert:  "",
+			clientKey:   "clientKey",
+			caCert:      "caCert",
+			err:         nil,
+			event:       nil,
 		},
 		{
-			desc:       "update cert with empty client key",
-			configID:   config.ID,
-			token:      validToken,
-			userID:     validID,
-			domainID:   domainID,
-			clientCert: "clientCert",
-			clientKey:  "",
-			caCert:     "caCert",
-			err:        nil,
-			event:      nil,
+			desc:        "update cert with empty client key",
+			configID:    config.ID,
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			clientCert:  "clientCert",
+			clientKey:   "",
+			caCert:      "caCert",
+			err:         nil,
+			event:       nil,
 		},
 		{
-			desc:       "update cert with empty CA certificate",
-			configID:   config.ID,
-			token:      validToken,
-			userID:     validID,
-			domainID:   domainID,
-			clientCert: "clientCert",
-			clientKey:  "clientKey",
-			caCert:     "",
-			err:        nil,
-			event:      nil,
+			desc:        "update cert with empty CA certificate",
+			configID:    config.ID,
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			clientCert:  "clientCert",
+			clientKey:   "clientKey",
+			caCert:      "",
+			err:         nil,
+			event:       nil,
 		},
 	}
 
 	lastID := "0"
 	for _, tc := range cases {
-		tc.session = smqauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
-		repoCall := tv.boot.On("UpdateCert", context.Background(), tc.domainID, tc.configID, tc.clientCert, tc.clientKey, tc.caCert).Return(config, tc.updateErr)
+		tc.session = smqauthn.Session{UserID: tc.userID, WorkspaceID: tc.workspaceID, WorkspaceUserID: validID}
+		repoCall := tv.boot.On("UpdateCert", context.Background(), tc.workspaceID, tc.configID, tc.clientCert, tc.clientKey, tc.caCert).Return(config, tc.updateErr)
 		_, err := tv.svc.UpdateCert(context.Background(), tc.session, tc.configID, tc.clientCert, tc.clientKey, tc.caCert)
 
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -449,7 +450,7 @@ func TestList(t *testing.T) {
 		token       string
 		session     smqauthn.Session
 		userID      string
-		domainID    string
+		workspaceID string
 		config      bootstrap.ConfigsPage
 		filter      bootstrap.Filter
 		offset      uint64
@@ -459,11 +460,11 @@ func TestList(t *testing.T) {
 		event       map[string]any
 	}{
 		{
-			desc:     "list successfully as super admin",
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
+			desc:        "list successfully as super admin",
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID, SuperAdmin: true},
 			config: bootstrap.ConfigsPage{
 				Total:   uint64(len(saved)),
 				Offset:  0,
@@ -475,21 +476,21 @@ func TestList(t *testing.T) {
 			limit:  10,
 			err:    nil,
 			event: map[string]any{
-				"config_id":   c.ID,
-				"domain_id":   c.DomainID,
-				"name":        c.Name,
-				"external_id": c.ExternalID,
-				"content":     c.Content,
-				"timestamp":   time.Now().Unix(),
-				"operation":   configList,
+				"config_id":    c.ID,
+				"workspace_id": c.WorkspaceID,
+				"name":         c.Name,
+				"external_id":  c.ExternalID,
+				"content":      c.Content,
+				"timestamp":    time.Now().Unix(),
+				"operation":    configList,
 			},
 		},
 		{
-			desc:     "list successfully as domain admin",
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
+			desc:        "list successfully as domain admin",
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID, SuperAdmin: true},
 			config: bootstrap.ConfigsPage{
 				Total:   uint64(len(saved)),
 				Offset:  0,
@@ -501,21 +502,21 @@ func TestList(t *testing.T) {
 			limit:  10,
 			err:    nil,
 			event: map[string]any{
-				"config_id":   c.ID,
-				"domain_id":   c.DomainID,
-				"name":        c.Name,
-				"external_id": c.ExternalID,
-				"content":     c.Content,
-				"timestamp":   time.Now().Unix(),
-				"operation":   configList,
+				"config_id":    c.ID,
+				"workspace_id": c.WorkspaceID,
+				"name":         c.Name,
+				"external_id":  c.ExternalID,
+				"content":      c.Content,
+				"timestamp":    time.Now().Unix(),
+				"operation":    configList,
 			},
 		},
 		{
-			desc:     "list successfully as non admin",
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
+			desc:        "list successfully as non admin",
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID},
 			config: bootstrap.ConfigsPage{
 				Total:   uint64(len(saved)),
 				Offset:  0,
@@ -527,21 +528,21 @@ func TestList(t *testing.T) {
 			limit:  10,
 			err:    nil,
 			event: map[string]any{
-				"config_id":   c.ID,
-				"domain_id":   c.DomainID,
-				"name":        c.Name,
-				"external_id": c.ExternalID,
-				"content":     c.Content,
-				"timestamp":   time.Now().Unix(),
-				"operation":   configList,
+				"config_id":    c.ID,
+				"workspace_id": c.WorkspaceID,
+				"name":         c.Name,
+				"external_id":  c.ExternalID,
+				"content":      c.Content,
+				"timestamp":    time.Now().Unix(),
+				"operation":    configList,
 			},
 		},
 		{
 			desc:        "list as super admin with failed retrieve all",
 			token:       validToken,
 			userID:      validID,
-			domainID:    domainID,
-			session:     smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID, SuperAdmin: true},
 			filter:      bootstrap.Filter{},
 			offset:      0,
 			limit:       10,
@@ -553,8 +554,8 @@ func TestList(t *testing.T) {
 			desc:        "list as domain admin with failed retrieve all",
 			token:       validToken,
 			userID:      validID,
-			domainID:    domainID,
-			session:     smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID, SuperAdmin: true},
 			filter:      bootstrap.Filter{},
 			offset:      0,
 			limit:       10,
@@ -566,8 +567,8 @@ func TestList(t *testing.T) {
 			desc:        "list as non admin with failed retrieve all",
 			token:       validToken,
 			userID:      validID,
-			domainID:    domainID,
-			session:     smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
+			workspaceID: workspaceID,
+			session:     smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID},
 			filter:      bootstrap.Filter{},
 			offset:      0,
 			limit:       10,
@@ -612,23 +613,23 @@ func TestRemove(t *testing.T) {
 	nonExisting.ID = unknownID
 
 	cases := []struct {
-		desc      string
-		configID  string
-		userID    string
-		domainID  string
-		token     string
-		session   smqauthn.Session
-		removeErr error
-		err       error
-		event     map[string]any
+		desc        string
+		configID    string
+		userID      string
+		workspaceID string
+		token       string
+		session     smqauthn.Session
+		removeErr   error
+		err         error
+		event       map[string]any
 	}{
 		{
-			desc:     "remove config successfully",
-			configID: config.ID,
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			err:      nil,
+			desc:        "remove config successfully",
+			configID:    config.ID,
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			err:         nil,
 			event: map[string]any{
 				"config_id": config.ID,
 				"timestamp": time.Now().Unix(),
@@ -636,20 +637,20 @@ func TestRemove(t *testing.T) {
 			},
 		},
 		{
-			desc:      "remove config with failed removal",
-			configID:  nonExisting.ID,
-			token:     validToken,
-			userID:    validID,
-			domainID:  domainID,
-			removeErr: svcerr.ErrNotFound,
-			err:       svcerr.ErrNotFound,
-			event:     nil,
+			desc:        "remove config with failed removal",
+			configID:    nonExisting.ID,
+			token:       validToken,
+			userID:      validID,
+			workspaceID: workspaceID,
+			removeErr:   svcerr.ErrNotFound,
+			err:         svcerr.ErrNotFound,
+			event:       nil,
 		},
 	}
 
 	lastID := "0"
 	for _, tc := range cases {
-		tc.session = smqauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
+		tc.session = smqauthn.Session{UserID: validID, WorkspaceID: tc.workspaceID, WorkspaceUserID: validID}
 		repoCall := tv.boot.On("Remove", context.Background(), mock.Anything, mock.Anything).Return(tc.removeErr)
 		err := tv.svc.Remove(context.Background(), tc.session, tc.configID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -745,7 +746,7 @@ func TestEnableConfig(t *testing.T) {
 		desc        string
 		id          string
 		userID      string
-		domainID    string
+		workspaceID string
 		session     smqauthn.Session
 		retrieveErr error
 		statusErr   error
@@ -753,11 +754,11 @@ func TestEnableConfig(t *testing.T) {
 		event       map[string]any
 	}{
 		{
-			desc:     "enable config",
-			id:       config.ID,
-			userID:   validID,
-			domainID: domainID,
-			err:      nil,
+			desc:        "enable config",
+			id:          config.ID,
+			userID:      validID,
+			workspaceID: workspaceID,
+			err:         nil,
 			event: map[string]any{
 				"config_id": config.ID,
 				"timestamp": time.Now().Unix(),
@@ -768,19 +769,19 @@ func TestEnableConfig(t *testing.T) {
 			desc:        "enable with failed retrieve by ID",
 			id:          "",
 			userID:      validID,
-			domainID:    domainID,
+			workspaceID: workspaceID,
 			retrieveErr: svcerr.ErrNotFound,
 			err:         svcerr.ErrNotFound,
 			event:       nil,
 		},
 		{
-			desc:      "enable with repo status error",
-			id:        config.ID,
-			userID:    validID,
-			domainID:  domainID,
-			statusErr: svcerr.ErrUpdateEntity,
-			err:       svcerr.ErrUpdateEntity,
-			event:     nil,
+			desc:        "enable with repo status error",
+			id:          config.ID,
+			userID:      validID,
+			workspaceID: workspaceID,
+			statusErr:   svcerr.ErrUpdateEntity,
+			err:         svcerr.ErrUpdateEntity,
+			event:       nil,
 		},
 	}
 
@@ -789,8 +790,8 @@ func TestEnableConfig(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		tc.session = smqauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
-		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(disabledConfig, tc.retrieveErr)
+		tc.session = smqauthn.Session{UserID: validID, WorkspaceID: tc.workspaceID, WorkspaceUserID: validID}
+		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.workspaceID, tc.id).Return(disabledConfig, tc.retrieveErr)
 		repoCall1 := tv.boot.On("ChangeStatus", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.statusErr)
 		_, err := tv.svc.EnableConfig(context.Background(), tc.session, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -823,7 +824,7 @@ func TestDisableConfig(t *testing.T) {
 		desc        string
 		id          string
 		userID      string
-		domainID    string
+		workspaceID string
 		session     smqauthn.Session
 		retrieveErr error
 		statusErr   error
@@ -831,11 +832,11 @@ func TestDisableConfig(t *testing.T) {
 		event       map[string]any
 	}{
 		{
-			desc:     "disable config",
-			id:       config.ID,
-			userID:   validID,
-			domainID: domainID,
-			err:      nil,
+			desc:        "disable config",
+			id:          config.ID,
+			userID:      validID,
+			workspaceID: workspaceID,
+			err:         nil,
 			event: map[string]any{
 				"config_id": config.ID,
 				"timestamp": time.Now().Unix(),
@@ -846,26 +847,26 @@ func TestDisableConfig(t *testing.T) {
 			desc:        "disable with failed retrieve by ID",
 			id:          "",
 			userID:      validID,
-			domainID:    domainID,
+			workspaceID: workspaceID,
 			retrieveErr: svcerr.ErrNotFound,
 			err:         svcerr.ErrNotFound,
 			event:       nil,
 		},
 		{
-			desc:      "disable with repo status error",
-			id:        config.ID,
-			userID:    validID,
-			domainID:  domainID,
-			statusErr: svcerr.ErrUpdateEntity,
-			err:       svcerr.ErrUpdateEntity,
-			event:     nil,
+			desc:        "disable with repo status error",
+			id:          config.ID,
+			userID:      validID,
+			workspaceID: workspaceID,
+			statusErr:   svcerr.ErrUpdateEntity,
+			err:         svcerr.ErrUpdateEntity,
+			event:       nil,
 		},
 	}
 
 	lastID := "0"
 	for _, tc := range cases {
-		tc.session = smqauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
-		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(config, tc.retrieveErr)
+		tc.session = smqauthn.Session{UserID: validID, WorkspaceID: tc.workspaceID, WorkspaceUserID: validID}
+		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.workspaceID, tc.id).Return(config, tc.retrieveErr)
 		repoCall1 := tv.boot.On("ChangeStatus", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.statusErr)
 		_, err := tv.svc.DisableConfig(context.Background(), tc.session, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))

@@ -101,7 +101,6 @@ func (es eventStore) UpdateCert(ctx context.Context, session smqauthn.Session, i
 	ev := updateCertEvent{
 		configID:   id,
 		clientCert: clientCert,
-		clientKey:  clientKey,
 		caCert:     caCert,
 	}
 

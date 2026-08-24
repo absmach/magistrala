@@ -14,11 +14,11 @@ info:
   license:
     name: Apache 2.0
     url: https://github.com/absmach/magistrala/blob/main/LICENSE
-  version: 0.19.0
+  version: 0.40.0
 
 servers:
-  - url: http://localhost:9013
-  - url: https://localhost:9013
+  - url: http://localhost:9010
+  - url: https://localhost:9010
 
 tags:
   - name: configs
@@ -30,6 +30,10 @@ tags:
     description: Device configuration profiles and templates
   - name: enrollments
     description: Enrollment profile assignment and resource bindings
+  - name: device-bootstrap
+    description: Per-device challenge-response and encrypted configuration retrieval
+  - name: health
+    description: Service health and observability
 
 paths:
   # ── Enrollment configs ────────────────────────────────────────────────────
@@ -40,7 +44,12 @@ paths:
       summary: Adds a new enrollment config
       description: |
         Adds a new bootstrap enrollment config owned by the user identified by
-        the provided access token.
+        the provided access token. When `external_key` is omitted, the service
+        generates a random per-device key and returns its unpadded base64url
+        text in the response. User-supplied keys may be any UTF-8 string with
+        at least 10 characters. Provision the external ID, external key, key
+        version, and Bootstrap URL into the device separately from its
+        downloaded config.
       tags:
         - configs
       parameters:
@@ -75,6 +84,8 @@ paths:
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Status"
         - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/ExternalIDQuery"
+        - $ref: "#/components/parameters/ConfigIDQuery"
       responses:
         "200":
           $ref: "#/components/responses/ConfigListRes"
@@ -230,62 +241,99 @@ paths:
 
   # ── Device bootstrap ──────────────────────────────────────────────────────
 
-  /clients/bootstrap/{externalID}:
-    get:
-      operationId: getBootstrapConfig
-      summary: Retrieves a bootstrap configuration
+  /clients/bootstrap/challenges/{externalID}:
+    post:
+      operationId: issueBootstrapChallenge
+      summary: Issues a device Bootstrap challenge
       description: |
-        Returns the rendered bootstrap configuration for a device identified by
-        its external ID and external key.
+        Creates a one-minute, single-use server challenge. The device does not
+        send its Bootstrap key. Unknown and disabled external IDs receive the
+        same response shape.
       tags:
-        - configs
-      security:
-        - bootstrapAuth: []
+        - device-bootstrap
+      security: []
       parameters:
         - $ref: "#/components/parameters/ExternalID"
       responses:
         "200":
-          $ref: "#/components/responses/BootstrapConfigRes"
+          description: Challenge issued. Do not cache this response.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BootstrapChallenge"
         "400":
           description: Missing or invalid external ID.
-        "401":
-          description: Missing or invalid external key.
-        "403":
-          description: Config is disabled.
-        "404":
-          description: No config found for the given external ID.
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /clients/bootstrap/secure/{externalID}:
-    get:
-      operationId: getSecureBootstrapConfig
-      summary: Retrieves an encrypted bootstrap configuration
+  /clients/bootstrap/configurations/{externalID}:
+    post:
+      operationId: retrieveEncryptedBootstrapConfig
+      summary: Authenticates a device and returns its encrypted configuration
       description: |
-        Returns the rendered bootstrap configuration encrypted with the device's
-        AES key. The external key must be hex-encoded and AES-encrypted.
+        The device generates a random 32-byte `device_nonce` and proves
+        possession of its enrollment-specific Bootstrap key. Treat the exact
+        external-key UTF-8 bytes as `root_key`; do not base64-decode the key.
+
+        First derive the authentication key with HKDF-SHA256:
+        `HKDF(root_key, salt=external_id,
+        info="magistrala-bootstrap-auth-v1", length=32)`.
+
+        Calculate `proof` as HMAC-SHA256 over the UTF-8 string formed by
+        joining these values with newline (`\n`) characters:
+        `v1`, `external_id`, `challenge_id`, `server_nonce`,
+        `device_nonce`, and decimal `key_version`. The nonce and proof fields
+        use unpadded base64url.
+
+        On success the response is an AES-256-GCM envelope. Derive its key with
+        HKDF-SHA256 using the same root key and external-ID salt but
+        `info="magistrala-bootstrap-response-v1"`. AES-GCM additional
+        authenticated data is the newline-joined UTF-8 string
+        `bootstrap-response-v1`, `external_id`, `challenge_id`,
+        `server_nonce`, `device_nonce`, and decimal `key_version`.
+        Decrypting `ciphertext` returns the Bootstrap response object. Its
+        `content` field is a string and `content_type` tells the device how to
+        parse that string.
+
+        This protocol does not require a device clock. A challenge can be
+        consumed only once and expires one minute after issue.
       tags:
-        - configs
-      security:
-        - bootstrapEncAuth: []
+        - device-bootstrap
+      security: []
       parameters:
         - $ref: "#/components/parameters/ExternalID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceBootstrapProof"
       responses:
         "200":
-          description: Encrypted bootstrap payload (binary).
-          content:
-            application/octet-stream:
+          description: Encrypted rendered Bootstrap configuration.
+          headers:
+            Cache-Control:
               schema:
                 type: string
-                format: binary
+                example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EncryptedBootstrapConfig"
         "400":
-          description: Missing or invalid external ID.
-        "401":
-          description: Missing or invalid encrypted external key.
+          description: Malformed proof request.
         "403":
-          description: Config is disabled.
-        "404":
-          description: No config found for the given external ID.
+          description: |
+            Device authentication failed. The response intentionally does not
+            reveal whether the external ID, challenge, key version, or proof
+            was incorrect.
+        "415":
+          description: Content-Type must be application/json.
         "500":
           $ref: "#/components/responses/ServiceError"
 
@@ -325,6 +373,7 @@ paths:
         - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Name"
       responses:
         "200":
           $ref: "#/components/responses/ProfileListRes"
@@ -353,6 +402,9 @@ paths:
             schema:
               $ref: "#/components/schemas/Profile"
           application/yaml:
+            schema:
+              $ref: "#/components/schemas/Profile"
+          text/yaml:
             schema:
               $ref: "#/components/schemas/Profile"
           application/toml:
@@ -446,7 +498,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  slots:
+                  binding_slots:
                     type: array
                     items:
                       $ref: "#/components/schemas/BindingSlot"
@@ -475,18 +527,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                config:
-                  $ref: "#/components/schemas/Config"
-                render_context:
-                  type: object
-                  additionalProperties: true
-                  description: Per-device variable overrides.
-                bindings:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/BindingSnapshot"
+              $ref: "#/components/schemas/RenderPreviewRequest"
       responses:
         "200":
           description: Rendered template output.
@@ -495,8 +536,16 @@ paths:
               schema:
                 type: object
                 properties:
-                  rendered:
+                  content_type:
                     type: string
+                    enum:
+                      - application/json
+                      - application/yaml
+                      - application/toml
+                      - text/plain
+                  content:
+                    type: string
+                required: [content_type, content]
         "400":
           description: Template rendering failed.
         "401":
@@ -530,8 +579,8 @@ paths:
               required:
                 - profile_id
       responses:
-        "200":
-          description: Profile assigned.
+        "204":
+          description: Profile assigned. The response has no body.
         "400":
           description: Failed due to malformed JSON.
         "401":
@@ -571,8 +620,8 @@ paths:
               required:
                 - bindings
       responses:
-        "200":
-          description: Bindings stored.
+        "204":
+          description: Bindings stored. The response has no body.
         "400":
           description: Failed due to malformed JSON or invalid binding request.
         "401":
@@ -614,8 +663,8 @@ paths:
         - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ConfigID"
       responses:
-        "200":
-          description: Bindings refreshed.
+        "204":
+          description: Bindings refreshed. The response has no body.
         "401":
           description: Missing or invalid access token provided.
         "404":
@@ -627,6 +676,7 @@ paths:
 
   /health:
     get:
+      operationId: getHealth
       summary: Retrieves service health check info.
       tags:
         - health
@@ -637,6 +687,21 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
+  /metrics:
+    get:
+      operationId: getMetrics
+      summary: Retrieves Prometheus metrics.
+      tags:
+        - health
+      security: []
+      responses:
+        "200":
+          description: Prometheus text exposition format.
+          content:
+            text/plain:
+              schema:
+                type: string
+
 components:
   schemas:
     Status:
@@ -644,8 +709,17 @@ components:
       enum: [enabled, disabled]
       description: Enrollment status.
 
+    StatusFilter:
+      type: string
+      enum: [enabled, disabled, all]
+      default: enabled
+      description: |
+        Enrollment status filter. For backward compatibility, the API also
+        accepts `0` for enabled and `1` for disabled.
+
     Config:
       type: object
+      description: Bootstrap enrollment representation. Fields omitted by the service are not emitted in JSON.
       properties:
         id:
           type: string
@@ -660,7 +734,19 @@ components:
           description: External device identifier (e.g. MAC address).
         external_key:
           type: string
-          description: External authentication key (write-only; not returned after creation).
+          description: |
+            Per-device Bootstrap root key containing at least 10 characters.
+            Its exact UTF-8 bytes are used as HKDF input. It is encrypted at
+            rest and decrypted only in authorized config create, list and get
+            responses. Responses use `Cache-Control: no-store`.
+          minLength: 10
+        bootstrap_key_version:
+          type: integer
+          format: int64
+          minimum: 1
+          description: |
+            Version of the per-device Bootstrap key. It starts at 1 and is
+            incremented whenever the external key is replaced.
         name:
           type: string
           description: Human-readable name.
@@ -686,9 +772,6 @@ components:
         ca_cert:
           type: string
           description: CA certificate (PEM).
-      required:
-        - external_id
-        - external_key
 
     ConfigList:
       type: object
@@ -722,6 +805,14 @@ components:
         content:
           type: string
           description: Rendered configuration payload.
+        content_type:
+          type: string
+          enum:
+            - application/json
+            - application/yaml
+            - application/toml
+            - text/plain
+          description: Media type used to parse the content string.
         client_cert:
           type: string
           description: Client TLS certificate (PEM).
@@ -731,6 +822,69 @@ components:
         ca_cert:
           type: string
           description: CA certificate (PEM).
+      required: [id, content_type, content]
+
+    BootstrapChallenge:
+      type: object
+      properties:
+        challenge_id:
+          type: string
+          format: uuid
+        server_nonce:
+          type: string
+          minLength: 43
+          maxLength: 43
+          pattern: "^[A-Za-z0-9_-]{43}$"
+          description: Unpadded base64url encoding of a random 32-byte server nonce.
+        expires_at:
+          type: string
+          format: date-time
+        key_version:
+          type: integer
+          format: int64
+          minimum: 1
+      required: [challenge_id, server_nonce, expires_at, key_version]
+
+    DeviceBootstrapProof:
+      type: object
+      properties:
+        challenge_id:
+          type: string
+          format: uuid
+        device_nonce:
+          type: string
+          minLength: 43
+          maxLength: 43
+          pattern: "^[A-Za-z0-9_-]{43}$"
+          description: Unpadded base64url encoding of a fresh random 32-byte device nonce.
+        proof:
+          type: string
+          minLength: 43
+          maxLength: 43
+          pattern: "^[A-Za-z0-9_-]{43}$"
+          description: Unpadded base64url encoding of the 32-byte HMAC-SHA256 proof.
+      required: [challenge_id, device_nonce, proof]
+
+    EncryptedBootstrapConfig:
+      type: object
+      properties:
+        version:
+          type: string
+          enum: [v1]
+        key_version:
+          type: integer
+          format: int64
+          minimum: 1
+        challenge_id:
+          type: string
+          format: uuid
+        nonce:
+          type: string
+          description: Unpadded base64url encoding of the 12-byte AES-GCM nonce.
+        ciphertext:
+          type: string
+          description: Unpadded base64url encoding of AES-GCM ciphertext followed by its 16-byte tag.
+      required: [version, key_version, challenge_id, nonce, ciphertext]
 
     ConfigUpdateCerts:
       type: object
@@ -763,10 +917,21 @@ components:
           type: string
         description:
           type: string
-        template_format:
+        content_format:
           type: string
-          enum: [go-template, raw]
-          default: go-template
+          enum: [go-template, raw, json, yaml, toml]
+          description: Rendering and template format.
+        content_type:
+          type: string
+          enum:
+            - application/json
+            - application/yaml
+            - application/toml
+            - text/plain
+          description: |
+            Media type of the rendered content delivered to devices. This is
+            independent of content_format; for example, a go-template can
+            produce application/json.
         content_template:
           type: string
           description: Template text rendered at bootstrap time.
@@ -792,7 +957,6 @@ components:
           readOnly: true
       required:
         - name
-        - template_format
 
     ProfileList:
       type: object
@@ -820,8 +984,8 @@ components:
           description: Slot name referenced in the template (e.g. "mqtt_client").
         type:
           type: string
-          enum: [client, channel, cert]
-          description: Expected resource type.
+          enum: [client, channel]
+          description: Expected ATOM resource type.
         required:
           type: boolean
           default: true
@@ -844,7 +1008,7 @@ components:
           description: Profile slot name to fill.
         type:
           type: string
-          enum: [client, channel, cert]
+          enum: [client, channel]
         resource_id:
           type: string
           format: uuid
@@ -875,6 +1039,26 @@ components:
         updated_at:
           type: string
           format: date-time
+
+    RenderPreviewRequest:
+      type: object
+      description: |
+        Preview input. When `config_id` is supplied, the stored enrollment and
+        bindings are loaded and take precedence over `config` and `bindings`.
+      properties:
+        config_id:
+          type: string
+          format: uuid
+        config:
+          $ref: "#/components/schemas/Config"
+        render_context:
+          type: object
+          additionalProperties: true
+          description: Used when config.render_context is absent.
+        bindings:
+          type: array
+          items:
+            $ref: "#/components/schemas/BindingSnapshot"
 
   parameters:
     ConfigID:
@@ -939,7 +1123,7 @@ components:
       description: Filter by enrollment status.
       in: query
       schema:
-        $ref: "#/components/schemas/Status"
+        $ref: "#/components/schemas/StatusFilter"
       required: false
 
     Name:
@@ -948,6 +1132,23 @@ components:
       in: query
       schema:
         type: string
+      required: false
+
+    ExternalIDQuery:
+      name: external_id
+      description: Filter configs by exact external device identifier.
+      in: query
+      schema:
+        type: string
+      required: false
+
+    ConfigIDQuery:
+      name: id
+      description: Filter configs by exact enrollment identifier.
+      in: query
+      schema:
+        type: string
+        format: uuid
       required: false
 
   requestBodies:
@@ -963,6 +1164,13 @@ components:
                 type: string
               external_key:
                 type: string
+                oneOf:
+                  - minLength: 10
+                  - maxLength: 0
+                description: |
+                  Optional UTF-8 string containing at least 10 characters.
+                  When omitted or empty, the service generates a strong random
+                  key.
               name:
                 type: string
               content:
@@ -981,7 +1189,6 @@ components:
                 type: string
             required:
               - external_id
-              - external_key
 
     ConfigUpdateReq:
       description: Fields to update on an enrollment config.
@@ -993,8 +1200,22 @@ components:
             properties:
               name:
                 type: string
+              external_key:
+                type: string
+                oneOf:
+                  - minLength: 10
+                  - maxLength: 0
+                description: |
+                  New per-device Bootstrap root key containing at least 10
+                  characters. Its exact UTF-8 bytes are used as HKDF input.
+                  When omitted or empty, the current key is preserved.
+                  Replacing it increments `bootstrap_key_version` and
+                  invalidates outstanding challenges.
               content:
                 type: string
+              render_context:
+                type: object
+                additionalProperties: true
 
     ConfigCertUpdateReq:
       description: Replacement certificate fields.
@@ -1031,9 +1252,16 @@ components:
                 type: string
               description:
                 type: string
-              template_format:
+              content_format:
                 type: string
-                enum: [go-template, raw]
+                enum: [go-template, raw, json, yaml, toml]
+              content_type:
+                type: string
+                enum:
+                  - application/json
+                  - application/yaml
+                  - application/toml
+                  - text/plain
               content_template:
                 type: string
               defaults:
@@ -1079,9 +1307,7 @@ components:
             $ref: "#/components/schemas/ConfigUpdateCerts"
 
     BootstrapConfigRes:
-      description: |
-        Rendered bootstrap configuration. For the secure endpoint the response
-        body is AES-encrypted binary rather than JSON.
+      description: Rendered bootstrap configuration before device-response encryption.
       content:
         application/json:
           schema:
@@ -1116,6 +1342,9 @@ components:
     ServiceError:
       description: Unexpected server-side error occurred.
 
+    BadRequest:
+      description: The request failed validation.
+
     HealthRes:
       description: Service health check.
       content:
@@ -1130,22 +1359,6 @@ components:
       bearerFormat: JWT
       description: |
         User access token: "Authorization: Bearer <user_token>"
-
-    bootstrapAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: string
-      description: |
-        Device access: "Authorization: Client <external_key>"
-
-    bootstrapEncAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: aes-uuid
-      description: |
-        Device access with AES-encrypted key: "Authorization: Client <external_enc_key>"
-        The external key must be hex-encoded and encrypted with AES using the
-        SHA256 of the external key itself as the encryption key.
 
 security:
   - bearerAuth: []

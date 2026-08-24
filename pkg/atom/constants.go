@@ -51,11 +51,17 @@ const (
 	atomScopeModeGroupDescendantObjects = "group_descendant_objects"
 )
 
+// Object types are "<objectKind>:<resourceKind>" and must be derived from the
+// Kind constants rather than spelled out: a literal that does not match the
+// projected Kind makes every capability registered for it inapplicable, so
+// each authorization check silently denies.
 const (
-	atomObjectTypeResourceChannel = "resource:channel"
-	atomObjectTypeResourceRule    = "resource:rule"
-	atomObjectTypeResourceReport  = "resource:report"
-	atomObjectTypeEntityDevice    = atomObjectKindEntity + ":" + atomKindDevice
+	atomObjectTypeResourceChannel          = atomObjectKindResource + ":" + KindChannel
+	atomObjectTypeResourceRule             = atomObjectKindResource + ":" + KindRule
+	atomObjectTypeResourceReport           = atomObjectKindResource + ":" + KindReport
+	atomObjectTypeResourceBootstrapConfig  = atomObjectKindResource + ":" + KindBootstrapConfig
+	atomObjectTypeResourceBootstrapProfile = atomObjectKindResource + ":" + KindBootstrapProfile
+	atomObjectTypeEntityDevice             = atomObjectKindEntity + ":" + atomKindDevice
 )
 
 const atomDecisionAllow = "allow"

@@ -287,3 +287,36 @@ func TestBootstrapMagistralaActionsIsIdempotent(t *testing.T) {
 		t.Fatalf("expected assignment guardrails to be created once, got %d calls", assignmentRuleCalls)
 	}
 }
+
+// A capability is only applicable to an object whose type is
+// "<objectKind>:<Kind>", where Kind is the value the projector stamps on the
+// resource. A registered ObjectType that does not match the projected Kind
+// makes every check against it deny, silently — so pin the relationship for
+// each kind Magistrala projects.
+func TestResourceObjectTypesMatchProjectedKinds(t *testing.T) {
+	for _, kind := range []string{
+		KindChannel,
+		KindRule,
+		KindReport,
+		KindBootstrapConfig,
+		KindBootstrapProfile,
+	} {
+		want := ObjectKind("", kind) + ":" + kind
+
+		var found bool
+		for _, spec := range magistralaActionApplicability {
+			if spec.ObjectType != want {
+				continue
+			}
+			found = true
+			if spec.ObjectKind != ObjectKind("", kind) {
+				t.Fatalf("kind %q: applicability registers objectKind %q, but ObjectKind resolves it to %q",
+					kind, spec.ObjectKind, ObjectKind("", kind))
+			}
+		}
+		if !found {
+			t.Fatalf("kind %q: no capability applicability registered for object type %q; "+
+				"every authorization check on this kind would deny", kind, want)
+		}
+	}
+}

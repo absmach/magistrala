@@ -45,6 +45,7 @@ func DefaultServiceTokenSpecs() []ServiceTokenSpec {
 		{Name: "alarms", Env: "MG_ATOM_TOKEN_ALARMS", Description: "Magistrala Docker Compose token for alarms"},
 		{Name: "reports", Env: "MG_ATOM_TOKEN_REPORTS", Description: "Magistrala Docker Compose token for reports"},
 		{Name: "postgres-reader", Env: "MG_ATOM_TOKEN_POSTGRES_READER", Description: "Magistrala Docker Compose token for postgres-reader"},
+		{Name: "bootstrap", Env: "MG_ATOM_TOKEN_BOOTSTRAP", Description: "Magistrala Docker Compose token for bootstrap"},
 	}
 }
 

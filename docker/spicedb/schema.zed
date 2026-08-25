@@ -5,9 +5,9 @@ definition user {}
 
 
 definition role {
-	relation entity: workspace | group | channel | client | rule | report
+	relation entity: workspace | group | channel | device | rule | report
 	relation member: user
-	relation built_in_role: workspace | group | channel | client | rule | report
+	relation built_in_role: workspace | group | channel | device | rule | report
 
 	permission delete = entity->manage_role_permission - built_in_role->manage_role_permission
 	permission update = entity->manage_role_permission - built_in_role->manage_role_permission
@@ -18,7 +18,7 @@ definition role {
 	permission view_user = entity->view_role_users_permission
 }
 
-definition client {
+definition device {
 	relation workspace: workspace // This can't be clubbed with parent_group, but if parent_group is unassigned then we could not track belongs to which workspace, so it safe to add workspace
 	relation parent_group: group
 
@@ -33,16 +33,16 @@ definition client {
 	relation remove_role_users: role#member
 	relation view_role_users: role#member
 
-	permission update_permission = update + parent_group->client_update_permission + workspace->client_update_permission
-	permission read_permission = read + parent_group->client_read_permission + workspace->client_read_permission
-	permission delete_permission = delete + parent_group->client_delete_permission + workspace->client_delete_permission
-	permission set_parent_group_permission = set_parent_group + parent_group->client_set_parent_group_permission + workspace->client_set_parent_group_permission
-	permission connect_to_channel_permission  =  connect_to_channel + parent_group->client_connect_to_channel_permission + workspace->client_connect_to_channel_permission
+	permission update_permission = update + parent_group->device_update_permission + workspace->device_update_permission
+	permission read_permission = read + parent_group->device_read_permission + workspace->device_read_permission
+	permission delete_permission = delete + parent_group->device_delete_permission + workspace->device_delete_permission
+	permission set_parent_group_permission = set_parent_group + parent_group->device_set_parent_group_permission + workspace->device_set_parent_group_permission
+	permission connect_to_channel_permission  =  connect_to_channel + parent_group->device_connect_to_channel_permission + workspace->device_connect_to_channel_permission
 
-	permission manage_role_permission = manage_role + parent_group->client_manage_role_permission + workspace->client_manage_role_permission
-	permission add_role_users_permission = add_role_users + parent_group->client_add_role_users_permission + workspace->client_add_role_users_permission
-	permission remove_role_users_permission = remove_role_users + parent_group->client_remove_role_users_permission + workspace->client_remove_role_users_permission
-	permission view_role_users_permission = view_role_users + parent_group->client_view_role_users_permission + workspace->client_view_role_users_permission
+	permission manage_role_permission = manage_role + parent_group->device_manage_role_permission + workspace->device_manage_role_permission
+	permission add_role_users_permission = add_role_users + parent_group->device_add_role_users_permission + workspace->device_add_role_users_permission
+	permission remove_role_users_permission = remove_role_users + parent_group->device_remove_role_users_permission + workspace->device_remove_role_users_permission
+	permission view_role_users_permission = view_role_users + parent_group->device_view_role_users_permission + workspace->device_view_role_users_permission
 }
 
 definition channel {
@@ -53,9 +53,9 @@ definition channel {
 	relation read: role#member
 	relation delete: role#member
 	relation set_parent_group: role#member
-	relation connect_to_client: role#member
-	relation publish: role#member | client
-	relation subscribe: role#member | client
+	relation connect_to_device: role#member
+	relation publish: role#member | device
+	relation subscribe: role#member | device
 
 	relation manage_role: role#member
 	relation add_role_users: role#member
@@ -66,7 +66,7 @@ definition channel {
 	permission read_permission = read + parent_group->channel_read_permission + workspace->channel_read_permission
 	permission delete_permission = delete + parent_group->channel_delete_permission + workspace->channel_delete_permission
 	permission set_parent_group_permission = set_parent_group + parent_group->channel_set_parent_group_permission + workspace->channel_set_parent_group_permission
-	permission connect_to_client_permission = connect_to_client + parent_group->channel_connect_to_client_permission + workspace->channel_connect_to_client_permission
+	permission connect_to_device_permission = connect_to_device + parent_group->channel_connect_to_device_permission + workspace->channel_connect_to_device_permission
 	permission publish_permission = publish + parent_group->channel_publish_permission + workspace->channel_publish_permission
 	permission subscribe_permission = subscribe + parent_group->channel_subscribe_permission + workspace->channel_subscribe_permission
 
@@ -92,29 +92,29 @@ definition group {
 	relation remove_role_users: role#member
 	relation view_role_users: role#member
 
-	relation client_create: role#member
+	relation device_create: role#member
 	relation channel_create: role#member
 	// this allows to add parent for group during the new group creation
 	relation subgroup_create: role#member
-	relation subgroup_client_create: role#member
+	relation subgroup_device_create: role#member
 	relation subgroup_channel_create: role#member
 
-	relation client_update: role#member
-	relation client_read: role#member
-	relation client_delete: role#member
-	relation client_set_parent_group: role#member
-	relation client_connect_to_channel: role#member
+	relation device_update: role#member
+	relation device_read: role#member
+	relation device_delete: role#member
+	relation device_set_parent_group: role#member
+	relation device_connect_to_channel: role#member
 
-	relation client_manage_role: role#member
-	relation client_add_role_users: role#member
-	relation client_remove_role_users: role#member
-	relation client_view_role_users: role#member
+	relation device_manage_role: role#member
+	relation device_add_role_users: role#member
+	relation device_remove_role_users: role#member
+	relation device_view_role_users: role#member
 
 	relation channel_update: role#member
 	relation channel_read: role#member
 	relation channel_delete: role#member
 	relation channel_set_parent_group: role#member
-	relation channel_connect_to_client: role#member
+	relation channel_connect_to_device: role#member
 	relation channel_publish: role#member
 	relation channel_subscribe: role#member
 
@@ -135,22 +135,22 @@ definition group {
 	relation subgroup_remove_role_users: role#member
 	relation subgroup_view_role_users: role#member
 
-	relation subgroup_client_update: role#member
-	relation subgroup_client_read: role#member
-	relation subgroup_client_delete: role#member
-	relation subgroup_client_set_parent_group: role#member
-	relation subgroup_client_connect_to_channel: role#member
+	relation subgroup_device_update: role#member
+	relation subgroup_device_read: role#member
+	relation subgroup_device_delete: role#member
+	relation subgroup_device_set_parent_group: role#member
+	relation subgroup_device_connect_to_channel: role#member
 
-	relation subgroup_client_manage_role: role#member
-	relation subgroup_client_add_role_users: role#member
-	relation subgroup_client_remove_role_users: role#member
-	relation subgroup_client_view_role_users: role#member
+	relation subgroup_device_manage_role: role#member
+	relation subgroup_device_add_role_users: role#member
+	relation subgroup_device_remove_role_users: role#member
+	relation subgroup_device_view_role_users: role#member
 
 	relation subgroup_channel_update: role#member
 	relation subgroup_channel_read: role#member
 	relation subgroup_channel_delete: role#member
 	relation subgroup_channel_set_parent_group: role#member
-	relation subgroup_channel_connect_to_client: role#member
+	relation subgroup_channel_connect_to_device: role#member
 	relation subgroup_channel_publish: role#member
 	relation subgroup_channel_subscribe: role#member
 
@@ -161,7 +161,7 @@ definition group {
 
 	// Subgroup permission
 	permission subgroup_create_permission = subgroup_create + parent_group->subgroup_create_permission
-	permission subgroup_client_create_permission = subgroup_client_create + parent_group->subgroup_client_create_permission
+	permission subgroup_device_create_permission = subgroup_device_create + parent_group->subgroup_device_create_permission
 	permission subgroup_channel_create_permission = subgroup_channel_create + parent_group->subgroup_channel_create_permission
 
 	permission subgroup_update_permission = subgroup_update + parent_group->subgroup_update_permission
@@ -189,37 +189,37 @@ definition group {
 	permission remove_role_users_permission = remove_role_users + parent_group->subgroup_remove_role_users_permission + workspace->group_remove_role_users_permission
 	permission view_role_users_permission = view_role_users + parent_group->subgroup_view_role_users_permission + workspace->group_view_role_users_permission
 
-	// Subgroup clients permission
-	permission subgroup_client_update_permission = subgroup_client_update + parent_group->subgroup_client_update_permission
-	permission subgroup_client_read_permission = subgroup_client_read + parent_group->subgroup_client_read_permission
-	permission subgroup_client_delete_permission = subgroup_client_delete + parent_group->subgroup_client_delete_permission
-	permission subgroup_client_set_parent_group_permission = subgroup_client_set_parent_group + parent_group->subgroup_client_set_parent_group_permission
-	permission subgroup_client_connect_to_channel_permission = subgroup_client_connect_to_channel + parent_group->subgroup_client_connect_to_channel_permission
+	// Subgroup devices permission
+	permission subgroup_device_update_permission = subgroup_device_update + parent_group->subgroup_device_update_permission
+	permission subgroup_device_read_permission = subgroup_device_read + parent_group->subgroup_device_read_permission
+	permission subgroup_device_delete_permission = subgroup_device_delete + parent_group->subgroup_device_delete_permission
+	permission subgroup_device_set_parent_group_permission = subgroup_device_set_parent_group + parent_group->subgroup_device_set_parent_group_permission
+	permission subgroup_device_connect_to_channel_permission = subgroup_device_connect_to_channel + parent_group->subgroup_device_connect_to_channel_permission
 
-	permission subgroup_client_manage_role_permission = subgroup_client_manage_role + parent_group->subgroup_client_manage_role_permission
-	permission subgroup_client_add_role_users_permission = subgroup_client_add_role_users + parent_group->subgroup_client_add_role_users_permission
-	permission subgroup_client_remove_role_users_permission = subgroup_client_remove_role_users + parent_group->subgroup_client_remove_role_users_permission
-	permission subgroup_client_view_role_users_permission = subgroup_client_view_role_users + parent_group->subgroup_client_view_role_users_permission
+	permission subgroup_device_manage_role_permission = subgroup_device_manage_role + parent_group->subgroup_device_manage_role_permission
+	permission subgroup_device_add_role_users_permission = subgroup_device_add_role_users + parent_group->subgroup_device_add_role_users_permission
+	permission subgroup_device_remove_role_users_permission = subgroup_device_remove_role_users + parent_group->subgroup_device_remove_role_users_permission
+	permission subgroup_device_view_role_users_permission = subgroup_device_view_role_users + parent_group->subgroup_device_view_role_users_permission
 
-	// Group clients permission
-	permission client_create_permission = client_create + parent_group->subgroup_client_create_permission + workspace->client_create_permission
-	permission client_update_permission = client_update + parent_group->subgroup_client_update_permission + workspace->client_update_permission
-	permission client_read_permission = client_read + parent_group->subgroup_client_read_permission + workspace->client_read_permission
-	permission client_delete_permission = client_delete + parent_group->subgroup_client_delete_permission + workspace->client_delete_permission
-	permission client_set_parent_group_permission = client_set_parent_group + parent_group->subgroup_client_set_parent_group_permission + workspace->client_set_parent_group_permission
-	permission client_connect_to_channel_permission = client_connect_to_channel + parent_group->subgroup_client_connect_to_channel_permission + workspace->client_connect_to_channel_permission
+	// Group devices permission
+	permission device_create_permission = device_create + parent_group->subgroup_device_create_permission + workspace->device_create_permission
+	permission device_update_permission = device_update + parent_group->subgroup_device_update_permission + workspace->device_update_permission
+	permission device_read_permission = device_read + parent_group->subgroup_device_read_permission + workspace->device_read_permission
+	permission device_delete_permission = device_delete + parent_group->subgroup_device_delete_permission + workspace->device_delete_permission
+	permission device_set_parent_group_permission = device_set_parent_group + parent_group->subgroup_device_set_parent_group_permission + workspace->device_set_parent_group_permission
+	permission device_connect_to_channel_permission = device_connect_to_channel + parent_group->subgroup_device_connect_to_channel_permission + workspace->device_connect_to_channel_permission
 
-	permission client_manage_role_permission = client_manage_role + parent_group->subgroup_client_manage_role_permission + workspace->client_manage_role_permission
-	permission client_add_role_users_permission = client_add_role_users + parent_group->subgroup_client_add_role_users_permission + workspace->client_add_role_users_permission
-	permission client_remove_role_users_permission = client_remove_role_users + parent_group->subgroup_client_remove_role_users_permission + workspace->client_remove_role_users_permission
-	permission client_view_role_users_permission = client_view_role_users + parent_group->subgroup_client_view_role_users_permission + workspace->client_view_role_users_permission
+	permission device_manage_role_permission = device_manage_role + parent_group->subgroup_device_manage_role_permission + workspace->device_manage_role_permission
+	permission device_add_role_users_permission = device_add_role_users + parent_group->subgroup_device_add_role_users_permission + workspace->device_add_role_users_permission
+	permission device_remove_role_users_permission = device_remove_role_users + parent_group->subgroup_device_remove_role_users_permission + workspace->device_remove_role_users_permission
+	permission device_view_role_users_permission = device_view_role_users + parent_group->subgroup_device_view_role_users_permission + workspace->device_view_role_users_permission
 
 	// Subgroup channels permission
 	permission subgroup_channel_update_permission = subgroup_channel_update + parent_group->subgroup_channel_update_permission
 	permission subgroup_channel_read_permission = subgroup_channel_read + parent_group->subgroup_channel_read_permission
 	permission subgroup_channel_delete_permission =  subgroup_channel_delete + parent_group->subgroup_channel_delete_permission
 	permission subgroup_channel_set_parent_group_permission = subgroup_channel_set_parent_group + parent_group->subgroup_channel_set_parent_group_permission
-	permission subgroup_channel_connect_to_client_permission = subgroup_channel_connect_to_client + parent_group->subgroup_channel_connect_to_client_permission
+	permission subgroup_channel_connect_to_device_permission = subgroup_channel_connect_to_device + parent_group->subgroup_channel_connect_to_device_permission
 	permission subgroup_channel_publish_permission = subgroup_channel_publish + parent_group->subgroup_channel_publish_permission
 	permission subgroup_channel_subscribe_permission = subgroup_channel_subscribe + parent_group->subgroup_channel_subscribe_permission
 
@@ -234,7 +234,7 @@ definition group {
 	permission channel_read_permission = channel_read + parent_group->subgroup_channel_read_permission + workspace->channel_read_permission
 	permission channel_delete_permission = channel_delete + parent_group->subgroup_channel_delete_permission + workspace->channel_delete_permission
 	permission channel_set_parent_group_permission = channel_set_parent_group + parent_group->subgroup_channel_set_parent_group_permission + workspace->channel_set_parent_group_permission
-	permission channel_connect_to_client_permission = channel_connect_to_client + parent_group->subgroup_channel_connect_to_client_permission + workspace->channel_connect_to_client_permission
+	permission channel_connect_to_device_permission = channel_connect_to_device + parent_group->subgroup_channel_connect_to_device_permission + workspace->channel_connect_to_device_permission
 	permission channel_publish_permission = channel_publish + parent_group->subgroup_channel_publish_permission + workspace->channel_publish_permission
 	permission channel_subscribe_permission = channel_subscribe + parent_group->subgroup_channel_subscribe_permission + workspace->channel_subscribe_permission
 
@@ -262,26 +262,26 @@ definition workspace {
 	relation remove_role_users: role#member | team#member
 	relation view_role_users: role#member | team#member
 
-	relation client_create: role#member | team#member
+	relation device_create: role#member | team#member
 	relation channel_create: role#member | team#member
 	relation group_create: role#member | team#member
 
-	relation client_update: role#member | team#member
-	relation client_read: role#member | team#member
-	relation client_delete: role#member | team#member
-	relation client_set_parent_group: role#member | team#member
-	relation client_connect_to_channel: role#member | team#member
+	relation device_update: role#member | team#member
+	relation device_read: role#member | team#member
+	relation device_delete: role#member | team#member
+	relation device_set_parent_group: role#member | team#member
+	relation device_connect_to_channel: role#member | team#member
 
-	relation client_manage_role: role#member | team#member
-	relation client_add_role_users: role#member | team#member
-	relation client_remove_role_users: role#member | team#member
-	relation client_view_role_users: role#member | team#member
+	relation device_manage_role: role#member | team#member
+	relation device_add_role_users: role#member | team#member
+	relation device_remove_role_users: role#member | team#member
+	relation device_view_role_users: role#member | team#member
 
 	relation channel_update: role#member | team#member
 	relation channel_read: role#member | team#member
 	relation channel_delete: role#member | team#member
 	relation channel_set_parent_group: role#member | team#member
-	relation channel_connect_to_client: role#member | team#member
+	relation channel_connect_to_device: role#member | team#member
 	relation channel_publish: role#member | team#member
 	relation channel_subscribe: role#member | team#member
 
@@ -338,10 +338,10 @@ definition workspace {
 
 	permission membership = read + update + enable + disable + delete +
 	manage_role + add_role_users + remove_role_users + view_role_users +
-	client_create + channel_create + group_create +
-	client_update + client_read + client_delete + client_set_parent_group + client_connect_to_channel +
-	client_manage_role + client_add_role_users + client_remove_role_users + client_view_role_users +
-	channel_update + channel_read + channel_delete + channel_set_parent_group + channel_connect_to_client + channel_publish + channel_subscribe +
+	device_create + channel_create + group_create +
+	device_update + device_read + device_delete + device_set_parent_group + device_connect_to_channel +
+	device_manage_role + device_add_role_users + device_remove_role_users + device_view_role_users +
+	channel_update + channel_read + channel_delete + channel_set_parent_group + channel_connect_to_device + channel_publish + channel_subscribe +
 	channel_manage_role + channel_add_role_users + channel_remove_role_users + channel_view_role_users +
 	group_update + group_membership + group_read + group_delete + group_set_child + group_set_parent +
 	group_manage_role + group_add_role_users + group_remove_role_users + group_view_role_users +
@@ -350,26 +350,26 @@ definition workspace {
 
 	permission admin = (read & update & enable & disable & delete & manage_role & add_role_users & remove_role_users & view_role_users) + organization->admin
 
-	permission client_create_permission = client_create + team->client_create + organization->admin
+	permission device_create_permission = device_create + team->device_create + organization->admin
 	permission channel_create_permission = channel_create + team->channel_create + organization->admin
 	permission group_create_permission = group_create + team->group_create + organization->admin
 
-	permission client_update_permission = client_update + team->client_update + organization->admin
-	permission client_read_permission = client_read + team->client_read + organization->admin
-	permission client_delete_permission = client_delete + team->client_delete + organization->admin
-	permission client_set_parent_group_permission = client_set_parent_group + team->client_set_parent_group + organization->admin
-	permission client_connect_to_channel_permission = client_connect_to_channel + team->client_connect_to_channel + organization->admin
+	permission device_update_permission = device_update + team->device_update + organization->admin
+	permission device_read_permission = device_read + team->device_read + organization->admin
+	permission device_delete_permission = device_delete + team->device_delete + organization->admin
+	permission device_set_parent_group_permission = device_set_parent_group + team->device_set_parent_group + organization->admin
+	permission device_connect_to_channel_permission = device_connect_to_channel + team->device_connect_to_channel + organization->admin
 
-	permission client_manage_role_permission = client_manage_role + team->client_manage_role + organization->admin
-	permission client_add_role_users_permission = client_add_role_users + team->client_add_role_users + organization->admin
-	permission client_remove_role_users_permission = client_remove_role_users + team->client_remove_role_users + organization->admin
-	permission client_view_role_users_permission = client_view_role_users + team->client_view_role_users + organization->admin
+	permission device_manage_role_permission = device_manage_role + team->device_manage_role + organization->admin
+	permission device_add_role_users_permission = device_add_role_users + team->device_add_role_users + organization->admin
+	permission device_remove_role_users_permission = device_remove_role_users + team->device_remove_role_users + organization->admin
+	permission device_view_role_users_permission = device_view_role_users + team->device_view_role_users + organization->admin
 
 	permission channel_update_permission = channel_update + team->channel_update + organization->admin
 	permission channel_read_permission = channel_read + team->channel_read + organization->admin
 	permission channel_delete_permission = channel_delete + team->channel_delete + organization->admin
 	permission channel_set_parent_group_permission = channel_set_parent_group + team->channel_set_parent_group + organization->admin
-	permission channel_connect_to_client_permission = channel_connect_to_client + team->channel_connect_to_client + organization->admin
+	permission channel_connect_to_device_permission = channel_connect_to_device + team->channel_connect_to_device + organization->admin
 	permission channel_publish_permission = channel_publish + team->channel_publish + organization->admin
 	permission channel_subscribe_permission = channel_subscribe + team->channel_subscribe + organization->admin
 
@@ -462,26 +462,26 @@ definition team {
 	relation workspace_remove_role_users: role#member | team#member
 	relation workspace_view_role_users: role#member | team#member
 
-	relation client_create: role#member | team#member
+	relation device_create: role#member | team#member
 	relation channel_create: role#member | team#member
 	relation group_create: role#member | team#member
 
-	relation client_update: role#member | team#member
-	relation client_read: role#member | team#member
-	relation client_delete: role#member | team#member
-	relation client_set_parent_group: role#member | team#member
-	relation client_connect_to_channel: role#member | team#member
+	relation device_update: role#member | team#member
+	relation device_read: role#member | team#member
+	relation device_delete: role#member | team#member
+	relation device_set_parent_group: role#member | team#member
+	relation device_connect_to_channel: role#member | team#member
 
-	relation client_manage_role: role#member | team#member
-	relation client_add_role_users: role#member | team#member
-	relation client_remove_role_users: role#member | team#member
-	relation client_view_role_users: role#member | team#member
+	relation device_manage_role: role#member | team#member
+	relation device_add_role_users: role#member | team#member
+	relation device_remove_role_users: role#member | team#member
+	relation device_view_role_users: role#member | team#member
 
 	relation channel_update: role#member | team#member
 	relation channel_read: role#member | team#member
 	relation channel_delete: role#member | team#member
 	relation channel_set_parent_group: role#member | team#member
-	relation channel_connect_to_client: role#member | team#member
+	relation channel_connect_to_device: role#member | team#member
 	relation channel_publish: role#member | team#member
 	relation channel_subscribe: role#member | team#member
 

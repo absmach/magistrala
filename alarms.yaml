@@ -42,7 +42,7 @@ paths:
         - $ref: '#/components/parameters/Order'
         - $ref: '#/components/parameters/Dir'
         - $ref: '#/components/parameters/ChannelID'
-        - $ref: '#/components/parameters/ClientID'
+        - $ref: '#/components/parameters/DeviceID'
         - $ref: '#/components/parameters/Subtopic'
         - $ref: '#/components/parameters/RuleID'
         - $ref: '#/components/parameters/Status'
@@ -182,9 +182,9 @@ components:
         channel_id:
           type: string
           description: Channel ID where the alarm was triggered
-        client_id:
+        device_id:
           type: string
-          description: Client ID that triggered the alarm
+          description: Device ID that triggered the alarm
         subtopic:
           type: string
           description: Subtopic associated with the alarm
@@ -349,9 +349,9 @@ components:
       required: false
       schema:
         type: string
-    ClientID:
-      name: client_id
-      description: Filter by client ID
+    DeviceID:
+      name: device_id
+      description: Filter by device ID
       in: query
       required: false
       schema:

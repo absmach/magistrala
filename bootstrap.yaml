@@ -500,6 +500,7 @@ paths:
                 properties:
                   binding_slots:
                     type: array
+                    nullable: true
                     items:
                       $ref: "#/components/schemas/BindingSlot"
         "401":

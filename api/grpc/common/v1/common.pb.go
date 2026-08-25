@@ -470,7 +470,7 @@ func (x *RemoveConnectionsRes) GetOk() bool {
 
 type Connection struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	ChannelId     string                 `protobuf:"bytes,2,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
 	WorkspaceId   string                 `protobuf:"bytes,3,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
 	Type          uint32                 `protobuf:"varint,4,opt,name=type,proto3" json:"type,omitempty"`
@@ -508,9 +508,9 @@ func (*Connection) Descriptor() ([]byte, []int) {
 	return file_common_v1_common_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *Connection) GetClientId() string {
+func (x *Connection) GetDeviceId() string {
 	if x != nil {
-		return x.ClientId
+		return x.DeviceId
 	}
 	return ""
 }
@@ -619,7 +619,7 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\"\x7f\n" +
 	"\n" +
 	"Connection\x12\x1b\n" +
-	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x1d\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x1d\n" +
 	"\n" +
 	"channel_id\x18\x02 \x01(\tR\tchannelId\x12!\n" +
 	"\fworkspace_id\x18\x03 \x01(\tR\vworkspaceId\x12\x12\n" +

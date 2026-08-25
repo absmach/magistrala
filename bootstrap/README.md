@@ -46,7 +46,7 @@ Replacing an enrollment's external key increments its key version and invalidate
 ## Device Bootstrap flow
 
 1. Request a challenge:
-   `POST /clients/bootstrap/challenges/{externalID}`.
+   `POST /devices/bootstrap/challenges/{externalID}`.
 2. Generate a random 32-byte device nonce.
 3. Encode the external key as UTF-8 and use those exact bytes as the root key.
    Derive a 32-byte authentication key with HKDF-SHA256 using the external ID
@@ -54,7 +54,7 @@ Replacing an enrollment's external key increments its key version and invalidate
 4. HMAC the newline-separated values `v1`, external ID, challenge ID, server
    nonce, device nonce, and decimal key version.
 5. Send the unpadded-base64url device nonce and proof to
-   `POST /clients/bootstrap/configurations/{externalID}`.
+   `POST /devices/bootstrap/configurations/{externalID}`.
 6. Derive the response key with the same root key and salt but
    `magistrala-bootstrap-response-v1` as info, then AES-GCM decrypt the returned
    JSON envelope as described in the OpenAPI document.
@@ -165,8 +165,8 @@ Re-enroll each legacy device as follows:
    that new key; this stores an encrypted key envelope with
    `bootstrap_key_version` set to one.
 4. Update the device to use its replacement external ID with
-   `POST /clients/bootstrap/challenges/{externalID}`
-   followed by `POST /clients/bootstrap/configurations/{externalID}`, then
+   `POST /devices/bootstrap/challenges/{externalID}`
+   followed by `POST /devices/bootstrap/configurations/{externalID}`, then
    verify one successful challenge/proof bootstrap.
 5. Disable and remove the bcrypt-backed enrollment only after the replacement
    has successfully bootstrapped. Keep a rollback record of the original

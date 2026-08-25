@@ -156,7 +156,7 @@ func expectSuperAdmin(authn *authnmocks.Authentication) {
 func expectGrants(evaluator *policymocks.Evaluator, lister *policymocks.Service, granted []string) {
 	evaluator.EXPECT().CheckPolicy(mock.Anything, mock.Anything).Return(errors.New("not admin"))
 	lister.EXPECT().ListAllObjects(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
-		return pr.Subject == e2eSubject && pr.Workspace == e2eWorkspace && pr.ObjectType == policies.ClientType
+		return pr.Subject == e2eSubject && pr.Workspace == e2eWorkspace && pr.ObjectType == policies.DeviceType
 	})).Return(policies.PolicyPage{Policies: granted}, nil)
 }
 

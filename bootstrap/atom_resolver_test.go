@@ -30,7 +30,7 @@ func TestAtomResolverEnforcesTenantAndAllowListsAttributes(t *testing.T) {
 	resolver := NewAtomResolver(reader)
 	snapshots, err := resolver.Resolve(context.Background(), ResolveRequest{
 		Enrollment: Config{WorkspaceID: "tenant-1"},
-		Requested:  []BindingRequest{{Slot: "device", Type: "client", ResourceID: "device-1"}},
+		Requested:  []BindingRequest{{Slot: "device", Type: "device", ResourceID: "device-1"}},
 	})
 	require.NoError(t, err)
 	require.Len(t, snapshots, 1)
@@ -40,7 +40,7 @@ func TestAtomResolverEnforcesTenantAndAllowListsAttributes(t *testing.T) {
 
 	_, err = resolver.Resolve(context.Background(), ResolveRequest{
 		Enrollment: Config{WorkspaceID: "tenant-2"},
-		Requested:  []BindingRequest{{Slot: "device", Type: "client", ResourceID: "device-1"}},
+		Requested:  []BindingRequest{{Slot: "device", Type: "device", ResourceID: "device-1"}},
 	})
 	require.Error(t, err)
 }

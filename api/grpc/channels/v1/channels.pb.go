@@ -25,27 +25,27 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type RemoveClientConnectionsReq struct {
+type RemoveDeviceConnectionsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RemoveClientConnectionsReq) Reset() {
-	*x = RemoveClientConnectionsReq{}
+func (x *RemoveDeviceConnectionsReq) Reset() {
+	*x = RemoveDeviceConnectionsReq{}
 	mi := &file_channels_v1_channels_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RemoveClientConnectionsReq) String() string {
+func (x *RemoveDeviceConnectionsReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RemoveClientConnectionsReq) ProtoMessage() {}
+func (*RemoveDeviceConnectionsReq) ProtoMessage() {}
 
-func (x *RemoveClientConnectionsReq) ProtoReflect() protoreflect.Message {
+func (x *RemoveDeviceConnectionsReq) ProtoReflect() protoreflect.Message {
 	mi := &file_channels_v1_channels_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -57,38 +57,38 @@ func (x *RemoveClientConnectionsReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RemoveClientConnectionsReq.ProtoReflect.Descriptor instead.
-func (*RemoveClientConnectionsReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use RemoveDeviceConnectionsReq.ProtoReflect.Descriptor instead.
+func (*RemoveDeviceConnectionsReq) Descriptor() ([]byte, []int) {
 	return file_channels_v1_channels_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *RemoveClientConnectionsReq) GetClientId() string {
+func (x *RemoveDeviceConnectionsReq) GetDeviceId() string {
 	if x != nil {
-		return x.ClientId
+		return x.DeviceId
 	}
 	return ""
 }
 
-type RemoveClientConnectionsRes struct {
+type RemoveDeviceConnectionsRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RemoveClientConnectionsRes) Reset() {
-	*x = RemoveClientConnectionsRes{}
+func (x *RemoveDeviceConnectionsRes) Reset() {
+	*x = RemoveDeviceConnectionsRes{}
 	mi := &file_channels_v1_channels_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RemoveClientConnectionsRes) String() string {
+func (x *RemoveDeviceConnectionsRes) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RemoveClientConnectionsRes) ProtoMessage() {}
+func (*RemoveDeviceConnectionsRes) ProtoMessage() {}
 
-func (x *RemoveClientConnectionsRes) ProtoReflect() protoreflect.Message {
+func (x *RemoveDeviceConnectionsRes) ProtoReflect() protoreflect.Message {
 	mi := &file_channels_v1_channels_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -100,8 +100,8 @@ func (x *RemoveClientConnectionsRes) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RemoveClientConnectionsRes.ProtoReflect.Descriptor instead.
-func (*RemoveClientConnectionsRes) Descriptor() ([]byte, []int) {
+// Deprecated: Use RemoveDeviceConnectionsRes.ProtoReflect.Descriptor instead.
+func (*RemoveDeviceConnectionsRes) Descriptor() ([]byte, []int) {
 	return file_channels_v1_channels_proto_rawDescGZIP(), []int{1}
 }
 
@@ -188,8 +188,8 @@ func (*UnsetParentGroupFromChannelsRes) Descriptor() ([]byte, []int) {
 type AuthzReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	WorkspaceId   string                 `protobuf:"bytes,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
-	ClientId      string                 `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	ClientType    string                 `protobuf:"bytes,3,opt,name=client_type,json=clientType,proto3" json:"client_type,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	DeviceType    string                 `protobuf:"bytes,3,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
 	ChannelId     string                 `protobuf:"bytes,4,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
 	Type          uint32                 `protobuf:"varint,5,opt,name=type,proto3" json:"type,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -233,16 +233,16 @@ func (x *AuthzReq) GetWorkspaceId() string {
 	return ""
 }
 
-func (x *AuthzReq) GetClientId() string {
+func (x *AuthzReq) GetDeviceId() string {
 	if x != nil {
-		return x.ClientId
+		return x.DeviceId
 	}
 	return ""
 }
 
-func (x *AuthzReq) GetClientType() string {
+func (x *AuthzReq) GetDeviceType() string {
 	if x != nil {
-		return x.ClientType
+		return x.DeviceType
 	}
 	return ""
 }
@@ -310,17 +310,17 @@ var File_channels_v1_channels_proto protoreflect.FileDescriptor
 const file_channels_v1_channels_proto_rawDesc = "" +
 	"\n" +
 	"\x1achannels/v1/channels.proto\x12\vchannels.v1\x1a\x16common/v1/common.proto\"9\n" +
-	"\x1aRemoveClientConnectionsReq\x12\x1b\n" +
-	"\tclient_id\x18\x01 \x01(\tR\bclientId\"\x1c\n" +
-	"\x1aRemoveClientConnectionsRes\"I\n" +
+	"\x1aRemoveDeviceConnectionsReq\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x1c\n" +
+	"\x1aRemoveDeviceConnectionsRes\"I\n" +
 	"\x1fUnsetParentGroupFromChannelsReq\x12&\n" +
 	"\x0fparent_group_id\x18\x01 \x01(\tR\rparentGroupId\"!\n" +
 	"\x1fUnsetParentGroupFromChannelsRes\"\x9e\x01\n" +
 	"\bAuthzReq\x12!\n" +
 	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\x12\x1b\n" +
-	"\tclient_id\x18\x02 \x01(\tR\bclientId\x12\x1f\n" +
-	"\vclient_type\x18\x03 \x01(\tR\n" +
-	"clientType\x12\x1d\n" +
+	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\x12\x1f\n" +
+	"\vdevice_type\x18\x03 \x01(\tR\n" +
+	"deviceType\x12\x1d\n" +
 	"\n" +
 	"channel_id\x18\x04 \x01(\tR\tchannelId\x12\x12\n" +
 	"\x04type\x18\x05 \x01(\rR\x04type\"*\n" +
@@ -330,7 +330,7 @@ const file_channels_v1_channels_proto_rawDesc = "" +
 	"authorized2\xe1\x03\n" +
 	"\x0fChannelsService\x12;\n" +
 	"\tAuthorize\x12\x15.channels.v1.AuthzReq\x1a\x15.channels.v1.AuthzRes\"\x00\x12m\n" +
-	"\x17RemoveClientConnections\x12'.channels.v1.RemoveClientConnectionsReq\x1a'.channels.v1.RemoveClientConnectionsRes\"\x00\x12|\n" +
+	"\x17RemoveDeviceConnections\x12'.channels.v1.RemoveDeviceConnectionsReq\x1a'.channels.v1.RemoveDeviceConnectionsRes\"\x00\x12|\n" +
 	"\x1cUnsetParentGroupFromChannels\x12,.channels.v1.UnsetParentGroupFromChannelsReq\x1a,.channels.v1.UnsetParentGroupFromChannelsRes\"\x00\x12N\n" +
 	"\x0eRetrieveEntity\x12\x1c.common.v1.RetrieveEntityReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00\x12T\n" +
 	"\x11RetrieveIDByRoute\x12\x1f.common.v1.RetrieveIDByRouteReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00B4Z2github.com/absmach/magistrala/api/grpc/channels/v1b\x06proto3"
@@ -349,8 +349,8 @@ func file_channels_v1_channels_proto_rawDescGZIP() []byte {
 
 var file_channels_v1_channels_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_channels_v1_channels_proto_goTypes = []any{
-	(*RemoveClientConnectionsReq)(nil),      // 0: channels.v1.RemoveClientConnectionsReq
-	(*RemoveClientConnectionsRes)(nil),      // 1: channels.v1.RemoveClientConnectionsRes
+	(*RemoveDeviceConnectionsReq)(nil),      // 0: channels.v1.RemoveDeviceConnectionsReq
+	(*RemoveDeviceConnectionsRes)(nil),      // 1: channels.v1.RemoveDeviceConnectionsRes
 	(*UnsetParentGroupFromChannelsReq)(nil), // 2: channels.v1.UnsetParentGroupFromChannelsReq
 	(*UnsetParentGroupFromChannelsRes)(nil), // 3: channels.v1.UnsetParentGroupFromChannelsRes
 	(*AuthzReq)(nil),                        // 4: channels.v1.AuthzReq
@@ -361,12 +361,12 @@ var file_channels_v1_channels_proto_goTypes = []any{
 }
 var file_channels_v1_channels_proto_depIdxs = []int32{
 	4, // 0: channels.v1.ChannelsService.Authorize:input_type -> channels.v1.AuthzReq
-	0, // 1: channels.v1.ChannelsService.RemoveClientConnections:input_type -> channels.v1.RemoveClientConnectionsReq
+	0, // 1: channels.v1.ChannelsService.RemoveDeviceConnections:input_type -> channels.v1.RemoveDeviceConnectionsReq
 	2, // 2: channels.v1.ChannelsService.UnsetParentGroupFromChannels:input_type -> channels.v1.UnsetParentGroupFromChannelsReq
 	6, // 3: channels.v1.ChannelsService.RetrieveEntity:input_type -> common.v1.RetrieveEntityReq
 	7, // 4: channels.v1.ChannelsService.RetrieveIDByRoute:input_type -> common.v1.RetrieveIDByRouteReq
 	5, // 5: channels.v1.ChannelsService.Authorize:output_type -> channels.v1.AuthzRes
-	1, // 6: channels.v1.ChannelsService.RemoveClientConnections:output_type -> channels.v1.RemoveClientConnectionsRes
+	1, // 6: channels.v1.ChannelsService.RemoveDeviceConnections:output_type -> channels.v1.RemoveDeviceConnectionsRes
 	3, // 7: channels.v1.ChannelsService.UnsetParentGroupFromChannels:output_type -> channels.v1.UnsetParentGroupFromChannelsRes
 	8, // 8: channels.v1.ChannelsService.RetrieveEntity:output_type -> common.v1.RetrieveEntityRes
 	8, // 9: channels.v1.ChannelsService.RetrieveIDByRoute:output_type -> common.v1.RetrieveEntityRes

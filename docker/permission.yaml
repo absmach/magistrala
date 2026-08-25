@@ -72,8 +72,8 @@ channels:
     - delete: delete_permission
     - set_parent_group: set_parent_group_permission
     - remove_parent_group: set_parent_group_permission
-    - connect_client: connect_to_client_permission
-    - disconnect_client: connect_to_client_permission
+    - connect_device: connect_to_device_permission
+    - disconnect_device: connect_to_device_permission
   roles_operations:
     - add: manage_role_permission
     - remove: manage_role_permission
@@ -106,8 +106,8 @@ groups:
     - remove_children_groups: set_child_permission
     - remove_all_children_groups: set_child_permission
     - list_children_groups: read_permission
-    - set_child_client: set_child_permission
-    - remove_child_client: set_child_permission
+    - set_child_device: set_child_permission
+    - remove_child_device: set_child_permission
     - set_child_channel: set_child_permission
     - remove_child_channel: set_child_permission
   roles_operations:
@@ -139,8 +139,8 @@ workspaces:
     - list_invitation: membership_permission
     - list_workspace_invitation: manage_role_permission
     - delete_invitation: manage_role_permission
-    - create_clients: client_create_permission
-    - list_clients: client_read_permission
+    - create_devices: device_create_permission
+    - list_devices: device_read_permission
     - create_channels: channel_create_permission
     - list_channels: channel_read_permission
     - create_groups: group_create_permission

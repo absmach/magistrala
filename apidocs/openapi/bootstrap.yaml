@@ -5,7 +5,7 @@ openapi: 3.0.1
 info:
   title: Magistrala Bootstrap service
   description: |
-    HTTP API for managing platform clients configuration, device profiles,
+    HTTP API for managing platform devices configuration, device profiles,
     and enrollment bindings.
     Some useful links:
     - [The Magistrala repository](https://github.com/absmach/magistrala)
@@ -38,7 +38,7 @@ tags:
 paths:
   # ── Enrollment configs ────────────────────────────────────────────────────
 
-  /{workspaceID}/clients/configs:
+  /{workspaceID}/devices/configs:
     post:
       operationId: createConfig
       summary: Adds a new enrollment config
@@ -96,7 +96,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{workspaceID}/clients/configs/{configID}:
+  /{workspaceID}/devices/configs/{configID}:
     get:
       operationId: getConfig
       summary: Retrieves a config
@@ -161,7 +161,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{workspaceID}/clients/configs/certs/{configID}:
+  /{workspaceID}/devices/configs/certs/{configID}:
     patch:
       operationId: updateConfigCerts
       summary: Updates client certificates
@@ -191,7 +191,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{workspaceID}/clients/configs/{configID}/enable:
+  /{workspaceID}/devices/configs/{configID}/enable:
     post:
       operationId: enableConfig
       summary: Enables a config
@@ -215,7 +215,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{workspaceID}/clients/configs/{configID}/disable:
+  /{workspaceID}/devices/configs/{configID}/disable:
     post:
       operationId: disableConfig
       summary: Disables a config
@@ -241,7 +241,7 @@ paths:
 
   # ── Device bootstrap ──────────────────────────────────────────────────────
 
-  /clients/bootstrap/challenges/{externalID}:
+  /devices/bootstrap/challenges/{externalID}:
     post:
       operationId: issueBootstrapChallenge
       summary: Issues a device Bootstrap challenge
@@ -271,7 +271,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /clients/bootstrap/configurations/{externalID}:
+  /devices/bootstrap/configurations/{externalID}:
     post:
       operationId: retrieveEncryptedBootstrapConfig
       summary: Authenticates a device and returns its encrypted configuration
@@ -339,7 +339,7 @@ paths:
 
   # ── Device profiles ───────────────────────────────────────────────────────
 
-  /{workspaceID}/clients/bootstrap/profiles:
+  /{workspaceID}/devices/bootstrap/profiles:
     post:
       operationId: createProfile
       summary: Creates a device profile
@@ -384,7 +384,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{workspaceID}/clients/bootstrap/profiles/upload:
+  /{workspaceID}/devices/bootstrap/profiles/upload:
     post:
       operationId: uploadProfile
       summary: Uploads a device profile
@@ -422,7 +422,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{workspaceID}/clients/bootstrap/profiles/{profileID}:
+  /{workspaceID}/devices/bootstrap/profiles/{profileID}:
     get:
       operationId: getProfile
       summary: Retrieves a device profile
@@ -481,7 +481,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{workspaceID}/clients/bootstrap/profiles/{profileID}/slots:
+  /{workspaceID}/devices/bootstrap/profiles/{profileID}/slots:
     get:
       operationId: getProfileSlots
       summary: Retrieves the binding slots declared by a profile
@@ -509,7 +509,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{workspaceID}/clients/bootstrap/profiles/{profileID}/render-preview:
+  /{workspaceID}/devices/bootstrap/profiles/{profileID}/render-preview:
     post:
       operationId: renderPreview
       summary: Renders a profile template preview
@@ -557,7 +557,7 @@ paths:
 
   # ── Enrollment bindings ───────────────────────────────────────────────────
 
-  /{workspaceID}/clients/bootstrap/enrollments/{configID}/profile:
+  /{workspaceID}/devices/bootstrap/enrollments/{configID}/profile:
     patch:
       operationId: assignProfile
       summary: Assigns a profile to an enrollment
@@ -592,7 +592,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{workspaceID}/clients/bootstrap/enrollments/{configID}/bindings:
+  /{workspaceID}/devices/bootstrap/enrollments/{configID}/bindings:
     put:
       operationId: bindResources
       summary: Binds resources to profile slots
@@ -650,7 +650,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{workspaceID}/clients/bootstrap/enrollments/{configID}/bindings/refresh:
+  /{workspaceID}/devices/bootstrap/enrollments/{configID}/bindings/refresh:
     post:
       operationId: refreshBindings
       summary: Refreshes all binding snapshots
@@ -984,7 +984,7 @@ components:
           description: Slot name referenced in the template (e.g. "mqtt_client").
         type:
           type: string
-          enum: [client, channel]
+          enum: [device, channel]
           description: Expected ATOM resource type.
         required:
           type: boolean
@@ -1008,7 +1008,7 @@ components:
           description: Profile slot name to fill.
         type:
           type: string
-          enum: [client, channel]
+          enum: [device, channel]
         resource_id:
           type: string
           format: uuid
@@ -1279,7 +1279,7 @@ components:
         Location:
           schema:
             type: string
-          description: Relative URL of the created config (e.g. /clients/configs/{configID}).
+          description: Relative URL of the created config (e.g. /devices/configs/{configID}).
       content:
         application/json:
           schema:

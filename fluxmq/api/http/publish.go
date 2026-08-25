@@ -25,7 +25,7 @@ const (
 )
 
 type publishRequest struct {
-	ClientID string          `json:"client_id"`
+	DeviceID string          `json:"device_id"`
 	Subtopic string          `json:"subtopic"`
 	Payload  json.RawMessage `json:"payload"`
 }
@@ -46,7 +46,7 @@ type publishHandler struct {
 
 // MakePublishHandler returns an HTTP handler that authenticates the user with
 // Atom, authorizes publish access in Atom, and writes directly to the message
-// broker with the selected client as the publisher identity.
+// broker with the selected device as the publisher identity.
 func MakePublishHandler(
 	authn smqauthn.Authentication,
 	atomClient *atom.Client,
@@ -100,14 +100,14 @@ func (h publishHandler) publish(w http.ResponseWriter, r *http.Request) {
 	}
 
 	publisherID := session.UserID
-	if req.ClientID != "" {
-		if err := h.ensureClientPublisher(r.Context(), workspaceID, channelID, session.UserID, req.ClientID); err != nil {
+	if req.DeviceID != "" {
+		if err := h.ensureDevicePublisher(r.Context(), workspaceID, channelID, session.UserID, req.DeviceID); err != nil {
 			writeError(w, http.StatusForbidden, err.Error())
 			return
 		}
-		publisherID = req.ClientID
+		publisherID = req.DeviceID
 	}
-	if err := h.ensureUserPublish(r.Context(), workspaceID, channelID, session.UserID, req.ClientID); err != nil {
+	if err := h.ensureUserPublish(r.Context(), workspaceID, channelID, session.UserID, req.DeviceID); err != nil {
 		writeError(w, http.StatusForbidden, err.Error())
 		return
 	}
@@ -142,7 +142,7 @@ func (h publishHandler) ensureUserPublish(
 	workspaceID string,
 	channelID string,
 	userID string,
-	clientID string,
+	deviceID string,
 ) error {
 	res, err := h.atom.CheckAuthz(ctx, atom.AuthzRequest{
 		SubjectID:  userID,
@@ -152,7 +152,7 @@ func (h publishHandler) ensureUserPublish(
 		ObjectID:   channelID,
 		Context: map[string]any{
 			workspaceIDContextKey: workspaceID,
-			"publisher_client_id": clientID,
+			"publisher_device_id": deviceID,
 		},
 	})
 	if err != nil {
@@ -164,29 +164,29 @@ func (h publishHandler) ensureUserPublish(
 	return nil
 }
 
-func (h publishHandler) ensureClientPublisher(
+func (h publishHandler) ensureDevicePublisher(
 	ctx context.Context,
 	workspaceID string,
 	channelID string,
 	userID string,
-	clientID string,
+	deviceID string,
 ) error {
-	client, err := h.atom.GetEntity(ctx, clientID)
+	device, err := h.atom.GetEntity(ctx, deviceID)
 	if err != nil {
-		return fmt.Errorf("publisher client not found")
+		return fmt.Errorf("publisher device not found")
 	}
-	if client.Kind != "device" && attrString(client.Attributes, "magistrala_kind") != atom.KindDevice {
-		return fmt.Errorf("publisher identity is not a client")
+	if device.Kind != "device" && attrString(device.Attributes, "magistrala_kind") != atom.KindDevice {
+		return fmt.Errorf("publisher identity is not a device")
 	}
-	if client.TenantID == "" || client.TenantID != workspaceID {
-		return fmt.Errorf("publisher client belongs to a different workspace")
+	if device.TenantID == "" || device.TenantID != workspaceID {
+		return fmt.Errorf("publisher device belongs to a different workspace")
 	}
 	userAccess, err := h.atom.CheckAuthz(ctx, atom.AuthzRequest{
 		SubjectID:  userID,
 		Action:     "read",
-		ResourceID: clientID,
+		ResourceID: deviceID,
 		ObjectKind: "entity",
-		ObjectID:   clientID,
+		ObjectID:   deviceID,
 		Context: map[string]any{
 			workspaceIDContextKey: workspaceID,
 		},
@@ -195,10 +195,10 @@ func (h publishHandler) ensureClientPublisher(
 		return err
 	}
 	if !userAccess.Allowed {
-		return fmt.Errorf("user is not allowed to use publisher client")
+		return fmt.Errorf("user is not allowed to use publisher device")
 	}
 	res, err := h.atom.CheckAuthz(ctx, atom.AuthzRequest{
-		SubjectID:  clientID,
+		SubjectID:  deviceID,
 		Action:     "publish",
 		ResourceID: channelID,
 		ObjectKind: "resource",
@@ -211,7 +211,7 @@ func (h publishHandler) ensureClientPublisher(
 		return err
 	}
 	if !res.Allowed {
-		return fmt.Errorf("publisher client is not connected for publish")
+		return fmt.Errorf("publisher device is not connected for publish")
 	}
 	return nil
 }

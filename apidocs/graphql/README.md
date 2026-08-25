@@ -1,6 +1,6 @@
 # Magistrala GraphQL API
 
-Magistrala uses Atom GraphQL for identity, domain, client, channel, group, role,
+Magistrala uses Atom GraphQL for identity, workspace, device, channel, group, role,
 and policy management. The old HTTP APIs for `users`, `clients`, `channels`,
 `groups`, and `domains` are no longer served by Magistrala as standalone
 service endpoints, so their OpenAPI specifications were removed.
@@ -46,15 +46,15 @@ curl -s http://localhost:8080/graphql \
 
 | Magistrala concept | Atom primitive |
 | --- | --- |
-| Domain | Tenant |
+| Workspace | Tenant |
 | User | Entity with `kind = human` |
-| Client | Entity with `kind = device` or `service` |
+| Device | Entity with `kind = device` or `service` |
 | Channel | Resource with `kind = "channel"` |
 | Group | Group |
-| Client key | Password credential or API key credential |
-| Client certificate | Certificate credential |
+| Device key | Password credential or API key credential |
+| Device certificate | Certificate credential |
 | Role member set | Principal group or role assignment |
-| Client-channel connection | Role assignment or direct policy |
+| Device-channel connection | Role assignment or direct policy |
 
 ## Common Operations
 
@@ -75,7 +75,7 @@ mutation {
 }
 ```
 
-### Create A Domain
+### Create A Workspace
 
 ```graphql
 mutation {
@@ -91,7 +91,7 @@ mutation {
 }
 ```
 
-### List Domains
+### List Workspaces
 
 ```graphql
 query {
@@ -115,7 +115,7 @@ mutation {
     profileId: "human-profile-id"
     name: "Alice"
     alias: "alice"
-    tenantId: "domain-tenant-id"
+    tenantId: "workspace-tenant-id"
     attributes: {
       email: "alice@example.com"
     }
@@ -143,15 +143,15 @@ mutation {
 }
 ```
 
-### Create A Client
+### Create A Device
 
 ```graphql
 mutation {
   createEntity(input: {
-    profileId: "client-profile-id"
+    profileId: "device-profile-id"
     name: "meter-001"
     alias: "meter-001"
-    tenantId: "domain-tenant-id"
+    tenantId: "workspace-tenant-id"
   }) {
     id
     kind
@@ -171,7 +171,7 @@ mutation {
     kind: "channel"
     name: "telemetry"
     alias: "telemetry"
-    tenantId: "domain-tenant-id"
+    tenantId: "workspace-tenant-id"
   }) {
     id
     kind
@@ -189,7 +189,7 @@ mutation {
   createGroup(input: {
     name: "field-devices"
     groupType: "object"
-    tenantId: "domain-tenant-id"
+    tenantId: "workspace-tenant-id"
   }) {
     id
     name
@@ -199,12 +199,12 @@ mutation {
 }
 ```
 
-### Assign A Client To A Group
+### Assign A Device To A Group
 
 ```graphql
 mutation {
   addEntityToObjectGroup(
-    entityId: "client-entity-id"
+    entityId: "device-entity-id"
     objectGroupId: "group-id"
   ) {
     id
@@ -232,7 +232,7 @@ mutation {
 ```graphql
 mutation {
   authzCheck(input: {
-    subjectId: "client-entity-id"
+    subjectId: "device-entity-id"
     action: "publish"
     resourceId: "channel-resource-id"
   }) {

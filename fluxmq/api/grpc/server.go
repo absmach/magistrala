@@ -33,7 +33,7 @@ type connectServer struct {
 }
 
 // NewServer creates a FluxMQ AuthService Connect handler that bridges to
-// Magistrala's Clients (authn) and Channels (authz) services.
+// Magistrala's Devices (authn) and Channels (authz) services.
 func NewServer(
 	clients grpcDevicesV1.DevicesServiceClient,
 	channels grpcChannelsV1.ChannelsServiceClient,
@@ -123,7 +123,7 @@ func (s *connectServer) Authorize(ctx context.Context, req *connect.Request[auth
 			ObjectID:   channelID,
 			Context: map[string]any{
 				"workspace_id": workspaceID,
-				"client_type":  policies.ClientType,
+				"device_type":  policies.DeviceType,
 				"connection":   connType.String(),
 				"topic_type":   uint32(topicType),
 			},
@@ -139,8 +139,8 @@ func (s *connectServer) Authorize(ctx context.Context, req *connect.Request[auth
 
 	ar := &grpcChannelsV1.AuthzReq{
 		Type:        uint32(connType),
-		ClientId:    req.Msg.GetExternalId(),
-		ClientType:  policies.ClientType,
+		DeviceId:    req.Msg.GetExternalId(),
+		DeviceType:  policies.DeviceType,
 		ChannelId:   channelID,
 		WorkspaceId: workspaceID,
 	}

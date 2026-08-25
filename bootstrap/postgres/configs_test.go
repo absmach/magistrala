@@ -263,8 +263,8 @@ func TestUpdate(t *testing.T) {
 		"region": "mombasa",
 	}
 
-	wrongDomainID := c
-	wrongDomainID.WorkspaceID = "3"
+	wrongWorkspaceID := c
+	wrongWorkspaceID.WorkspaceID = "3"
 
 	cases := []struct {
 		desc          string
@@ -274,7 +274,7 @@ func TestUpdate(t *testing.T) {
 	}{
 		{
 			desc:   "update with wrong workspaceID",
-			config: wrongDomainID,
+			config: wrongWorkspaceID,
 			err:    repoerr.ErrNotFound,
 		},
 		{
@@ -316,8 +316,8 @@ func TestUpdateCert(t *testing.T) {
 	c.Content = "new content"
 	c.Name = "new name"
 
-	wrongDomainID := c
-	wrongDomainID.WorkspaceID = "3"
+	wrongWorkspaceID := c
+	wrongWorkspaceID.WorkspaceID = "3"
 
 	cases := []struct {
 		desc           string
@@ -335,7 +335,7 @@ func TestUpdateCert(t *testing.T) {
 			cert:           "cert",
 			certKey:        "certKey",
 			ca:             "",
-			workspaceID:    wrongDomainID.WorkspaceID,
+			workspaceID:    wrongWorkspaceID.WorkspaceID,
 			expectedConfig: bootstrap.Config{},
 			err:            repoerr.ErrNotFound,
 		},

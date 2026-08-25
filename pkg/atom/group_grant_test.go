@@ -415,7 +415,7 @@ func TestGroupGrantAuthorizationFollowsMembership(t *testing.T) {
 		SubjectKind: atomObjectKindEntity,
 		SubjectID:   "customer-1",
 		ObjectKind:  atomObjectKindEntity,
-		ObjectType:  policies.ClientType,
+		ObjectType:  policies.DeviceType,
 		Actions:     []string{"read"},
 	})
 	if err != nil {
@@ -492,7 +492,7 @@ func TestGroupGrantIncludeDescendantsReachesChildGroupMembers(t *testing.T) {
 		SubjectKind: atomObjectKindEntity,
 		SubjectID:   "direct-customer",
 		ObjectKind:  atomObjectKindEntity,
-		ObjectType:  policies.ClientType,
+		ObjectType:  policies.DeviceType,
 		Actions:     []string{"read"},
 	}
 	if err := svc.GrantGroupAccess(ctx, directGrant); err != nil {
@@ -505,7 +505,7 @@ func TestGroupGrantIncludeDescendantsReachesChildGroupMembers(t *testing.T) {
 		SubjectKind:        atomObjectKindEntity,
 		SubjectID:          "descendant-customer",
 		ObjectKind:         atomObjectKindEntity,
-		ObjectType:         policies.ClientType,
+		ObjectType:         policies.DeviceType,
 		Actions:            []string{"read"},
 		IncludeDescendants: true,
 	}
@@ -553,7 +553,7 @@ func TestRevokeGroupAccessDeniesOnlyThroughThatGroup(t *testing.T) {
 		SubjectKind: atomObjectKindEntity,
 		SubjectID:   "customer-1",
 		ObjectKind:  atomObjectKindEntity,
-		ObjectType:  policies.ClientType,
+		ObjectType:  policies.DeviceType,
 		Actions:     []string{"read"},
 	}
 	grantB := grantA
@@ -626,7 +626,7 @@ func TestGrantGroupAccessWriteCountIsConstantRegardlessOfMemberCount(t *testing.
 		SubjectKind: atomObjectKindEntity,
 		SubjectID:   "customer-1",
 		ObjectKind:  atomObjectKindEntity,
-		ObjectType:  policies.ClientType,
+		ObjectType:  policies.DeviceType,
 		Actions:     []string{"read"},
 	}); err != nil {
 		t.Fatalf("grant group access failed: %v", err)

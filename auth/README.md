@@ -1,6 +1,6 @@
 # Auth - Authentication and Authorization service
 
-Auth service provides authentication features as an API for managing authentication keys as well as administering groups of entities - `clients` and `users`.
+Auth service provides authentication features as an API for managing authentication keys as well as administering groups of entities - `devices` and `users`.
 
 ## Authentication
 
@@ -25,7 +25,7 @@ Authentication keys are represented and distributed by the corresponding [JWT](j
 
 User keys are issued when user logs in. Each user request (other than `registration` and `login`) contains user key that is used to authenticate the user.
 
-API keys are similar to the User keys. The main difference is that API keys have configurable expiration time. If no time is set, the key will never expire. For that reason, API keys are _the only key type that can be revoked_. This also means that, despite being used as a JWT, it requires a query to the database to validate the API key. The user with API key can perform all the same actions as the user with login key (can act on behalf of the user for Client, Channel, or user profile management), _except issuing new API keys_.
+API keys are similar to the User keys. The main difference is that API keys have configurable expiration time. If no time is set, the key will never expire. For that reason, API keys are _the only key type that can be revoked_. This also means that, despite being used as a JWT, it requires a query to the database to validate the API key. The user with API key can perform all the same actions as the user with login key (can act on behalf of the user for Device, Channel, or user profile management), _except issuing new API keys_.
 
 Recovery key is the password recovery key. It's short-lived token used for password recovery process.
 
@@ -40,7 +40,7 @@ The following actions are supported:
 
 ## Workspaces
 
-Workspaces are used to group users and clients. Each workspace has a unique `route` that is associated with the workspace. Workspaces are used to group users and their entities.
+Workspaces are used to group users and devices. Each workspace has a unique `route` that is associated with the workspace. Workspaces are used to group users and their entities.
 
 Workspace consists of the following fields:
 
@@ -217,7 +217,7 @@ PATs can be scoped to the following entity types:
 | ------------ | ---------------------- |
 | `groups`     | User groups            |
 | `channels`   | Communication channels |
-| `clients`    | Client applications    |
+| `devices`    | Device applications    |
 | `workspaces`    | Organizational workspaces |
 | `users`      | User accounts          |
 | `dashboards` | Dashboard interfaces   |
@@ -245,7 +245,7 @@ Response:
   "id": "a2500226-95dc-4285-87e2-e693e4a0a976",
   "user_id": "user123",
   "name": "pat 1",
-  "description": "for creating any client or channel",
+  "description": "for creating any device or channel",
   "secret": "pat_dXNlcjEyM19hMjUwMDIyNi05NWRjLTQyODUtODdlMi1lNjkzZTRhMGE5NzY=_randomstring...",
   "issued_at": "2025-02-27T11:20:59Z",
   "expires_at": "2025-02-28T11:20:59Z"
@@ -261,20 +261,20 @@ curl --location --request PATCH 'http://localhost:9001/pats/a2500226-95dc-4285-8
 --data '{
     "scopes": [
         {
-            "optional_workspace_id": "c16c980a-9d4c-4793-8fb2-c81304cf1d9f",
-            "entity_type": "clients",
+            "workspace_id": "c16c980a-9d4c-4793-8fb2-c81304cf1d9f",
+            "entity_type": "devices",
             "operation": "create",
             "entity_id": "*"
         },
         {
-            "optional_workspace_id": "c16c980a-9d4c-4793-8fb2-c81304cf1d9f",
+            "workspace_id": "c16c980a-9d4c-4793-8fb2-c81304cf1d9f",
             "entity_type": "channels",
             "operation": "create",
             "entity_id": "cfbc6936-5748-4339-a8ef-37b64b02bc96"
         },
         {
             "entity_type": "dashboards",
-            "optional_workspace_id": "c16c980a-9d4c-4793-8fb2-c81304cf1d9f",
+            "workspace_id": "c16c980a-9d4c-4793-8fb2-c81304cf1d9f",
             "operation": "read",
             "entity_id": "*"
         }
@@ -322,15 +322,15 @@ When making API requests, include the PAT in the Authorization header:
 Authorization: Bearer pat_<encoded-user-and-pat-id>_<random-string>
 ```
 
-#### Example: Creating a Client Using PAT
+#### Example: Creating a Device Using PAT
 
 ```bash
-curl --location 'http://localhost:9006/c16c980a-9d4c-4793-8fb2-c81304cf1d9f/clients' \
+curl --location 'http://localhost:9006/c16c980a-9d4c-4793-8fb2-c81304cf1d9f/devices' \
 --header 'accept: application/json' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer pat_etKoiXKTR6a0zdgsBHC00qJQAiaV3EKFh+Lmk+SgqXY=_u7@5fyjgti9V@#Bw^bS*SPmX3OnH=HTvKwmIbxIuyBjoI|6FASo9egjKD^u-M$b|2Dpt3CXZtv&4k+hmYYjk&C$57AV59P%-iDV0' \
 --data '{
-  "name": "test client",
+  "name": "test device",
   "tags": [
     "tag1",
     "tag2"
@@ -340,7 +340,7 @@ curl --location 'http://localhost:9006/c16c980a-9d4c-4793-8fb2-c81304cf1d9f/clie
 }'
 ```
 
-This example shows how to create a client in a specific workspace (`c16c980a-9d4c-4793-8fb2-c81304cf1d9f`) using a PAT for authentication. The PAT must have the appropriate scope (e.g., `clients` entity type with `create` operation) for this workspace.
+This example shows how to create a device in a specific workspace (`c16c980a-9d4c-4793-8fb2-c81304cf1d9f`) using a PAT for authentication. The PAT must have the appropriate scope (e.g., `devices` entity type with `create` operation) for this workspace.
 
 ### Wildcard Entity IDs
 
@@ -355,24 +355,24 @@ Using wildcards should be done carefully, as they grant broader permissions. Alw
 
 ### Scope Examples
 
-#### Allow Creating Any Client in a Workspace
+#### Allow Creating Any Device in a Workspace
 
 ```json
 {
-  "optional_workspace_id": "workspace_id",
-  "entity_type": "clients",
+  "workspace_id": "workspace_id",
+  "entity_type": "devices",
   "operation": "create",
   "entity_id": "*"
 }
 ```
 
-This scope allows the PAT to create any client within the specified workspace. The wildcard `*` for `entity_id` means the token can create any client, not just a specific one.
+This scope allows the PAT to create any device within the specified workspace. The wildcard `*` for `entity_id` means the token can create any device, not just a specific one.
 
 #### Allow Publishing to a Specific Channel
 
 ```json
 {
-  "optional_workspace_id": "workspace_id",
+  "workspace_id": "workspace_id",
   "entity_type": "channels",
   "operation": "publish",
   "entity_id": "channel_id"
@@ -385,7 +385,7 @@ This scope restricts the PAT to only publish to a specific channel (`channel_id`
 
 ```json
 {
-  "optional_workspace_id": "workspace_id",
+  "workspace_id": "workspace_id",
   "entity_type": "dashboards",
   "operation": "read",
   "entity_id": "*"
@@ -425,11 +425,11 @@ CREATE TABLE IF NOT EXISTS pats (
 CREATE TABLE IF NOT EXISTS pat_scopes (
     id                  VARCHAR(36) PRIMARY KEY,
     pat_id              VARCHAR(36) REFERENCES pats(id) ON DELETE CASCADE,
-    optional_workspace_id  VARCHAR(36),
+    workspace_id  VARCHAR(36),
     entity_type         VARCHAR(50) NOT NULL,
     operation           VARCHAR(50) NOT NULL,
     entity_id           VARCHAR(50) NOT NULL,
-    UNIQUE (pat_id, optional_workspace_id, entity_type, operation, entity_id)
+    UNIQUE (pat_id, workspace_id, entity_type, operation, entity_id)
 )
 ```
 

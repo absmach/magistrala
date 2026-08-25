@@ -118,8 +118,8 @@ func connectionPolicies(conns []*commonv1.Connection) ([]policies.Policy, error)
 		}
 		prs = append(prs, policies.Policy{
 			Workspace:   conn.GetWorkspaceId(),
-			Subject:     conn.GetClientId(),
-			SubjectType: policies.ClientType,
+			Subject:     conn.GetDeviceId(),
+			SubjectType: policies.DeviceType,
 			Object:      conn.GetChannelId(),
 			ObjectType:  policies.ChannelType,
 			Permission:  permission,
@@ -192,7 +192,7 @@ func (c AtomChannelsCompat) Authorize(ctx context.Context, in *channelsv1.AuthzR
 	if connections.ConnType(in.GetType()) == connections.Publish {
 		action = "publish"
 	}
-	subjectID := strings.TrimPrefix(in.GetClientId(), in.GetWorkspaceId()+"_")
+	subjectID := strings.TrimPrefix(in.GetDeviceId(), in.GetWorkspaceId()+"_")
 	resp, err := c.Client.CheckAuthz(ctx, AuthzRequest{
 		SubjectID:  subjectID,
 		Action:     action,
@@ -209,7 +209,7 @@ func (c AtomChannelsCompat) Authorize(ctx context.Context, in *channelsv1.AuthzR
 	return &channelsv1.AuthzRes{Authorized: resp.Allowed}, nil
 }
 
-func (c AtomChannelsCompat) RemoveClientConnections(context.Context, *channelsv1.RemoveClientConnectionsReq, ...grpc.CallOption) (*channelsv1.RemoveClientConnectionsRes, error) {
+func (c AtomChannelsCompat) RemoveDeviceConnections(context.Context, *channelsv1.RemoveDeviceConnectionsReq, ...grpc.CallOption) (*channelsv1.RemoveDeviceConnectionsRes, error) {
 	return nil, status.Error(codes.Unimplemented, "atom channels compatibility only supports Authorize")
 }
 

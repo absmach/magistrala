@@ -102,7 +102,7 @@ Bootstraps(ctx context.Context, pm PageMetadata, workspaceID, token string) (Boo
 // Device-facing bootstrap retrieval
 Bootstrap(ctx context.Context, externalID, externalKey string) (BootstrapConfig, errors.SDKError)
 BootstrapSecure(ctx context.Context, externalID, externalKey, cryptoKey string) (BootstrapConfig, errors.SDKError)
-Whitelist(ctx context.Context, clientID string, status BootstrapStatus, workspaceID, token string) errors.SDKError
+Whitelist(ctx context.Context, id string, status BootstrapStatus, workspaceID, token string) errors.SDKError
 
 // Bootstrap profiles
 CreateBootstrapProfile(ctx context.Context, profile BootstrapProfile, workspaceID, token string) (BootstrapProfile, errors.SDKError)
@@ -196,7 +196,7 @@ Health(service string) (HealthInfo, errors.SDKError)
 
 ## Examples
 
-### Bootstrap a client
+### Bootstrap a device
 
 ```go
 ctx := context.Background()

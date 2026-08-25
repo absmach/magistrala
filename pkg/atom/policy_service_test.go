@@ -97,7 +97,7 @@ func TestPolicyServiceListAllObjectsUsesAtomAuthorizedObjectIds(t *testing.T) {
 		SubjectType: policies.UserType,
 		Subject:     testWorkspaceID + "_user-1",
 		Workspace:   testWorkspaceID,
-		ObjectType:  policies.ClientType,
+		ObjectType:  policies.DeviceType,
 		Permission:  policies.ViewPermission,
 	})
 	if err != nil {
@@ -126,7 +126,7 @@ func TestPolicyServiceAddPolicyCreatesInternalCapabilityPolicy(t *testing.T) {
 	err := svc.AddPolicy(context.Background(), policies.Policy{
 		Workspace:   testWorkspaceID,
 		Subject:     testWorkspaceID + "_client-1",
-		SubjectType: policies.ClientType,
+		SubjectType: policies.DeviceType,
 		Object:      "channel-1",
 		ObjectType:  policies.ChannelType,
 		Permission:  policies.PublishPermission,
@@ -228,7 +228,7 @@ func TestPolicyServiceDeletePolicyFilterRemovesMatchingCapabilityPolicy(t *testi
 	err := svc.DeletePolicyFilter(context.Background(), policies.Policy{
 		Workspace:   testWorkspaceID,
 		Subject:     "workspace-1_client-1",
-		SubjectType: policies.ClientType,
+		SubjectType: policies.DeviceType,
 		Object:      "channel-1",
 		ObjectType:  policies.ChannelType,
 		Permission:  policies.SubscribePermission,
@@ -264,7 +264,7 @@ func TestPolicyServiceObjectTypeMatchesOnWriteAndReadPaths(t *testing.T) {
 		Subject:     testWorkspaceID + "_user-1",
 		SubjectType: policies.UserType,
 		Object:      "device-1",
-		ObjectType:  policies.ClientType,
+		ObjectType:  policies.DeviceType,
 		Permission:  policies.ViewPermission,
 	}
 	if err := svc.AddPolicy(context.Background(), writePolicy); err != nil {
@@ -279,7 +279,7 @@ func TestPolicyServiceObjectTypeMatchesOnWriteAndReadPaths(t *testing.T) {
 		Workspace:   testWorkspaceID,
 		Subject:     testWorkspaceID + "_user-1",
 		SubjectType: policies.UserType,
-		ObjectType:  policies.ClientType,
+		ObjectType:  policies.DeviceType,
 		Permission:  policies.ViewPermission,
 	}
 	if _, err := svc.ListAllObjects(context.Background(), readPolicy); err != nil {
@@ -325,7 +325,7 @@ func TestPolicyServiceListAllObjectsFindsObjectScopedDeviceGrant(t *testing.T) {
 		SubjectType: policies.UserType,
 		Subject:     testWorkspaceID + "_user-1",
 		Workspace:   testWorkspaceID,
-		ObjectType:  policies.ClientType,
+		ObjectType:  policies.DeviceType,
 		Permission:  policies.ViewPermission,
 	})
 	if err != nil {
@@ -359,7 +359,7 @@ func TestPolicyServiceDeletePolicyFilterPaginatesAcrossAllMatches(t *testing.T) 
 	pr := policies.Policy{
 		Workspace:   testWorkspaceID,
 		Subject:     testWorkspaceID + "_client-1",
-		SubjectType: policies.ClientType,
+		SubjectType: policies.DeviceType,
 		Object:      "channel-1",
 		ObjectType:  policies.ChannelType,
 		Permission:  policies.SubscribePermission,
@@ -441,7 +441,7 @@ func TestGrantGroupAccessCreatesOneBlockAndOnePolicy(t *testing.T) {
 		SubjectKind: atomObjectKindEntity,
 		SubjectID:   "user-1",
 		ObjectKind:  atomObjectKindEntity,
-		ObjectType:  policies.ClientType,
+		ObjectType:  policies.DeviceType,
 		Actions:     []string{"read"},
 	}
 	if err := svc.GrantGroupAccess(context.Background(), grant); err != nil {
@@ -485,7 +485,7 @@ func TestGrantGroupAccessIncludeDescendantsUsesDescendantScopeMode(t *testing.T)
 		SubjectKind:        atomObjectKindEntity,
 		SubjectID:          "user-1",
 		ObjectKind:         atomObjectKindEntity,
-		ObjectType:         policies.ClientType,
+		ObjectType:         policies.DeviceType,
 		Actions:            []string{"read"},
 		IncludeDescendants: true,
 	}
@@ -512,7 +512,7 @@ func TestGrantGroupAccessResolvesMultipleActions(t *testing.T) {
 		SubjectKind: atomObjectKindEntity,
 		SubjectID:   "user-1",
 		ObjectKind:  atomObjectKindEntity,
-		ObjectType:  policies.ClientType,
+		ObjectType:  policies.DeviceType,
 		Actions:     []string{"read", "write"},
 	}
 	if err := svc.GrantGroupAccess(context.Background(), grant); err != nil {
@@ -534,35 +534,35 @@ func TestGrantGroupAccessRejectsInvalidGrant(t *testing.T) {
 	}{
 		{
 			name:  "missing tenant",
-			grant: GroupGrant{GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.DeviceType, Actions: []string{"read"}},
 		},
 		{
 			name:  "missing group",
-			grant: GroupGrant{TenantID: testWorkspaceID, SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testWorkspaceID, SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.DeviceType, Actions: []string{"read"}},
 		},
 		{
 			name:  "missing subject",
-			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, ObjectKind: atomObjectKindEntity, ObjectType: policies.DeviceType, Actions: []string{"read"}},
 		},
 		{
 			name:  "missing subject kind",
-			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.DeviceType, Actions: []string{"read"}},
 		},
 		{
 			name:  "unsupported subject kind",
-			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindResource, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindResource, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.DeviceType, Actions: []string{"read"}},
 		},
 		{
 			name:  "no actions",
-			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType},
+			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.DeviceType},
 		},
 		{
 			name:  "object kind is a group, not entity/resource",
-			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindGroup, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindGroup, ObjectType: policies.DeviceType, Actions: []string{"read"}},
 		},
 		{
 			name:  "device object type with resource object kind",
-			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindResource, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindResource, ObjectType: policies.DeviceType, Actions: []string{"read"}},
 		},
 		{
 			name:  "resource object type with entity object kind",
@@ -647,7 +647,7 @@ func TestRevokeGroupAccessRejectsInvalidGrantBeforeListing(t *testing.T) {
 		SubjectKind: atomObjectKindEntity,
 		SubjectID:   "user-1",
 		ObjectKind:  atomObjectKindEntity,
-		ObjectType:  policies.ClientType,
+		ObjectType:  policies.DeviceType,
 		Actions:     []string{"read"},
 	})
 	if err == nil {
@@ -704,7 +704,7 @@ func TestRevokeGroupAccessOnlyRemovesTargetedGroupsBlock(t *testing.T) {
 		SubjectKind: atomObjectKindEntity,
 		SubjectID:   "user-1",
 		ObjectKind:  atomObjectKindEntity,
-		ObjectType:  policies.ClientType,
+		ObjectType:  policies.DeviceType,
 		Actions:     []string{"read"},
 	})
 	if err != nil {
@@ -755,7 +755,7 @@ func TestRevokeGroupAccessOnlyRemovesMatchingActionSet(t *testing.T) {
 		SubjectKind: atomObjectKindEntity,
 		SubjectID:   "user-1",
 		ObjectKind:  atomObjectKindEntity,
-		ObjectType:  policies.ClientType,
+		ObjectType:  policies.DeviceType,
 		Actions:     []string{"read"},
 	})
 	if err != nil {
@@ -815,8 +815,8 @@ func TestListGroupGrantsFiltersByGroupID(t *testing.T) {
 	if got.GroupID != "group-a" || got.SubjectID != "user-1" || got.IncludeDescendants {
 		t.Fatalf("unexpected grant: %+v", got)
 	}
-	if got.ObjectType != policies.ClientType {
-		t.Fatalf("expected revocable object type %q, got %q", policies.ClientType, got.ObjectType)
+	if got.ObjectType != policies.DeviceType {
+		t.Fatalf("expected revocable object type %q, got %q", policies.DeviceType, got.ObjectType)
 	}
 	if len(got.Actions) != 1 || got.Actions[0] != "read" {
 		t.Fatalf("unexpected grant actions: %+v", got.Actions)
@@ -837,22 +837,22 @@ func TestIsSupportedObjectList(t *testing.T) {
 	}{
 		{
 			name: "user view on device is supported",
-			pr:   policies.Policy{SubjectType: policies.UserType, Subject: "user-1", ObjectType: policies.ClientType, Permission: policies.ViewPermission},
+			pr:   policies.Policy{SubjectType: policies.UserType, Subject: "user-1", ObjectType: policies.DeviceType, Permission: policies.ViewPermission},
 			want: true,
 		},
 		{
 			name: "user read on device (entity:device) is supported",
-			pr:   policies.Policy{SubjectType: policies.UserType, Subject: "user-1", ObjectType: policies.ClientType, Permission: atomActionRead},
+			pr:   policies.Policy{SubjectType: policies.UserType, Subject: "user-1", ObjectType: policies.DeviceType, Permission: atomActionRead},
 			want: true,
 		},
 		{
 			name: "non-user subject is unsupported",
-			pr:   policies.Policy{SubjectType: policies.ClientType, Subject: "client-1", ObjectType: policies.ClientType, Permission: policies.ViewPermission},
+			pr:   policies.Policy{SubjectType: policies.DeviceType, Subject: "client-1", ObjectType: policies.DeviceType, Permission: policies.ViewPermission},
 			want: false,
 		},
 		{
 			name: "empty subject is unsupported",
-			pr:   policies.Policy{SubjectType: policies.UserType, Subject: "", ObjectType: policies.ClientType, Permission: policies.ViewPermission},
+			pr:   policies.Policy{SubjectType: policies.UserType, Subject: "", ObjectType: policies.DeviceType, Permission: policies.ViewPermission},
 			want: false,
 		},
 		{
@@ -862,7 +862,7 @@ func TestIsSupportedObjectList(t *testing.T) {
 		},
 		{
 			name: "unsupported permission on device is rejected",
-			pr:   policies.Policy{SubjectType: policies.UserType, Subject: "user-1", ObjectType: policies.ClientType, Permission: policies.EditPermission},
+			pr:   policies.Policy{SubjectType: policies.UserType, Subject: "user-1", ObjectType: policies.DeviceType, Permission: policies.EditPermission},
 			want: false,
 		},
 	}

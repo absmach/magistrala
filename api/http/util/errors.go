@@ -24,8 +24,8 @@ var (
 	// ErrMissingEntityID indicates missing entity ID.
 	ErrMissingEntityID = errors.NewRequestError("missing entity id")
 
-	// ErrMissingClientID indicates missing client ID.
-	ErrMissingClientID = errors.NewRequestError("missing client id")
+	// ErrMissingDeviceID indicates missing device ID.
+	ErrMissingDeviceID = errors.NewRequestError("missing device id")
 
 	// ErrMissingChannelID indicates missing client ID.
 	ErrMissingChannelID = errors.NewRequestError("missing channel id")

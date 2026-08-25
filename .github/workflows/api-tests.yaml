@@ -110,6 +110,45 @@ jobs:
           export USER_TOKEN=$(curl -fsS -X POST "$ATOM_LOGIN_URL" -H "Content-Type: application/json" -d "{\"identifier\":\"$USER_IDENTITY\",\"secret\":\"$USER_SECRET\",\"kind\":\"password\"}" | jq -er .token)
           echo "USER_TOKEN=$USER_TOKEN" >> $GITHUB_ENV
 
+      # The bootstrap.yaml examples reference a fixed placeholder workspaceID
+      # that doesn't exist in a fresh Atom instance, and Atom denies every
+      # request scoped to a tenant/resource it has no role assignment for
+      # (there is no automatic superadmin bypass). This provisions a real
+      # workspace, a role that covers every action the bootstrap service's
+      # tenant- and resource-scoped checks require, and one real config and
+      # profile so the {configID}/{profileID}-scoped operations resolve
+      # against an object Atom actually knows about instead of the spec's
+      # placeholder IDs.
+      - name: Provision Bootstrap test workspace
+        if: steps.changes.outputs.bootstrap == 'true' && hashFiles('bootstrap/api/**') != ''
+        run: |
+          gql() {
+            curl -fsS http://localhost/graphql -H "Authorization: Bearer $USER_TOKEN" -H 'Content-Type: application/json' --data @-
+          }
+
+          ADMIN_ID="00000000-0000-0000-0000-000000000001"
+          TENANT_ACTIONS='["3f0d052a-0c7a-4a0b-b582-bd63307e761a","7f28fa61-065d-45ee-9362-e34225e07ece","237db9ef-c385-4ac2-856b-23757a43cf59","aa1e4196-a6ca-4830-a291-ff6fc0a90903"]'
+          RESOURCE_ACTIONS='["aa1e4196-a6ca-4830-a291-ff6fc0a90903","7f28fa61-065d-45ee-9362-e34225e07ece","203e7303-c02c-43f9-8938-543fa1fd8339","3f0d052a-0c7a-4a0b-b582-bd63307e761a"]'
+
+          WORKSPACE_ID=$(jq -n '{query:"mutation CreateWorkspace($input: CreateTenantInput!) { createTenant(input: $input) { id } }",variables:{input:{name:("ci-bootstrap-" + (now|tostring))}}}' | gql | jq -er '.data.createTenant.id')
+
+          PB_TENANT=$(jq -n --arg t "$WORKSPACE_ID" --argjson a "$TENANT_ACTIONS" '{query:"mutation CreateBlock($input: CreatePermissionBlockInput!) { createPermissionBlock(input: $input) { id } }",variables:{input:{tenantId:$t,scopeMode:"object",objectKind:"tenant",objectId:$t,effect:"allow",actionIds:$a}}}' | gql | jq -er '.data.createPermissionBlock.id')
+          PB_CONFIG=$(jq -n --arg t "$WORKSPACE_ID" --argjson a "$RESOURCE_ACTIONS" '{query:"mutation CreateBlock($input: CreatePermissionBlockInput!) { createPermissionBlock(input: $input) { id } }",variables:{input:{tenantId:$t,scopeMode:"object_type",objectKind:"resource",objectType:"resource:bootstrap_config",effect:"allow",actionIds:$a}}}' | gql | jq -er '.data.createPermissionBlock.id')
+          PB_PROFILE=$(jq -n --arg t "$WORKSPACE_ID" --argjson a "$RESOURCE_ACTIONS" '{query:"mutation CreateBlock($input: CreatePermissionBlockInput!) { createPermissionBlock(input: $input) { id } }",variables:{input:{tenantId:$t,scopeMode:"object_type",objectKind:"resource",objectType:"resource:bootstrap_profile",effect:"allow",actionIds:$a}}}' | gql | jq -er '.data.createPermissionBlock.id')
+
+          ROLE_ID=$(jq -n --arg t "$WORKSPACE_ID" '{query:"mutation CreateRole($input: CreateRoleInput!) { createRole(input: $input) { id } }",variables:{input:{name:"ci-bootstrap-tester",description:"CI smoke test role",tenantId:$t}}}' | gql | jq -er '.data.createRole.id')
+
+          jq -n --arg r "$ROLE_ID" --argjson ids "[\"$PB_TENANT\",\"$PB_CONFIG\",\"$PB_PROFILE\"]" '{query:"mutation Attach($roleId: ID!, $permissionBlockIds: [ID!]!) { replaceRolePermissionBlocks(roleId: $roleId, permissionBlockIds: $permissionBlockIds) }",variables:{roleId:$r,permissionBlockIds:$ids}}' | gql > /dev/null
+
+          jq -n --arg s "$ADMIN_ID" --arg r "$ROLE_ID" --arg t "$WORKSPACE_ID" '{query:"mutation Assign($input: CreateRoleAssignmentInput!) { createRoleAssignment(input: $input) { id } }",variables:{input:{subjectKind:"entity",subjectId:$s,roleId:$r,tenantId:$t}}}' | gql > /dev/null
+
+          CONFIG_ID=$(curl -fsS -X POST "$BOOTSTRAP_URL/$WORKSPACE_ID/clients/configs" -H "Authorization: Bearer $USER_TOKEN" -H 'Content-Type: application/json' -d '{"external_id":"ci-ext-id","external_key":"ci-ext-key","name":"ci-config"}' | jq -er .id)
+          PROFILE_ID=$(curl -fsS -X POST "$BOOTSTRAP_URL/$WORKSPACE_ID/clients/bootstrap/profiles" -H "Authorization: Bearer $USER_TOKEN" -H 'Content-Type: application/json' -d '{"name":"ci-profile"}' | jq -er .id)
+
+          echo "BOOTSTRAP_WORKSPACE_ID=$WORKSPACE_ID" >> $GITHUB_ENV
+          echo "BOOTSTRAP_CONFIG_ID=$CONFIG_ID" >> $GITHUB_ENV
+          echo "BOOTSTRAP_PROFILE_ID=$PROFILE_ID" >> $GITHUB_ENV
+
       - name: Run Bootstrap API tests
         if: steps.changes.outputs.bootstrap == 'true' && hashFiles('bootstrap/api/**') != ''
         uses: schemathesis/action@v3.0.0
@@ -117,7 +156,12 @@ jobs:
           schema: apidocs/openapi/bootstrap.yaml
           base-url: ${{ env.BOOTSTRAP_URL }}
           checks: all
-          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+          # DELETE is excluded because both DELETE operations in this spec
+          # (config, profile) share the same --set-path fixture ID as every
+          # other {configID}/{profileID} operation in the same run; once a
+          # DELETE test case fires, later operations that reuse that ID
+          # legitimately 403 against a now-nonexistent resource.
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --exclude-method=DELETE --set-path "workspaceID=${{ env.BOOTSTRAP_WORKSPACE_ID }}" --set-path "configID=${{ env.BOOTSTRAP_CONFIG_ID }}" --set-path "profileID=${{ env.BOOTSTRAP_PROFILE_ID }}" --phases=examples'
           coverage-artifact-name: schema-coverage-bootstrap
           coverage-pr-comment: false
 

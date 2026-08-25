@@ -1,0 +1,176 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+#
+# Magistrala Atom bootstrap file.
+#
+# Declarative replacement for the imperative bootstrap-actions Go code path.
+# Atom reads this at startup via ATOM_BOOTSTRAP_FILE and upserts capabilities
+# and guardrail rules idempotently. Rows are stamped managed_by='config' and
+# become immutable through the Atom API.
+
+capabilities:
+  - name: read
+    description: "Read / view an object"
+    applicability:
+      - object_kind: entity
+        object_type: "entity:device"
+      - object_kind: group
+      - object_kind: resource
+        object_type: "resource:channel"
+      - object_kind: resource
+        object_type: "resource:rule"
+      - object_kind: resource
+        object_type: "resource:report"
+      - object_kind: resource
+        object_type: "resource:bootstrap_config"
+      - object_kind: resource
+        object_type: "resource:bootstrap_profile"
+
+  - name: write
+    description: "Create or update an object"
+    applicability:
+      - object_kind: tenant
+      - object_kind: entity
+        object_type: "entity:device"
+      - object_kind: group
+      - object_kind: resource
+        object_type: "resource:channel"
+      - object_kind: resource
+        object_type: "resource:rule"
+      - object_kind: resource
+        object_type: "resource:report"
+      - object_kind: resource
+        object_type: "resource:bootstrap_config"
+      - object_kind: resource
+        object_type: "resource:bootstrap_profile"
+
+  - name: delete
+    description: "Delete an object"
+    applicability:
+      - object_kind: entity
+        object_type: "entity:device"
+      - object_kind: group
+      - object_kind: resource
+        object_type: "resource:channel"
+      - object_kind: resource
+        object_type: "resource:rule"
+      - object_kind: resource
+        object_type: "resource:report"
+      - object_kind: resource
+        object_type: "resource:bootstrap_config"
+      - object_kind: resource
+        object_type: "resource:bootstrap_profile"
+
+  - name: manage
+    description: "Full administrative control"
+    applicability:
+      - object_kind: entity
+        object_type: "entity:device"
+      - object_kind: group
+      - object_kind: resource
+        object_type: "resource:channel"
+      - object_kind: resource
+        object_type: "resource:rule"
+      - object_kind: resource
+        object_type: "resource:report"
+      - object_kind: resource
+        object_type: "resource:bootstrap_config"
+      - object_kind: resource
+        object_type: "resource:bootstrap_profile"
+
+  - name: publish
+    description: "Publish messages to a channel"
+    applicability:
+      - object_kind: resource
+        object_type: "resource:channel"
+
+
+  - name: subscribe
+    description: "Subscribe to channel messages"
+    applicability:
+      - object_kind: resource
+        object_type: "resource:channel"
+
+
+  - name: execute
+    description: "Execute a command or action"
+    applicability:
+      - object_kind: resource
+        object_type: "resource:rule"
+      - object_kind: resource
+        object_type: "resource:report"
+
+
+  - name: list
+    description: "List objects"
+    applicability:
+      - object_kind: tenant
+      - object_kind: group
+      - object_kind: resource
+        object_type: "resource:rule"
+      - object_kind: resource
+        object_type: "resource:report"
+      - object_kind: resource
+        object_type: "resource:bootstrap_config"
+      - object_kind: resource
+        object_type: "resource:bootstrap_profile"
+
+  - name: alarm_read
+    description: "Read alarms in a tenant or rule scope"
+    applicability:
+      - object_kind: tenant
+      - object_kind: resource
+        object_type: "resource:rule"
+
+
+  - name: alarm_update
+    description: "Update alarms in a tenant or rule scope"
+    applicability:
+      - object_kind: tenant
+      - object_kind: resource
+        object_type: "resource:rule"
+
+
+  - name: alarm_delete
+    description: "Delete alarms in a tenant or rule scope"
+    applicability:
+      - object_kind: tenant
+      - object_kind: resource
+        object_type: "resource:rule"
+
+
+  - name: alarm_assign
+    description: "Assign alarms in a tenant or rule scope"
+    applicability:
+      - object_kind: tenant
+      - object_kind: resource
+        object_type: "resource:rule"
+
+
+  - name: alarm_acknowledge
+    description: "Acknowledge alarms in a tenant or rule scope"
+    applicability:
+      - object_kind: tenant
+      - object_kind: resource
+        object_type: "resource:rule"
+
+
+  - name: alarm_resolve
+    description: "Resolve alarms in a tenant or rule scope"
+    applicability:
+      - object_kind: tenant
+      - object_kind: resource
+        object_type: "resource:rule"
+
+action_assignment_rules:
+  - entity_kind: device
+    action_name: publish
+    object_kind: resource
+    object_type: "resource:channel"
+    decision: allow
+
+  - entity_kind: device
+    action_name: subscribe
+    object_kind: resource
+    object_type: "resource:channel"
+    decision: allow

@@ -72,7 +72,7 @@ func TestChannelsCompatAuthorizeBuildsResourceRequest(t *testing.T) {
 	compat := atom.NewChannelsCompat(client)
 
 	res, err := compat.Authorize(context.Background(), &channelsv1.AuthzReq{
-		ClientId:    "workspace-1_user-1",
+		DeviceId:    "workspace-1_user-1",
 		WorkspaceId: "workspace-1",
 		Type:        uint32(connections.Subscribe),
 		ChannelId:   "channel-1",

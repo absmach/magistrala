@@ -46,7 +46,7 @@ func NewAuthorization(ctx context.Context, cfg grpcclient.Config, workspacesAuth
 }
 
 func (a authorization) Authorize(ctx context.Context, pr authz.PolicyReq, pat *authz.PATReq) error {
-	if pr.SubjectType == policies.UserType && (pr.ObjectType == policies.GroupType || pr.ObjectType == policies.ClientType || pr.ObjectType == policies.WorkspaceType) {
+	if pr.SubjectType == policies.UserType && (pr.ObjectType == policies.GroupType || pr.ObjectType == policies.DeviceType || pr.ObjectType == policies.WorkspaceType) {
 		workspaceID := pr.Workspace
 		if workspaceID == "" {
 			if pr.ObjectType != policies.WorkspaceType {

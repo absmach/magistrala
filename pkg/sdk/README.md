@@ -196,7 +196,7 @@ Health(service string) (HealthInfo, errors.SDKError)
 
 ## Examples
 
-### Bootstrap a client
+### Bootstrap a device
 
 ```go
 ctx := context.Background()

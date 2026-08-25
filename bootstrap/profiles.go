@@ -88,15 +88,15 @@ type ProfileRepository interface {
 	// Save persists a new Profile and returns it with server-assigned fields set.
 	Save(ctx context.Context, p Profile) (Profile, error)
 
-	// RetrieveByID returns the Profile with the given ID inside the given domain.
+	// RetrieveByID returns the Profile with the given ID inside the given workspace.
 	RetrieveByID(ctx context.Context, workspaceID, id string) (Profile, error)
 
-	// RetrieveAll returns a page of Profiles belonging to the given domain, optionally filtered by name.
+	// RetrieveAll returns a page of Profiles belonging to the given workspace, optionally filtered by name.
 	RetrieveAll(ctx context.Context, workspaceID string, offset, limit uint64, name string) (ProfilesPage, error)
 
 	// Update updates editable fields of the given Profile and returns the updated Profile.
 	Update(ctx context.Context, p Profile) (Profile, error)
 
-	// Delete removes the Profile with the given ID from the given domain.
+	// Delete removes the Profile with the given ID from the given workspace.
 	Delete(ctx context.Context, workspaceID, id string) error
 }

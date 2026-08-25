@@ -32,7 +32,7 @@ func (r *atomResolver) Resolve(ctx context.Context, req ResolveRequest) ([]Bindi
 		var snapshot BindingSnapshot
 		var err error
 		switch binding.Type {
-		case "client":
+		case "device":
 			snapshot, err = r.entity(ctx, req.Enrollment.WorkspaceID, binding)
 		case "channel":
 			snapshot, err = r.resource(ctx, req.Enrollment.WorkspaceID, binding)
@@ -50,7 +50,7 @@ func (r *atomResolver) Resolve(ctx context.Context, req ResolveRequest) ([]Bindi
 func (r *atomResolver) entity(ctx context.Context, tenantID string, binding BindingRequest) (BindingSnapshot, error) {
 	entity, err := r.client.GetEntity(ctx, binding.ResourceID)
 	if err != nil || entity.TenantID != tenantID || entity.Kind != "device" {
-		return BindingSnapshot{}, errors.Wrap(svcerr.ErrNotFound, fmt.Errorf("client %q not found in tenant", binding.ResourceID))
+		return BindingSnapshot{}, errors.Wrap(svcerr.ErrNotFound, fmt.Errorf("device %q not found in tenant", binding.ResourceID))
 	}
 	values := map[string]any{snapshotKeyID: entity.ID, snapshotKeyName: entity.Name, snapshotKeyWorkspaceID: entity.TenantID}
 	copyStringAttribute(values, entity.Attributes, snapshotKeyIdentity)

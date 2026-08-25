@@ -29,7 +29,7 @@ func TestDeviceBootstrapEndpoints(t *testing.T) {
 	challengeCall := svc.On("IssueBootstrapChallenge", mock.Anything, "device-1").Return(challenge, nil).Once()
 
 	res, err := server.Client().Post(
-		server.URL+"/clients/bootstrap/challenges/device-1",
+		server.URL+"/devices/bootstrap/challenges/device-1",
 		"application/json",
 		nil,
 	)
@@ -62,7 +62,7 @@ func TestDeviceBootstrapEndpoints(t *testing.T) {
 	bootstrapCall := svc.On("Bootstrap", mock.Anything, "device-1", proof).Return(cfg, nil).Once()
 
 	res, err = server.Client().Post(
-		server.URL+"/clients/bootstrap/configurations/device-1",
+		server.URL+"/devices/bootstrap/configurations/device-1",
 		"application/json",
 		bytes.NewReader(body),
 	)
@@ -83,7 +83,7 @@ func TestDeviceBootstrapEndpoints(t *testing.T) {
 		Return(bootstrap.Config{}, bootstrap.ErrDeviceBootstrapAuth).
 		Once()
 	res, err = server.Client().Post(
-		server.URL+"/clients/bootstrap/configurations/device-1",
+		server.URL+"/devices/bootstrap/configurations/device-1",
 		"application/json",
 		bytes.NewReader(body),
 	)
@@ -92,7 +92,7 @@ func TestDeviceBootstrapEndpoints(t *testing.T) {
 	require.NoError(t, res.Body.Close())
 	invalidProofCall.Unset()
 
-	req, err := http.NewRequest(http.MethodGet, server.URL+"/clients/bootstrap/device-1", nil)
+	req, err := http.NewRequest(http.MethodGet, server.URL+"/devices/bootstrap/device-1", nil)
 	require.NoError(t, err)
 	res, err = server.Client().Do(req)
 	require.NoError(t, err)

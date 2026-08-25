@@ -501,7 +501,7 @@ components:
         entity_type:
           type: string
           enum:
-            [groups, channels, clients, workspaces, users, dashboards, messages]
+            [groups, channels, devices, workspaces, users, dashboards, messages]
           example: "groups"
           description: Type of entity the scope applies to
         entity_id:

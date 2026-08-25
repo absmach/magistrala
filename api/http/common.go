@@ -37,7 +37,7 @@ const (
 	TagsKey     = "tags"
 	StatusKey   = "status"
 
-	ClientKey    = "client"
+	DeviceKey    = "device"
 	ChannelKey   = "channel"
 	ConnTypeKey  = "connection_type"
 	GroupKey     = "group"
@@ -77,7 +77,7 @@ const (
 	DefStartLevel   = 1
 	DefEndLevel     = 0
 	DefStatus       = "enabled"
-	DefClientStatus = "enabled"
+	DefDeviceStatus = "enabled"
 	DefUserStatus   = "enabled"
 	DefGroupStatus  = "enabled"
 

@@ -4,8 +4,8 @@
 
 ####
 ## The script helps to copy tables from one database to another database
-## This script can be used to synchronize workspaces and workspaces roles tables to groups, channels and clients database
-## and groups and groups roles to channels and clients database
+## This script can be used to synchronize workspaces and workspaces roles tables to groups, channels and devices database
+## and groups and groups roles to channels and devices database
 ####
 
 set -e

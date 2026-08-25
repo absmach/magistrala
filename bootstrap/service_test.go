@@ -20,10 +20,10 @@ import (
 )
 
 const (
-	validToken      = "validToken"
-	invalidDomainID = "invalid"
-	unknown         = "unknown"
-	validID         = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
+	validToken         = "validToken"
+	invalidWorkspaceID = "invalid"
+	unknown            = "unknown"
+	validID            = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 )
 
 var (
@@ -116,53 +116,53 @@ func TestView(t *testing.T) {
 	svc := newService()
 
 	cases := []struct {
-		desc         string
-		configID     string
-		userID       string
-		domain       string
-		clientDomain string
-		token        string
-		session      smqauthn.Session
-		retrieveErr  error
-		clientErr    error
-		channelErr   error
-		err          error
+		desc            string
+		configID        string
+		userID          string
+		workspace       string
+		configWorkspace string
+		token           string
+		session         smqauthn.Session
+		retrieveErr     error
+		clientErr       error
+		channelErr      error
+		err             error
 	}{
 		{
-			desc:         "view an existing config",
-			configID:     config.ID,
-			userID:       validID,
-			clientDomain: workspaceID,
-			domain:       workspaceID,
-			token:        validToken,
-			err:          nil,
+			desc:            "view an existing config",
+			configID:        config.ID,
+			userID:          validID,
+			configWorkspace: workspaceID,
+			workspace:       workspaceID,
+			token:           validToken,
+			err:             nil,
 		},
 		{
-			desc:         "view a non-existing config",
-			configID:     unknown,
-			userID:       validID,
-			clientDomain: workspaceID,
-			domain:       workspaceID,
-			token:        validToken,
-			retrieveErr:  svcerr.ErrNotFound,
-			err:          svcerr.ErrNotFound,
+			desc:            "view a non-existing config",
+			configID:        unknown,
+			userID:          validID,
+			configWorkspace: workspaceID,
+			workspace:       workspaceID,
+			token:           validToken,
+			retrieveErr:     svcerr.ErrNotFound,
+			err:             svcerr.ErrNotFound,
 		},
 		{
-			desc:         "view a config with invalid domain",
-			configID:     config.ID,
-			userID:       validID,
-			clientDomain: invalidDomainID,
-			domain:       invalidDomainID,
-			token:        validToken,
-			retrieveErr:  svcerr.ErrNotFound,
-			err:          svcerr.ErrNotFound,
+			desc:            "view a config with invalid workspace",
+			configID:        config.ID,
+			userID:          validID,
+			configWorkspace: invalidWorkspaceID,
+			workspace:       invalidWorkspaceID,
+			token:           validToken,
+			retrieveErr:     svcerr.ErrNotFound,
+			err:             svcerr.ErrNotFound,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			tc.session = smqauthn.Session{UserID: tc.userID, WorkspaceID: tc.domain, WorkspaceUserID: validID}
-			repoCall := boot.On("RetrieveByID", context.Background(), tc.clientDomain, tc.configID).Return(config, tc.retrieveErr)
+			tc.session = smqauthn.Session{UserID: tc.userID, WorkspaceID: tc.workspace, WorkspaceUserID: validID}
+			repoCall := boot.On("RetrieveByID", context.Background(), tc.configWorkspace, tc.configID).Return(config, tc.retrieveErr)
 			_, err := svc.View(context.Background(), tc.session, tc.configID)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			repoCall.Unset()
@@ -375,7 +375,7 @@ func TestList(t *testing.T) {
 			err:         nil,
 		},
 		{
-			desc: "list configs successfully as domain admin",
+			desc: "list configs successfully as workspace admin",
 			config: bootstrap.ConfigsPage{
 				Total:   uint64(len(saved)),
 				Offset:  0,
@@ -426,7 +426,7 @@ func TestList(t *testing.T) {
 			err:         nil,
 		},
 		{
-			desc: "list configs with specified name as domain admin",
+			desc: "list configs with specified name as workspace admin",
 			config: bootstrap.ConfigsPage{
 				Total:   1,
 				Offset:  0,
@@ -477,7 +477,7 @@ func TestList(t *testing.T) {
 			err:         nil,
 		},
 		{
-			desc: "list last page as domain admin",
+			desc: "list last page as workspace admin",
 			config: bootstrap.ConfigsPage{
 				Total:   uint64(len(saved)),
 				Offset:  95,
@@ -528,7 +528,7 @@ func TestList(t *testing.T) {
 			err:         nil,
 		},
 		{
-			desc: "list configs with Active status as domain admin",
+			desc: "list configs with Active status as workspace admin",
 			config: bootstrap.ConfigsPage{
 				Total:   1,
 				Offset:  35,
@@ -892,7 +892,7 @@ func TestCreateProfile(t *testing.T) {
 			desc: "create profile with invalid slot: empty name",
 			profile: bootstrap.Profile{
 				Name:         "test",
-				BindingSlots: []bootstrap.BindingSlot{{Name: "", Type: "client"}},
+				BindingSlots: []bootstrap.BindingSlot{{Name: "", Type: "device"}},
 			},
 			err: errors.New("invalid binding slot: slot name is required"),
 		},
@@ -909,7 +909,7 @@ func TestCreateProfile(t *testing.T) {
 			profile: bootstrap.Profile{
 				Name: "test",
 				BindingSlots: []bootstrap.BindingSlot{
-					{Name: "mqtt", Type: "client"},
+					{Name: "mqtt", Type: "device"},
 					{Name: "mqtt", Type: "channel"},
 				},
 			},
@@ -942,7 +942,7 @@ func TestCreateProfile(t *testing.T) {
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
 			if tc.err == nil {
 				assert.NotEmpty(t, saved.ID, fmt.Sprintf("%s: expected non-empty profile ID\n", tc.desc))
-				assert.Equal(t, workspaceID, saved.WorkspaceID, fmt.Sprintf("%s: expected domain ID %s got %s\n", tc.desc, workspaceID, saved.WorkspaceID))
+				assert.Equal(t, workspaceID, saved.WorkspaceID, fmt.Sprintf("%s: expected workspace ID %s got %s\n", tc.desc, workspaceID, saved.WorkspaceID))
 				assert.Equal(t, tc.wantFormat, saved.ContentFormat, fmt.Sprintf("%s: expected %s format\n", tc.desc, tc.wantFormat))
 				assert.Equal(t, tc.wantContentType, saved.ContentType, fmt.Sprintf("%s: expected %s content type\n", tc.desc, tc.wantContentType))
 				assert.Equal(t, 1, saved.Version, fmt.Sprintf("%s: expected version 1\n", tc.desc))
@@ -1042,7 +1042,7 @@ func TestUpdateProfile(t *testing.T) {
 				ID:   validProfile.ID,
 				Name: "test",
 				BindingSlots: []bootstrap.BindingSlot{
-					{Name: "slot1", Type: "client"},
+					{Name: "slot1", Type: "device"},
 					{Name: "slot1", Type: "channel"},
 				},
 			},
@@ -1169,7 +1169,7 @@ func TestBindResources(t *testing.T) {
 		WorkspaceID: workspaceID,
 		Name:        "bind-profile",
 		BindingSlots: []bootstrap.BindingSlot{
-			{Name: "mqtt", Type: "client", Required: true},
+			{Name: "mqtt", Type: "device", Required: true},
 			{Name: "commands", Type: "channel", Required: true},
 		},
 	}
@@ -1198,7 +1198,7 @@ func TestBindResources(t *testing.T) {
 	snapshot := bootstrap.BindingSnapshot{
 		ConfigID:   config.ID,
 		Slot:       "mqtt",
-		Type:       "client",
+		Type:       "device",
 		ResourceID: validID,
 		Snapshot:   map[string]any{"id": validID},
 	}
@@ -1212,7 +1212,7 @@ func TestBindResources(t *testing.T) {
 	}
 
 	requested := []bootstrap.BindingRequest{
-		{Slot: "mqtt", Type: "client", ResourceID: validID},
+		{Slot: "mqtt", Type: "device", ResourceID: validID},
 	}
 
 	channelRequested := []bootstrap.BindingRequest{
@@ -1248,14 +1248,14 @@ func TestBindResources(t *testing.T) {
 		{
 			desc:     "bind resources with unknown slot",
 			configID: config.ID,
-			bindings: []bootstrap.BindingRequest{{Slot: "unknown", Type: "client", ResourceID: validID}},
+			bindings: []bootstrap.BindingRequest{{Slot: "unknown", Type: "device", ResourceID: validID}},
 			err:      errors.New("binding slot \"unknown\" is not available in the assigned profile; available slots: mqtt, commands"),
 		},
 		{
 			desc:     "bind resources with wrong slot type",
 			configID: config.ID,
 			bindings: []bootstrap.BindingRequest{{Slot: "mqtt", Type: "channel", ResourceID: validID}},
-			err:      errors.New("binding slot \"mqtt\" requires type \"client\", got \"channel\""),
+			err:      errors.New("binding slot \"mqtt\" requires type \"device\", got \"channel\""),
 		},
 		{
 			desc:       "bind resources with resolver error",
@@ -1310,7 +1310,7 @@ func TestListBindings(t *testing.T) {
 	session := smqauthn.Session{UserID: validID, WorkspaceID: workspaceID, WorkspaceUserID: validID}
 
 	snapshots := []bootstrap.BindingSnapshot{
-		{ConfigID: config.ID, Slot: "mqtt", Type: "client", ResourceID: validID, Snapshot: map[string]any{"id": validID}},
+		{ConfigID: config.ID, Slot: "mqtt", Type: "device", ResourceID: validID, Snapshot: map[string]any{"id": validID}},
 	}
 
 	cases := []struct {
@@ -1363,7 +1363,7 @@ func TestRefreshBindings(t *testing.T) {
 		WorkspaceID: workspaceID,
 		Name:        "refresh-profile",
 		BindingSlots: []bootstrap.BindingSlot{
-			{Name: "mqtt", Type: "client", Required: true},
+			{Name: "mqtt", Type: "device", Required: true},
 		},
 	}
 
@@ -1374,11 +1374,11 @@ func TestRefreshBindings(t *testing.T) {
 	}
 
 	existing := []bootstrap.BindingSnapshot{
-		{ConfigID: config.ID, Slot: "mqtt", Type: "client", ResourceID: validID},
+		{ConfigID: config.ID, Slot: "mqtt", Type: "device", ResourceID: validID},
 	}
 
 	refreshed := []bootstrap.BindingSnapshot{
-		{ConfigID: config.ID, Slot: "mqtt", Type: "client", ResourceID: validID, Snapshot: map[string]any{"id": validID}},
+		{ConfigID: config.ID, Slot: "mqtt", Type: "device", ResourceID: validID, Snapshot: map[string]any{"id": validID}},
 	}
 
 	cases := []struct {
@@ -1429,7 +1429,7 @@ func TestRefreshBindings(t *testing.T) {
 			snapshots: []bootstrap.BindingSnapshot{
 				{ConfigID: config.ID, Slot: "mqtt", Type: "channel", ResourceID: validID},
 			},
-			err: errors.New("invalid binding slot: slot \"mqtt\" expects \"client\", got \"channel\""),
+			err: errors.New("invalid binding slot: slot \"mqtt\" expects \"device\", got \"channel\""),
 		},
 		{
 			desc:      "refresh bindings with save error",

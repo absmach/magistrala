@@ -50,7 +50,7 @@ func ObjectKind(legacyObjectType, resourceKind string) string {
 		return atomObjectKindTenant
 	case policies.PlatformType:
 		return policies.PlatformType
-	case policies.ClientType:
+	case policies.DeviceType:
 		return atomObjectKindEntity
 	case policies.GroupType:
 		return atomObjectKindGroup

@@ -50,7 +50,7 @@ message RemoveConnectionsRes {
 }
 
 message Connection {
-  string client_id = 1;
+  string device_id = 1;
   string channel_id = 2;
   string workspace_id  = 3;
   uint32 type = 4;

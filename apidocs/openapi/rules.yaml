@@ -53,7 +53,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
         "503":
-          description: Failed to receive response from the clients service.
+          description: Failed to receive response from the devices service.
     get:
       operationId: getRules
       summary: List Rules

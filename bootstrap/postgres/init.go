@@ -469,6 +469,22 @@ func Migration() *migrate.MemoryMigrationSource {
 					renameColumn("configs", "workspace_id", "domain_id"),
 				},
 			},
+			{
+				// configs_8 renamed the configs.client_id column itself to id,
+				// but left the indexes that predate that rename still spelling
+				// out "client_id" even though they now index the id column.
+				// Renames them to match, as part of the platform-wide rename of
+				// clients to devices.
+				Id: "configs_z02",
+				Up: []string{
+					renameIndex("configs_client_id_key", "configs_id_key"),
+					renameIndex("configs_client_id_workspace_id_key", "configs_id_workspace_id_key"),
+				},
+				Down: []string{
+					renameIndex("configs_id_workspace_id_key", "configs_client_id_workspace_id_key"),
+					renameIndex("configs_id_key", "configs_client_id_key"),
+				},
+			},
 		},
 	}
 }

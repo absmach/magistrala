@@ -352,11 +352,11 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response any) erro
 // set. noAccess means the caller may read nothing on this channel, so the response must be empty
 // rather than unfiltered.
 func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcDevicesV1.DevicesServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer) (pm readers.PageMetadata, noAccess bool, err error) {
-	clientID, clientType, superAdmin, err := authenticate(ctx, req.token, req.key, req.workspace, authn, clients)
+	deviceID, deviceType, superAdmin, err := authenticate(ctx, req.token, req.key, req.workspace, authn, clients)
 	if err != nil {
 		return readers.PageMetadata{}, false, err
 	}
-	if err := authorize(ctx, clientID, clientType, req.chanID, req.workspace, channels); err != nil {
+	if err := authorize(ctx, deviceID, deviceType, req.chanID, req.workspace, channels); err != nil {
 		return readers.PageMetadata{}, false, err
 	}
 
@@ -365,11 +365,11 @@ func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authent
 	}
 
 	// Per-device grants only exist for workspace users, not for clients authenticating with a secret key.
-	if clientType != policies.UserType {
+	if deviceType != policies.UserType {
 		return req.pageMeta, false, nil
 	}
 
-	scope, err := readAuthz.resolve(ctx, req.workspace, clientID, requestedPublishers(req.pageMeta), requestedDeviceIDs(req.pageMeta))
+	scope, err := readAuthz.resolve(ctx, req.workspace, deviceID, requestedPublishers(req.pageMeta), requestedDeviceIDs(req.pageMeta))
 	if err != nil {
 		return readers.PageMetadata{}, false, err
 	}
@@ -385,7 +385,7 @@ func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authent
 	return pm, false, nil
 }
 
-func authenticate(ctx context.Context, token, key, workspace string, authn smqauthn.Authentication, clients grpcDevicesV1.DevicesServiceClient) (clientID string, clientType string, superAdmin bool, err error) {
+func authenticate(ctx context.Context, token, key, workspace string, authn smqauthn.Authentication, clients grpcDevicesV1.DevicesServiceClient) (deviceID string, deviceType string, superAdmin bool, err error) {
 	switch {
 	case token != "":
 		session, err := authn.Authenticate(ctx, token)
@@ -407,16 +407,16 @@ func authenticate(ctx context.Context, token, key, workspace string, authn smqau
 		if !res.GetAuthenticated() {
 			return "", "", false, svcerr.ErrAuthentication
 		}
-		return res.GetId(), policies.ClientType, false, nil
+		return res.GetId(), policies.DeviceType, false, nil
 	default:
 		return "", "", false, svcerr.ErrAuthentication
 	}
 }
 
-func authorize(ctx context.Context, clientID, clientType, chanID, workspace string, channels grpcChannelsV1.ChannelsServiceClient) (err error) {
+func authorize(ctx context.Context, deviceID, deviceType, chanID, workspace string, channels grpcChannelsV1.ChannelsServiceClient) (err error) {
 	res, err := channels.Authorize(ctx, &grpcChannelsV1.AuthzReq{
-		ClientId:    clientID,
-		ClientType:  clientType,
+		DeviceId:    deviceID,
+		DeviceType:  deviceType,
 		Type:        uint32(connections.Subscribe),
 		ChannelId:   chanID,
 		WorkspaceId: workspace,

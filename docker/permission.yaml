@@ -139,8 +139,8 @@ workspaces:
     - list_invitation: membership_permission
     - list_workspace_invitation: manage_role_permission
     - delete_invitation: manage_role_permission
-    - create_clients: client_create_permission
-    - list_clients: client_read_permission
+    - create_devices: client_create_permission
+    - list_devices: client_read_permission
     - create_channels: channel_create_permission
     - list_channels: channel_read_permission
     - create_groups: group_create_permission

@@ -172,7 +172,7 @@ func TestAdd(t *testing.T) {
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusCreated,
-			location:    "/clients/configs/" + c.ID,
+			location:    "/devices/configs/" + c.ID,
 			err:         nil,
 		},
 		{
@@ -247,7 +247,7 @@ func TestAdd(t *testing.T) {
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPost,
-				url:         fmt.Sprintf("%s/%s/clients/configs", bs.URL, tc.workspaceID),
+				url:         fmt.Sprintf("%s/%s/devices/configs", bs.URL, tc.workspaceID),
 				contentType: tc.contentType,
 				token:       tc.token,
 				body:        strings.NewReader(tc.req),
@@ -339,7 +339,7 @@ func TestView(t *testing.T) {
 			req := testRequest{
 				client: bs.Client(),
 				method: http.MethodGet,
-				url:    fmt.Sprintf("%s/%s/clients/configs/%s", bs.URL, workspaceID, tc.id),
+				url:    fmt.Sprintf("%s/%s/devices/configs/%s", bs.URL, workspaceID, tc.id),
 				token:  tc.token,
 			}
 			res, err := req.make()
@@ -463,7 +463,7 @@ func TestUpdate(t *testing.T) {
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPatch,
-				url:         fmt.Sprintf("%s/%s/clients/configs/%s", bs.URL, workspaceID, tc.id),
+				url:         fmt.Sprintf("%s/%s/devices/configs/%s", bs.URL, workspaceID, tc.id),
 				contentType: tc.contentType,
 				token:       tc.token,
 				body:        strings.NewReader(tc.req),
@@ -571,7 +571,7 @@ func TestUpdateCert(t *testing.T) {
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPatch,
-				url:         fmt.Sprintf("%s/%s/clients/configs/certs/%s", bs.URL, workspaceID, tc.id),
+				url:         fmt.Sprintf("%s/%s/devices/configs/certs/%s", bs.URL, workspaceID, tc.id),
 				contentType: tc.contentType,
 				token:       tc.token,
 				body:        strings.NewReader(tc.req),
@@ -593,7 +593,7 @@ func TestList(t *testing.T) {
 
 	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
-	path := fmt.Sprintf("%s/%s/%s", bs.URL, workspaceID, "clients/configs")
+	path := fmt.Sprintf("%s/%s/%s", bs.URL, workspaceID, "devices/configs")
 
 	c := newConfig()
 
@@ -912,7 +912,7 @@ func TestRemove(t *testing.T) {
 			req := testRequest{
 				client: bs.Client(),
 				method: http.MethodDelete,
-				url:    fmt.Sprintf("%s/%s/clients/configs/%s", bs.URL, workspaceID, tc.id),
+				url:    fmt.Sprintf("%s/%s/devices/configs/%s", bs.URL, workspaceID, tc.id),
 				token:  tc.token,
 			}
 			res, err := req.make()
@@ -998,7 +998,7 @@ func TestChangeStatus(t *testing.T) {
 			req := testRequest{
 				client: bs.Client(),
 				method: http.MethodPost,
-				url:    fmt.Sprintf("%s/%s/clients/configs/%s/%s", bs.URL, workspaceID, tc.id, tc.action),
+				url:    fmt.Sprintf("%s/%s/devices/configs/%s/%s", bs.URL, workspaceID, tc.id, tc.action),
 				token:  tc.token,
 			}
 			res, err := req.make()
@@ -1097,7 +1097,7 @@ func TestUploadProfile(t *testing.T) {
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPost,
-				url:         fmt.Sprintf("%s/%s/clients/bootstrap/profiles/upload", bs.URL, workspaceID),
+				url:         fmt.Sprintf("%s/%s/devices/bootstrap/profiles/upload", bs.URL, workspaceID),
 				contentType: tc.contentType,
 				token:       validToken,
 				body:        strings.NewReader(tc.body),
@@ -1117,7 +1117,7 @@ func TestListProfiles(t *testing.T) {
 	defer bs.Close()
 
 	session := smqauthn.Session{WorkspaceUserID: workspaceID + "_" + validID, UserID: validID, WorkspaceID: workspaceID}
-	path := fmt.Sprintf("%s/%s/clients/bootstrap/profiles", bs.URL, workspaceID)
+	path := fmt.Sprintf("%s/%s/devices/bootstrap/profiles", bs.URL, workspaceID)
 
 	profiles := []bootstrap.Profile{
 		{ID: testsutil.GenerateUUID(t), WorkspaceID: workspaceID, Name: "gateway-profile"},
@@ -1196,7 +1196,7 @@ func TestProfileSlots(t *testing.T) {
 	session := smqauthn.Session{WorkspaceUserID: workspaceID + "_" + validID, UserID: validID, WorkspaceID: workspaceID}
 	profileID := testsutil.GenerateUUID(t)
 	slots := []bootstrap.BindingSlot{
-		{Name: "mqtt_client", Type: "client", Required: true, Fields: []string{"id", "secret"}},
+		{Name: "mqtt_client", Type: "device", Required: true, Fields: []string{"id", "secret"}},
 		{Name: "telemetry", Type: "channel", Required: true, Fields: []string{"id", "topic"}},
 	}
 	profile := bootstrap.Profile{
@@ -1210,7 +1210,7 @@ func TestProfileSlots(t *testing.T) {
 	req := testRequest{
 		client: bs.Client(),
 		method: http.MethodGet,
-		url:    fmt.Sprintf("%s/%s/clients/bootstrap/profiles/%s/slots", bs.URL, workspaceID, profileID),
+		url:    fmt.Sprintf("%s/%s/devices/bootstrap/profiles/%s/slots", bs.URL, workspaceID, profileID),
 		token:  validToken,
 	}
 	res, err := req.make()
@@ -1328,7 +1328,7 @@ func TestRenderPreview(t *testing.T) {
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPost,
-				url:         fmt.Sprintf("%s/%s/clients/bootstrap/profiles/%s/render-preview", bs.URL, workspaceID, profileID),
+				url:         fmt.Sprintf("%s/%s/devices/bootstrap/profiles/%s/render-preview", bs.URL, workspaceID, profileID),
 				contentType: contentType,
 				token:       validToken,
 				body:        strings.NewReader(tc.body),

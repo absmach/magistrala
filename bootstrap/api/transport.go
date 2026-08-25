@@ -51,7 +51,7 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader b
 
 	r := chi.NewRouter()
 
-	r.Route("/{workspaceID}/clients", func(r chi.Router) {
+	r.Route("/{workspaceID}/devices", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(authn.WithOptions(smqauthn.WithWorkspaceCheck(true)).Middleware())
 			r.Route("/configs", func(r chi.Router) {
@@ -187,7 +187,7 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader b
 		})
 	})
 
-	r.Route("/clients/bootstrap", func(r chi.Router) {
+	r.Route("/devices/bootstrap", func(r chi.Router) {
 		r.Post("/challenges/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
 			issueBootstrapChallengeEndpoint(svc),
 			decodeBootstrapChallengeRequest,

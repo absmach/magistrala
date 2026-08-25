@@ -147,7 +147,7 @@ var cmdBootstrap = []cobra.Command{
 	{
 		Use:   "bootstrap [<external_id> <external_key> | secure <external_id> <external_key> <crypto_key> ]",
 		Short: "Bootstrap config",
-		Long: `Returns Config to the Client with provided external ID using external key.
+		Long: `Returns Config to the Device with provided external ID using external key.
 				secure - Retrieves a configuration with given external ID and encrypted external key.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 2 {

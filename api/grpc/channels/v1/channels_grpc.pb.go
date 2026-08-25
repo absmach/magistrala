@@ -24,7 +24,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	ChannelsService_Authorize_FullMethodName                    = "/channels.v1.ChannelsService/Authorize"
-	ChannelsService_RemoveClientConnections_FullMethodName      = "/channels.v1.ChannelsService/RemoveClientConnections"
+	ChannelsService_RemoveDeviceConnections_FullMethodName      = "/channels.v1.ChannelsService/RemoveDeviceConnections"
 	ChannelsService_UnsetParentGroupFromChannels_FullMethodName = "/channels.v1.ChannelsService/UnsetParentGroupFromChannels"
 	ChannelsService_RetrieveEntity_FullMethodName               = "/channels.v1.ChannelsService/RetrieveEntity"
 	ChannelsService_RetrieveIDByRoute_FullMethodName            = "/channels.v1.ChannelsService/RetrieveIDByRoute"
@@ -35,7 +35,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChannelsServiceClient interface {
 	Authorize(ctx context.Context, in *AuthzReq, opts ...grpc.CallOption) (*AuthzRes, error)
-	RemoveClientConnections(ctx context.Context, in *RemoveClientConnectionsReq, opts ...grpc.CallOption) (*RemoveClientConnectionsRes, error)
+	RemoveDeviceConnections(ctx context.Context, in *RemoveDeviceConnectionsReq, opts ...grpc.CallOption) (*RemoveDeviceConnectionsRes, error)
 	UnsetParentGroupFromChannels(ctx context.Context, in *UnsetParentGroupFromChannelsReq, opts ...grpc.CallOption) (*UnsetParentGroupFromChannelsRes, error)
 	RetrieveEntity(ctx context.Context, in *v1.RetrieveEntityReq, opts ...grpc.CallOption) (*v1.RetrieveEntityRes, error)
 	RetrieveIDByRoute(ctx context.Context, in *v1.RetrieveIDByRouteReq, opts ...grpc.CallOption) (*v1.RetrieveEntityRes, error)
@@ -59,10 +59,10 @@ func (c *channelsServiceClient) Authorize(ctx context.Context, in *AuthzReq, opt
 	return out, nil
 }
 
-func (c *channelsServiceClient) RemoveClientConnections(ctx context.Context, in *RemoveClientConnectionsReq, opts ...grpc.CallOption) (*RemoveClientConnectionsRes, error) {
+func (c *channelsServiceClient) RemoveDeviceConnections(ctx context.Context, in *RemoveDeviceConnectionsReq, opts ...grpc.CallOption) (*RemoveDeviceConnectionsRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RemoveClientConnectionsRes)
-	err := c.cc.Invoke(ctx, ChannelsService_RemoveClientConnections_FullMethodName, in, out, cOpts...)
+	out := new(RemoveDeviceConnectionsRes)
+	err := c.cc.Invoke(ctx, ChannelsService_RemoveDeviceConnections_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (c *channelsServiceClient) RetrieveIDByRoute(ctx context.Context, in *v1.Re
 // for forward compatibility.
 type ChannelsServiceServer interface {
 	Authorize(context.Context, *AuthzReq) (*AuthzRes, error)
-	RemoveClientConnections(context.Context, *RemoveClientConnectionsReq) (*RemoveClientConnectionsRes, error)
+	RemoveDeviceConnections(context.Context, *RemoveDeviceConnectionsReq) (*RemoveDeviceConnectionsRes, error)
 	UnsetParentGroupFromChannels(context.Context, *UnsetParentGroupFromChannelsReq) (*UnsetParentGroupFromChannelsRes, error)
 	RetrieveEntity(context.Context, *v1.RetrieveEntityReq) (*v1.RetrieveEntityRes, error)
 	RetrieveIDByRoute(context.Context, *v1.RetrieveIDByRouteReq) (*v1.RetrieveEntityRes, error)
@@ -121,8 +121,8 @@ type UnimplementedChannelsServiceServer struct{}
 func (UnimplementedChannelsServiceServer) Authorize(context.Context, *AuthzReq) (*AuthzRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method Authorize not implemented")
 }
-func (UnimplementedChannelsServiceServer) RemoveClientConnections(context.Context, *RemoveClientConnectionsReq) (*RemoveClientConnectionsRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method RemoveClientConnections not implemented")
+func (UnimplementedChannelsServiceServer) RemoveDeviceConnections(context.Context, *RemoveDeviceConnectionsReq) (*RemoveDeviceConnectionsRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveDeviceConnections not implemented")
 }
 func (UnimplementedChannelsServiceServer) UnsetParentGroupFromChannels(context.Context, *UnsetParentGroupFromChannelsReq) (*UnsetParentGroupFromChannelsRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method UnsetParentGroupFromChannels not implemented")
@@ -172,20 +172,20 @@ func _ChannelsService_Authorize_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChannelsService_RemoveClientConnections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveClientConnectionsReq)
+func _ChannelsService_RemoveDeviceConnections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveDeviceConnectionsReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ChannelsServiceServer).RemoveClientConnections(ctx, in)
+		return srv.(ChannelsServiceServer).RemoveDeviceConnections(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ChannelsService_RemoveClientConnections_FullMethodName,
+		FullMethod: ChannelsService_RemoveDeviceConnections_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChannelsServiceServer).RemoveClientConnections(ctx, req.(*RemoveClientConnectionsReq))
+		return srv.(ChannelsServiceServer).RemoveDeviceConnections(ctx, req.(*RemoveDeviceConnectionsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -256,8 +256,8 @@ var ChannelsService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ChannelsService_Authorize_Handler,
 		},
 		{
-			MethodName: "RemoveClientConnections",
-			Handler:    _ChannelsService_RemoveClientConnections_Handler,
+			MethodName: "RemoveDeviceConnections",
+			Handler:    _ChannelsService_RemoveDeviceConnections_Handler,
 		},
 		{
 			MethodName: "UnsetParentGroupFromChannels",

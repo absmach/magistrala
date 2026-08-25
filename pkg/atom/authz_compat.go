@@ -107,8 +107,8 @@ func legacyResourceKind(objectKind, objectType string) string {
 	switch objectKind {
 	case policies.ChannelsKind, policies.NewChannelKind:
 		return KindChannel
-	case policies.ClientsKind, policies.NewClientKind:
-		return "client"
+	case policies.DevicesKind, policies.NewDeviceKind:
+		return KindDevice
 	case policies.GroupsKind, policies.NewGroupKind:
 		return atomObjectKindGroup
 	case policies.WorkspacesKind:
@@ -117,8 +117,8 @@ func legacyResourceKind(objectKind, objectType string) string {
 		switch objectType {
 		case policies.ChannelType:
 			return KindChannel
-		case policies.ClientType:
-			return "client"
+		case policies.DeviceType:
+			return KindDevice
 		case policies.GroupType:
 			return atomObjectKindGroup
 		case policies.WorkspaceType:

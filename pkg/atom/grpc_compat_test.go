@@ -174,13 +174,13 @@ func TestAtomDevicesCompatRemoveConnectionsDeletesConnectionPolicies(t *testing.
 	res, err := compat.RemoveConnections(context.Background(), &commonv1.RemoveConnectionsReq{
 		Connections: []*commonv1.Connection{
 			{
-				ClientId:    testDeviceID,
+				DeviceId:    testDeviceID,
 				ChannelId:   "channel-1",
 				WorkspaceId: testWorkspaceID,
 				Type:        uint32(connections.Publish),
 			},
 			{
-				ClientId:    testDeviceID,
+				DeviceId:    testDeviceID,
 				ChannelId:   "channel-1",
 				WorkspaceId: testWorkspaceID,
 				Type:        uint32(connections.Subscribe),

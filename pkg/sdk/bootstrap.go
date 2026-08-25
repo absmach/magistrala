@@ -21,11 +21,11 @@ import (
 )
 
 const (
-	configsEndpoint          = "clients/configs"
-	bootstrapEndpoint        = "clients/bootstrap"
-	bootstrapCertsEndpoint   = "clients/configs/certs"
-	bootstrapProfilesPath    = "clients/bootstrap/profiles"
-	bootstrapEnrollmentsPath = "clients/bootstrap/enrollments"
+	configsEndpoint          = "devices/configs"
+	bootstrapEndpoint        = "devices/bootstrap"
+	bootstrapCertsEndpoint   = "devices/configs/certs"
+	bootstrapProfilesPath    = "devices/bootstrap/profiles"
+	bootstrapEnrollmentsPath = "devices/bootstrap/enrollments"
 	secureEndpoint           = "secure"
 	enableEndpoint           = "enable"
 	disableEndpoint          = "disable"
@@ -163,7 +163,7 @@ func (sdk mgSDK) AddBootstrap(ctx context.Context, cfg BootstrapConfig, workspac
 		return "", sdkerr
 	}
 
-	id := strings.TrimPrefix(headers.Get("Location"), "/clients/configs/")
+	id := strings.TrimPrefix(headers.Get("Location"), "/devices/configs/")
 
 	return id, nil
 }

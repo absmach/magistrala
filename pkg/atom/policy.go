@@ -61,7 +61,7 @@ func policyObjectKind(pr policies.Policy) string {
 		return atomObjectKindTenant
 	case policies.PlatformType:
 		return policies.PlatformType
-	case policies.ClientType:
+	case policies.DeviceType:
 		return atomObjectKindEntity
 	case policies.GroupType:
 		return atomObjectKindGroup

@@ -59,10 +59,10 @@ var _ Service = (*bootstrapService)(nil)
 // Service specifies an API that must be fulfilled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
-	// Add adds new Client Config to the user identified by the provided token.
+	// Add adds new Device Config to the user identified by the provided token.
 	Add(ctx context.Context, session smqauthn.Session, token string, cfg Config) (Config, error)
 
-	// View returns Client Config with given ID belonging to the user identified by the given token.
+	// View returns Device Config with given ID belonging to the user identified by the given token.
 	View(ctx context.Context, session smqauthn.Session, id string) (Config, error)
 
 	// Update updates editable fields of the provided Config.
@@ -100,7 +100,7 @@ type Service interface {
 	// UpdateProfile updates editable fields of the given Profile and returns the updated Profile.
 	UpdateProfile(ctx context.Context, session smqauthn.Session, p Profile) (Profile, error)
 
-	// ListProfiles returns a page of Profiles belonging to the domain.
+	// ListProfiles returns a page of Profiles belonging to the workspace.
 	ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64, name string) (ProfilesPage, error)
 
 	// DeleteProfile removes the Profile with the given ID.
@@ -609,7 +609,7 @@ func (bs bootstrapService) AssignProfile(ctx context.Context, session smqauthn.S
 	if bs.profiles == nil {
 		return errors.Wrap(errAssignProfile, errors.New("profile repository not configured"))
 	}
-	// Validate profile exists in domain.
+	// Validate profile exists in workspace.
 	if _, err := bs.profiles.RetrieveByID(ctx, session.WorkspaceID, profileID); err != nil {
 		return errors.Wrap(errAssignProfile, err)
 	}

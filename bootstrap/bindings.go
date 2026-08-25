@@ -12,7 +12,7 @@ import (
 // a concrete resource.
 type BindingRequest struct {
 	Slot       string `json:"slot"`
-	Type       string `json:"type"`        // "client" | "channel" | "cert"
+	Type       string `json:"type"`        // "device" | "channel" | "cert"
 	ResourceID string `json:"resource_id"` // ID of the resource in its owning service
 }
 

@@ -19,11 +19,11 @@ type Policy struct {
 	Subject string `json:"subject"`
 
 	// SubjectType contains the subject type. Supported subject types are
-	// platform, group, workspace, client, users.
+	// platform, group, workspace, device, users.
 	SubjectType string `json:"subject_type"`
 
 	// SubjectKind contains the subject kind. Supported subject kinds are
-	// token, users, platform, clients,  channels, groups, workspace.
+	// token, users, platform, devices,  channels, groups, workspace.
 	SubjectKind string `json:"subject_kind"`
 
 	// SubjectRelation contains subject relations.
@@ -36,11 +36,11 @@ type Policy struct {
 	Object string `json:"object"`
 
 	// ObjectKind contains the object kind. Supported object kinds are
-	// users, platform, clients,  channels, groups, workspace.
+	// users, platform, devices,  channels, groups, workspace.
 	ObjectKind string `json:"object_kind"`
 
 	// ObjectType contains the object type. Supported object types are
-	// platform, group, workspace, client, users.
+	// platform, group, workspace, device, users.
 	ObjectType string `json:"object_type"`
 
 	// Relation contains the relation. Supported relations are administrator, editor, contributor, member, guest, parent_group,group,workspace.

@@ -80,7 +80,7 @@ func noStoreHeaders() map[string]string {
 func (res configRes) Headers() map[string]string {
 	headers := noStoreHeaders()
 	if res.created {
-		headers["Location"] = fmt.Sprintf("/clients/configs/%s", res.ID)
+		headers["Location"] = fmt.Sprintf("/devices/configs/%s", res.ID)
 	}
 	return headers
 }

@@ -13,8 +13,8 @@ import (
 
 func TestValidateRequiredBindingsReportsAllMissingSlots(t *testing.T) {
 	profile := Profile{BindingSlots: []BindingSlot{
-		{Name: "temperature-sensor", Type: "client", Required: true},
-		{Name: "optional-client", Type: "client", Required: false},
+		{Name: "temperature-sensor", Type: "device", Required: true},
+		{Name: "optional-client", Type: "device", Required: false},
 		{Name: "telemetry-channel", Type: "channel", Required: true},
 		{Name: "command-channel", Type: "channel", Required: true},
 	}}
@@ -31,7 +31,7 @@ func TestValidateRequiredBindingsReportsAllMissingSlots(t *testing.T) {
 
 func TestValidateRequestedBindingsReportsUnavailableSlotAndValidOptions(t *testing.T) {
 	profile := Profile{BindingSlots: []BindingSlot{
-		{Name: "temperature-sensor", Type: "client", Required: true},
+		{Name: "temperature-sensor", Type: "device", Required: true},
 		{Name: "telemetry-channel", Type: "channel", Required: true},
 		{Name: "command-channel", Type: "channel", Required: true},
 	}}

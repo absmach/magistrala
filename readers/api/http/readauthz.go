@@ -501,7 +501,7 @@ func (a *readAuthorizer) load(ctx context.Context, workspace, subject string) (r
 		SubjectKind: policies.UsersKind,
 		Subject:     subject,
 		Workspace:   workspace,
-		ObjectType:  policies.ClientType,
+		ObjectType:  policies.DeviceType,
 		Permission:  policies.ViewPermission,
 	})
 	if err != nil {
@@ -583,11 +583,11 @@ func (a *readAuthorizer) isWorkspaceAdmin(ctx context.Context, workspace, subjec
 // an empty page, never an error), but never needs to hold a grant on the
 // gateway client itself.
 func authzDeviceView(ctx context.Context, chanID, workspace, token, key string, authn smqauthn.Authentication, clients grpcDevicesV1.DevicesServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer, requestedPublishers, requestedDeviceIDs []string) (scope *readers.DeviceScope, noAccess bool, err error) {
-	clientID, clientType, superAdmin, err := authenticate(ctx, token, key, workspace, authn, clients)
+	deviceID, deviceType, superAdmin, err := authenticate(ctx, token, key, workspace, authn, clients)
 	if err != nil {
 		return nil, false, err
 	}
-	if err := authorize(ctx, clientID, clientType, chanID, workspace, channels); err != nil {
+	if err := authorize(ctx, deviceID, deviceType, chanID, workspace, channels); err != nil {
 		return nil, false, err
 	}
 
@@ -605,11 +605,11 @@ func authzDeviceView(ctx context.Context, chanID, workspace, token, key string, 
 	// them to a scope they cannot meaningfully be granted is not possible, so
 	// the honest behaviour is channel-scoped and full, mirroring ReadMessages
 	// (MG-08).
-	if clientType != policies.UserType {
+	if deviceType != policies.UserType {
 		return nil, false, nil
 	}
 
-	resolved, err := readAuthz.resolve(ctx, workspace, clientID, requestedPublishers, requestedDeviceIDs)
+	resolved, err := readAuthz.resolve(ctx, workspace, deviceID, requestedPublishers, requestedDeviceIDs)
 	if err != nil {
 		return nil, false, err
 	}

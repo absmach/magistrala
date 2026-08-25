@@ -326,7 +326,7 @@ func (ps PolicyService) ListPermissions(context.Context, policies.Policy, []stri
 }
 
 func isSupportedObjectList(pr policies.Policy) bool {
-	if pr.SubjectType != policies.UserType || pr.Subject == "" || pr.ObjectType != policies.ClientType {
+	if pr.SubjectType != policies.UserType || pr.Subject == "" || pr.ObjectType != policies.DeviceType {
 		return false
 	}
 	return pr.Permission == policies.ViewPermission || pr.Permission == atomActionRead
@@ -355,7 +355,7 @@ func policyGrantObjectKind(pr policies.Policy) string {
 		return ""
 	}
 	switch pr.ObjectType {
-	case policies.ClientType:
+	case policies.DeviceType:
 		return atomObjectKindEntity
 	case policies.GroupType:
 		return atomObjectKindGroup
@@ -373,7 +373,7 @@ func policyGrantObjectType(pr policies.Policy) string {
 // atomPolicyObjectType is shared by the write and read paths so their object types cannot drift apart.
 func atomPolicyObjectType(objectType string) string {
 	switch objectType {
-	case policies.ClientType:
+	case policies.DeviceType:
 		return atomObjectType(atomObjectKindEntity, entityKind(KindDevice))
 	case policies.ChannelType:
 		return atomObjectType(atomObjectKindResource, KindChannel)
@@ -475,7 +475,7 @@ func groupGrantObjectType(g GroupGrant) string {
 
 func groupGrantObjectKind(g GroupGrant) string {
 	switch g.ObjectType {
-	case policies.ClientType:
+	case policies.DeviceType:
 		return atomObjectKindEntity
 	case policies.ChannelType, policies.RulesType, policies.ReportsType, policies.AlarmsType:
 		return atomObjectKindResource
@@ -486,8 +486,8 @@ func groupGrantObjectKind(g GroupGrant) string {
 
 func groupGrantPolicyObjectType(objectType string) string {
 	switch objectType {
-	case atomPolicyObjectType(policies.ClientType):
-		return policies.ClientType
+	case atomPolicyObjectType(policies.DeviceType):
+		return policies.DeviceType
 	case atomPolicyObjectType(policies.ChannelType):
 		return policies.ChannelType
 	case atomPolicyObjectType(policies.RulesType):

@@ -195,7 +195,7 @@ type PageMetadata struct {
 	InputChannel       string    `json:"input_channel,omitempty"`
 	RuleID             string    `json:"rule_id,omitempty"`
 	ChannelID          string    `json:"channel_id,omitempty"`
-	ClientID           string    `json:"client_id,omitempty"`
+	DeviceID           string    `json:"device_id,omitempty"`
 	Subtopic           string    `json:"subtopic,omitempty"`
 	AssigneeID         string    `json:"assignee_id,omitempty"`
 	Severity           uint8     `json:"severity,omitempty"`

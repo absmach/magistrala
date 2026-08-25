@@ -21,7 +21,7 @@ type Alarm struct {
 	RuleID         string    `json:"rule_id,omitempty"`
 	WorkspaceID    string    `json:"workspace_id,omitempty"`
 	ChannelID      string    `json:"channel_id,omitempty"`
-	ClientID       string    `json:"client_id,omitempty"`
+	DeviceID       string    `json:"device_id,omitempty"`
 	Subtopic       string    `json:"subtopic,omitempty"`
 	Status         string    `json:"status,omitempty"`
 	Measurement    string    `json:"measurement,omitempty"`

@@ -109,6 +109,33 @@ func TestGroupCreateRejectsUnsupportedGroupType(t *testing.T) {
 	}
 }
 
+func TestPasswordChangeUsesVerifiedSelfMutation(t *testing.T) {
+	clearAtomEnv(t)
+	server, req := recordingServer(t, `{"data":{"`+respChangePassword+`":true}}`)
+
+	err := runRootCmd(t,
+		"--graphql-url", server.URL+atomGraphQLPath,
+		"--token", "test-token",
+		"password", "change", "old-password", "new-password",
+	)
+	if err != nil {
+		t.Fatalf("execute command: %v", err)
+	}
+
+	if !strings.Contains(req.Query, "changeOwnPassword") {
+		t.Errorf("query does not change own password: %s", req.Query)
+	}
+	if strings.Contains(req.Query, "createPassword") {
+		t.Errorf("password change must not create a replacement credential directly: %s", req.Query)
+	}
+	if req.Variables["currentPassword"] != "old-password" {
+		t.Errorf("unexpected current password variable: %#v", req.Variables["currentPassword"])
+	}
+	if req.Variables["newPassword"] != "new-password" {
+		t.Errorf("unexpected new password variable: %#v", req.Variables["newPassword"])
+	}
+}
+
 func TestWorkspaceCreateSeedsDefaultDeviceTypes(t *testing.T) {
 	clearAtomEnv(t)
 	createdKeys := map[string]bool{}

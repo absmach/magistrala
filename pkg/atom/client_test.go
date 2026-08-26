@@ -601,6 +601,38 @@ func TestRevealSharedKey(t *testing.T) {
 	}
 }
 
+func TestChangeOwnPassword(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != atomGraphQLPath {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+		var payload struct {
+			Query     string         `json:"query"`
+			Variables map[string]any `json:"variables"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(payload.Query, "changeOwnPassword") {
+			t.Fatalf("query does not change own password: %s", payload.Query)
+		}
+		if payload.Variables["currentPassword"] != "old-password" || payload.Variables["newPassword"] != "new-password" {
+			t.Fatalf("unexpected variables: %+v", payload.Variables)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": map[string]any{
+				"changeOwnPassword": true,
+			},
+		})
+	}))
+	defer srv.Close()
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	if err := client.ChangeOwnPassword(context.Background(), "old-password", "new-password"); err != nil {
+		t.Fatalf("change own password failed: %v", err)
+	}
+}
+
 func TestListCredentials(t *testing.T) {
 	createdAt := "2026-06-30T10:15:30Z"
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

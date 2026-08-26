@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,8 +19,9 @@ import (
 )
 
 const (
-	defCertsSvcURL    = "http://localhost:9010"
-	defHTTPAdapterURL = "http://localhost:9026"
+	defHTTPAdapterURL = "http://localhost/http"
+	cliTimeoutEnv     = "MG_CLI_ATOM_TIMEOUT"
+	defCLITimeout     = 90 * time.Second
 )
 
 type rootOptions struct {
@@ -34,13 +36,12 @@ func NewRootCmd() *cobra.Command {
 	opts := &rootOptions{
 		graphQLURL: graphQLURLFromEnv(atomCfg.URL),
 		token:      strings.TrimSpace(atomCfg.Token),
-		timeout:    atomCfg.Timeout,
+		timeout:    cliTimeout(),
 	}
 
 	// health is the one command still served by the legacy per-service HTTP
 	// APIs rather than by Atom, so it keeps using the Magistrala SDK.
 	SetSDK(smqsdk.NewSDK(smqsdk.Config{
-		CertsURL:       envOrDefault("MG_CERTS_URL", defCertsSvcURL),
 		HTTPAdapterURL: envOrDefault("MG_HTTP_ADAPTER_URL", defHTTPAdapterURL),
 	}))
 
@@ -54,6 +55,7 @@ func NewRootCmd() *cobra.Command {
 			cfg := atomCfg
 			cfg.URL = atomBaseURL(opts.graphQLURL, atomCfg.URL)
 			cfg.Token = opts.token
+			cfg.Timeout = opts.timeout
 			SetAtomClient(atom.NewClient(cfg))
 		},
 	}
@@ -78,6 +80,23 @@ func NewRootCmd() *cobra.Command {
 	)
 
 	return cmd
+}
+
+func cliTimeout() time.Duration {
+	raw := strings.TrimSpace(os.Getenv(cliTimeoutEnv))
+	if raw == "" {
+		return defCLITimeout
+	}
+	timeout, err := time.ParseDuration(raw)
+	if err == nil && timeout > 0 {
+		return timeout
+	}
+	seconds, err := strconv.Atoi(raw)
+	if err == nil && seconds > 0 {
+		return time.Duration(seconds) * time.Second
+	}
+
+	return defCLITimeout
 }
 
 // atomBaseURL turns a GraphQL endpoint back into the Atom base URL

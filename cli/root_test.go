@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 )
 
 func clearAtomEnv(t *testing.T) {
@@ -16,6 +17,8 @@ func clearAtomEnv(t *testing.T) {
 	t.Setenv("ATOM_GRAPHQL_URL", "")
 	t.Setenv("ATOM_SERVICE_TOKEN", "")
 	t.Setenv("ATOM_ADMIN_TOKEN", "")
+	t.Setenv("ATOM_TIMEOUT", "")
+	t.Setenv(cliTimeoutEnv, "")
 }
 
 func TestRootCommandContainsAtomBackedCommands(t *testing.T) {
@@ -66,6 +69,31 @@ func TestGraphQLURLFromEnv(t *testing.T) {
 				t.Fatalf("unexpected endpoint: got %q want %q", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestCLITimeoutDefaultsToInteractiveTimeout(t *testing.T) {
+	t.Setenv(cliTimeoutEnv, "")
+	t.Setenv("ATOM_TIMEOUT", "5s")
+
+	if got := cliTimeout(); got != defCLITimeout {
+		t.Fatalf("unexpected default CLI timeout: got %s want %s", got, defCLITimeout)
+	}
+}
+
+func TestCLITimeoutHonorsCLIEnvironmentValue(t *testing.T) {
+	t.Setenv(cliTimeoutEnv, "3s")
+
+	if got := cliTimeout(); got != 3*time.Second {
+		t.Fatalf("unexpected CLI timeout: got %s want 3s", got)
+	}
+}
+
+func TestCLITimeoutUsesInteractiveDefaultForInvalidCLIEnvironmentValue(t *testing.T) {
+	t.Setenv(cliTimeoutEnv, "definitely-not-a-duration")
+
+	if got := cliTimeout(); got != defCLITimeout {
+		t.Fatalf("unexpected fallback CLI timeout: got %s want %s", got, defCLITimeout)
 	}
 }
 

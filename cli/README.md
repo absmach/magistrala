@@ -14,17 +14,20 @@ The binary is written to `build/cli`.
 
 ## Configuration
 
-The CLI reuses the Atom variables the rest of the deployment already sets, so a
-shell that has sourced `docker/.env` is configured:
+The CLI reuses the Atom endpoint and token variables the rest of the deployment
+already sets, so a shell that has sourced `docker/.env` is configured for local
+GraphQL access:
 
-| Variable             | Purpose                                             |
-| -------------------- | --------------------------------------------------- |
-| `ATOM_URL`           | Atom base URL; the endpoint is this plus `/graphql` |
-| `ATOM_GRAPHQL_URL`   | Full GraphQL endpoint, overrides `ATOM_URL`         |
-| `ATOM_SERVICE_TOKEN` | Bearer token, falling back to `ATOM_ADMIN_TOKEN`    |
-| `ATOM_TIMEOUT`       | Request timeout, `5s` by default                    |
+| Variable              | Purpose                                             |
+| --------------------- | --------------------------------------------------- |
+| `ATOM_URL`            | Atom base URL; the endpoint is this plus `/graphql` |
+| `ATOM_GRAPHQL_URL`    | Full GraphQL endpoint, overrides `ATOM_URL`         |
+| `ATOM_SERVICE_TOKEN`  | Bearer token, falling back to `ATOM_ADMIN_TOKEN`    |
+| `MG_CLI_ATOM_TIMEOUT` | CLI request timeout; defaults to `90s` when unset   |
 
-Without `ATOM_URL` the CLI defaults to `http://localhost:8080/graphql`.
+Without `ATOM_URL` the CLI defaults to `http://localhost:8080/graphql`. The CLI
+does not use the backend service `ATOM_TIMEOUT`; set `MG_CLI_ATOM_TIMEOUT` only
+when an interactive command needs a different request timeout.
 
 Both settings also have flags, which win over the environment:
 
@@ -131,6 +134,13 @@ reachability relation between devices and gateways.
 ./build/cli gateways <gateway_id> devices <workspace_id>
 ```
 
+In raw mode, successful mutating commands that otherwise print `ok` return a
+JSON object:
+
+```json
+{"status":"ok"}
+```
+
 ```bash
 ./build/cli devicetypes create <JSON_device_type> <workspace_id>
 ./build/cli devicetypes all get <workspace_id>
@@ -143,12 +153,12 @@ reachability relation between devices and gateways.
 
 ## Health
 
-`health` is the one command still served by the per-service HTTP APIs rather
-than by Atom. It covers `certs` and `fluxmq`, and reads `MG_CERTS_URL` and
-`MG_HTTP_ADAPTER_URL`.
+`health` is served by the per-service HTTP APIs rather than by Atom. It covers
+the FluxMQ HTTP adapter and reads `MG_HTTP_ADAPTER_URL`, defaulting to the local
+Compose nginx route at `http://localhost/http`.
 
 ```bash
-./build/cli health certs
+./build/cli health fluxmq
 ```
 
 All management commands except `login` and `health` require a bearer token

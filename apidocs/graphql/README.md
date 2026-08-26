@@ -143,6 +143,20 @@ mutation {
 }
 ```
 
+### Change Your Own Password
+
+Self-service password changes require the caller to prove knowledge of the
+current password:
+
+```graphql
+mutation {
+  changeOwnPassword(
+    currentPassword: "old-p@ssw0rd"
+    newPassword: "new-s3cur3-p@ssw0rd"
+  )
+}
+```
+
 ### Create A Device
 
 ```graphql

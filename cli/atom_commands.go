@@ -36,6 +36,7 @@ const (
 // Top-level response fields selected out of the GraphQL data object.
 const (
 	respLogin          = "login"
+	respChangePassword = "changeOwnPassword"
 	respTenant         = "tenant"
 	respTenants        = "tenants"
 	respCreateTenant   = "createTenant"
@@ -259,6 +260,38 @@ func newLoginCmd(opts *rootOptions) *cobra.Command {
 			cmd.Flags().StringVar(&kind, varKind, "password", "credential kind")
 		},
 	})
+}
+
+func newPasswordCmd(opts *rootOptions) *cobra.Command {
+	cmd := &cobra.Command{Use: "password", Short: "Manage the authenticated user's password"}
+	cmd.AddCommand(newPasswordChangeCmd(opts))
+
+	return cmd
+}
+
+func newPasswordChangeCmd(opts *rootOptions) *cobra.Command {
+	return &cobra.Command{
+		Use:   "change <current_password> <new_password>",
+		Short: "Change the authenticated user's password",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
+
+			if _, err := opts.authedClient(); err != nil {
+				return err
+			}
+			if !requireAtomClient(cmd) {
+				return nil
+			}
+
+			if err := atomClient.ChangeOwnPassword(cmd.Context(), args[0], args[1]); err != nil {
+				return err
+			}
+			logOKCmd(*cmd)
+
+			return nil
+		},
+	}
 }
 
 func newWorkspacesCmd(opts *rootOptions) *cobra.Command {

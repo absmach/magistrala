@@ -739,6 +739,12 @@ func (c *Client) CreatePassword(ctx context.Context, entityID, password string) 
 	}`, map[string]any{atomInputKeyEntityID: entityID, "password": password}, nil)
 }
 
+func (c *Client) ChangeOwnPassword(ctx context.Context, currentPassword, newPassword string) error {
+	return c.graphQL(ctx, `mutation ChangeOwnPassword($currentPassword: String!, $newPassword: String!) {
+		changeOwnPassword(currentPassword: $currentPassword, newPassword: $newPassword)
+	}`, map[string]any{"currentPassword": currentPassword, "newPassword": newPassword}, nil)
+}
+
 func (c *Client) CreateUnscopedAccessToken(ctx context.Context, entityID, name, description string) (AccessTokenResponse, error) {
 	var out struct {
 		CreateAccessToken AccessTokenResponse `json:"createAccessToken"`

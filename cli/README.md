@@ -58,6 +58,14 @@ Tenant-scoped credentials can pass either a tenant ID or alias:
 ./build/cli login user@example.com secret --tenant-alias <workspace_alias>
 ```
 
+## Password
+
+Authenticated users must provide their current password when changing it:
+
+```bash
+./build/cli --token "$ATOM_USER_TOKEN" password change <current_password> <new_password>
+```
+
 ## Workspaces
 
 Workspaces map to Atom tenants.

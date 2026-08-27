@@ -1,0 +1,65 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+# A second timescale-writer instance, configured with the JSON transformer,
+# so messages published under the "json" subtopic actually get persisted
+# (the main compose file's timescale-writer is SenML-only and fails to
+# parse them). It writes to the same Timescale database as the primary
+# writer and reuses its broker identity (the FluxMQ consumer group is
+# derived from the topic filter, not the client certificate, so sharing the
+# principal is safe and avoids provisioning a new one). Run alongside the
+# base stack:
+# docker compose -f docker/docker-compose.yaml -f docker/addons/timescale-writer-json/docker-compose.yaml up
+# from project root.
+
+networks:
+  magistrala-base-net:
+    external: true
+
+services:
+  timescale-writer-json:
+    image: ghcr.io/absmach/magistrala/timescale-writer:${MG_RELEASE_TAG}
+    container_name: magistrala-timescale-writer-json
+    depends_on:
+      timescale:
+        condition: service_healthy
+      fluxmq-node1:
+        condition: service_healthy
+    restart: on-failure
+    environment:
+      MG_TIMESCALE_WRITER_LOG_LEVEL: ${MG_TIMESCALE_WRITER_LOG_LEVEL}
+      MG_TIMESCALE_WRITER_CONFIG_PATH: /config.toml
+      # Overrides the shared .env value, which is the primary writer's
+      # container hostname (resolves to a different container's IP).
+      MG_TIMESCALE_WRITER_HTTP_HOST: "0.0.0.0"
+      MG_TIMESCALE_WRITER_HTTP_PORT: 9018
+      MG_TIMESCALE_WRITER_HTTP_SERVER_CERT: ${MG_TIMESCALE_WRITER_HTTP_SERVER_CERT}
+      MG_TIMESCALE_WRITER_HTTP_SERVER_KEY: ${MG_TIMESCALE_WRITER_HTTP_SERVER_KEY}
+      MG_TIMESCALE_HOST: ${MG_TIMESCALE_HOST}
+      MG_TIMESCALE_PORT: ${MG_TIMESCALE_PORT}
+      MG_TIMESCALE_USER: ${MG_TIMESCALE_USER}
+      MG_TIMESCALE_PASS: ${MG_TIMESCALE_PASS}
+      MG_TIMESCALE_NAME: ${MG_TIMESCALE_NAME}
+      MG_TIMESCALE_SSL_MODE: ${MG_TIMESCALE_SSL_MODE}
+      MG_TIMESCALE_SSL_CERT: ${MG_TIMESCALE_SSL_CERT}
+      MG_TIMESCALE_SSL_KEY: ${MG_TIMESCALE_SSL_KEY}
+      MG_TIMESCALE_SSL_ROOT_CERT: ${MG_TIMESCALE_SSL_ROOT_CERT}
+      MG_MESSAGE_BROKER_URL: ${MG_TIMESCALE_WRITER_BROKER_URL}
+      MG_TIMESCALE_WRITER_BROKER_CLIENT_CERT: ${MG_TIMESCALE_WRITER_BROKER_CLIENT_CERT}
+      MG_TIMESCALE_WRITER_BROKER_CLIENT_KEY: ${MG_TIMESCALE_WRITER_BROKER_CLIENT_KEY}
+      MG_TIMESCALE_WRITER_BROKER_CA_CERTS: ${MG_TIMESCALE_WRITER_BROKER_CA_CERTS}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_TIMESCALE_WRITER_INSTANCE_ID: ${MG_TIMESCALE_WRITER_INSTANCE_ID}
+    ports:
+      - 9018:9018
+    networks:
+      - magistrala-base-net
+    volumes:
+      # Relative paths in an addon file resolve against the project directory,
+      # which is the base compose file's directory rather than this one.
+      - ./addons/timescale-writer-json/config.toml:/config.toml
+      - ./ssl/certs/timescale-writer-fluxmq-client.crt:${MG_TIMESCALE_WRITER_BROKER_CLIENT_CERT}:ro
+      - ./ssl/certs/timescale-writer-fluxmq-client.key:${MG_TIMESCALE_WRITER_BROKER_CLIENT_KEY}:ro
+      - ./ssl/certs/ca.crt:${MG_TIMESCALE_WRITER_BROKER_CA_CERTS}:ro

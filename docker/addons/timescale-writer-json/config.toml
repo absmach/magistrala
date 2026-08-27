@@ -1,0 +1,14 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+# A second timescale-writer instance dedicated to JSON-format messages. A
+# writer process only ever runs one static transformer, so SenML and JSON
+# messages need separate processes. This one is scoped to the "json"
+# subtopic, the convention a publisher uses to mark a message as raw JSON
+# instead of SenML, so it never competes for the same consumer group as the
+# SenML writer in ../timescale-writer, which stays subscribed to "writers/#".
+["subscriber"]
+topics = ["writers/+/c/+/json"]
+
+[transformer]
+format = "json"

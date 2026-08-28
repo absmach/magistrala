@@ -6,7 +6,7 @@ require (
 	connectrpc.com/connect v1.20.0
 	connectrpc.com/otelconnect v0.9.0
 	github.com/absmach/callhome v0.18.2
-	github.com/absmach/fluxmq v0.51.1-0.20260825132747-d66c86c32bc2
+	github.com/absmach/fluxmq v0.51.1-0.20260828145228-de1e72223fa0
 	github.com/absmach/senml v1.0.8
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/caarlos0/env/v11 v11.4.1

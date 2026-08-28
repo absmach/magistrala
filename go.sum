@@ -18,8 +18,8 @@ github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrd
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/absmach/callhome v0.18.2 h1:dmopRHm2qTheHN1hdUKRRYpKwRrj7X9d8AWCFrb+K6s=
 github.com/absmach/callhome v0.18.2/go.mod h1:LEXKhES9JJtj3tBgTZv7VPNjOi5ukJQB0mFic0QP60Q=
-github.com/absmach/fluxmq v0.51.1-0.20260825132747-d66c86c32bc2 h1:SCgrXrV6zXDV28zsRSIiDuaL/+jlPbaEEL1QBWPzrMQ=
-github.com/absmach/fluxmq v0.51.1-0.20260825132747-d66c86c32bc2/go.mod h1:Ck/HTeFt/FOv70FHR9yQ6GyPo2N+KPtycy3tPbsH1b0=
+github.com/absmach/fluxmq v0.51.1-0.20260828145228-de1e72223fa0 h1:zerU8HbHlGBqk0WeWT6f4rBLnWci6R2pwRuCdl4nwoE=
+github.com/absmach/fluxmq v0.51.1-0.20260828145228-de1e72223fa0/go.mod h1:hOzx10v+WhnmaLmh2Twft6bTVZWxnxR6MWSZhUz+J70=
 github.com/absmach/senml v1.0.8 h1:+opem/r4g6c6eA/JLyCIuksyEhj7eBdysY3pEmy1mqo=
 github.com/absmach/senml v1.0.8/go.mod h1:DRhzHLgvQoIUHroBgpFrSWso+bJZO9E96RlHAHy+VRI=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=

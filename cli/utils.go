@@ -85,6 +85,10 @@ func logErrorCmd(cmd cobra.Command, err error) {
 }
 
 func logOKCmd(cmd cobra.Command) {
+	if RawOutput {
+		logJSONCmd(cmd, map[string]string{"status": "ok"})
+		return
+	}
 	fmt.Fprintf(cmd.OutOrStdout(), "\n%s\n\n", color.BlueString("ok"))
 }
 

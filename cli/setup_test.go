@@ -31,6 +31,9 @@ const (
 
 func executeCommand(t *testing.T, root *cobra.Command, args ...string) string {
 	t.Helper()
+	prevRawOutput := cli.RawOutput
+	defer func() { cli.RawOutput = prevRawOutput }()
+
 	buffer := new(bytes.Buffer)
 	root.SetOut(buffer)
 	root.SetErr(buffer)

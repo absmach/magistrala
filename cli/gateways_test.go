@@ -27,6 +27,20 @@ func TestGatewaysSetCmd(t *testing.T) {
 	assert.ElementsMatch(t, []string{"gw-1", "gw-2"}, gws)
 }
 
+func TestGatewaysSetCmdRawOutput(t *testing.T) {
+	newFakeAtom(t,
+		atom.Entity{ID: "device-1", Kind: "device"},
+		atom.Entity{ID: "gw-1", Kind: "device"},
+	)
+	rootCmd := setFlags(cli.NewGatewaysCmd())
+
+	out := executeCommand(t, rootCmd, "--raw", "set", "device-1", "gw-1")
+
+	var got map[string]string
+	require.NoError(t, json.Unmarshal([]byte(out), &got))
+	assert.Equal(t, "ok", got["status"])
+}
+
 func TestGatewaysSetCmdClearsList(t *testing.T) {
 	// gw-old must resolve as a live entity: DeviceGateways silently drops
 	// stale references (pkg/atom/devices.go), and an unseeded ID here would

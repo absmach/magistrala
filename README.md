@@ -258,9 +258,10 @@ make cli
 ./build/cli --token "$ATOM_ADMIN_TOKEN" workspaces list
 ```
 
-The CLI reads the same `ATOM_URL`, `ATOM_SERVICE_TOKEN`/`ATOM_ADMIN_TOKEN` and
-`ATOM_TIMEOUT` variables the services use, so a shell that has sourced
-`docker/.env` needs no extra flags.
+The CLI reads the same `ATOM_URL` and `ATOM_SERVICE_TOKEN`/`ATOM_ADMIN_TOKEN`
+variables the services use, so a shell that has sourced `docker/.env` needs no
+extra endpoint or token flags. CLI requests use a separate
+`MG_CLI_ATOM_TIMEOUT` setting and default to a 90s interactive timeout.
 
 See [cli/README.md](cli/README.md) for the Atom GraphQL-backed command reference.
 

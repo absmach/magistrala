@@ -36,6 +36,8 @@ func (sdk mgSDK) Health(service string) (HealthInfo, errors.SDKError) {
 		url = fmt.Sprintf("%s/health", sdk.certsURL)
 	case "fluxmq":
 		url = fmt.Sprintf("%s/health", sdk.httpAdapterURL)
+	default:
+		return HealthInfo{}, errors.NewSDKError(fmt.Errorf("unsupported health service %q", service))
 	}
 
 	resp, err := sdk.client.Get(url)

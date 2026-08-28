@@ -832,6 +832,56 @@ services:
       - ./ssl/certs/timescale-writer-fluxmq-client.crt:${MG_TIMESCALE_WRITER_BROKER_CLIENT_CERT}:ro
       - ./ssl/certs/timescale-writer-fluxmq-client.key:${MG_TIMESCALE_WRITER_BROKER_CLIENT_KEY}:ro
       - ./ssl/certs/ca.crt:${MG_TIMESCALE_WRITER_BROKER_CA_CERTS}:ro
+
+  timescale-writer-json:
+    image: ghcr.io/absmach/magistrala/timescale-writer:${MG_RELEASE_TAG}
+    container_name: magistrala-timescale-writer-json
+    depends_on:
+      timescale:
+        condition: service_healthy
+      fluxmq-node1:
+        condition: service_healthy
+    restart: on-failure
+    environment:
+      MG_TIMESCALE_WRITER_LOG_LEVEL: ${MG_TIMESCALE_WRITER_LOG_LEVEL}
+      MG_TIMESCALE_WRITER_CONFIG_PATH: ${MG_TIMESCALE_WRITER_JSON_CONFIG_PATH}
+      MG_TIMESCALE_WRITER_HTTP_HOST: ${MG_TIMESCALE_WRITER_JSON_HTTP_HOST}
+      MG_TIMESCALE_WRITER_HTTP_PORT: ${MG_TIMESCALE_WRITER_JSON_HTTP_PORT}
+      MG_TIMESCALE_WRITER_HTTP_SERVER_CERT: ${MG_TIMESCALE_WRITER_HTTP_SERVER_CERT}
+      MG_TIMESCALE_WRITER_HTTP_SERVER_KEY: ${MG_TIMESCALE_WRITER_HTTP_SERVER_KEY}
+      MG_TIMESCALE_HOST: ${MG_TIMESCALE_HOST}
+      MG_TIMESCALE_PORT: ${MG_TIMESCALE_PORT}
+      MG_TIMESCALE_USER: ${MG_TIMESCALE_USER}
+      MG_TIMESCALE_PASS: ${MG_TIMESCALE_PASS}
+      MG_TIMESCALE_NAME: ${MG_TIMESCALE_NAME}
+      MG_TIMESCALE_SSL_MODE: ${MG_TIMESCALE_SSL_MODE}
+      MG_TIMESCALE_SSL_CERT: ${MG_TIMESCALE_SSL_CERT}
+      MG_TIMESCALE_SSL_KEY: ${MG_TIMESCALE_SSL_KEY}
+      MG_TIMESCALE_SSL_ROOT_CERT: ${MG_TIMESCALE_SSL_ROOT_CERT}
+      MG_MESSAGE_BROKER_URL: ${MG_TIMESCALE_WRITER_BROKER_URL}
+      MG_TIMESCALE_WRITER_BROKER_CLIENT_CERT: ${MG_TIMESCALE_WRITER_BROKER_CLIENT_CERT}
+      MG_TIMESCALE_WRITER_BROKER_CLIENT_KEY: ${MG_TIMESCALE_WRITER_BROKER_CLIENT_KEY}
+      MG_TIMESCALE_WRITER_BROKER_CA_CERTS: ${MG_TIMESCALE_WRITER_BROKER_CA_CERTS}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_TIMESCALE_WRITER_INSTANCE_ID: ${MG_TIMESCALE_WRITER_INSTANCE_ID}
+    ports:
+      - ${MG_TIMESCALE_WRITER_JSON_HTTP_PORT}:${MG_TIMESCALE_WRITER_JSON_HTTP_PORT}
+    networks:
+      - magistrala-base-net
+    volumes:
+      # A writer process only ever runs one static transformer, so JSON-format
+      # messages need a second instance with its own config; see
+      # addons/timescale-writer-json/config.toml. Reuses the timescale-writer
+      # FluxMQ principal and Timescale DB from above: the consumer group is
+      # derived from the topic filter, not the client certificate, and both
+      # instances write to the same database.
+      - ./addons/timescale-writer-json/config.toml:${MG_TIMESCALE_WRITER_JSON_CONFIG_PATH}
+      - ./ssl/certs/timescale-writer-fluxmq-client.crt:${MG_TIMESCALE_WRITER_BROKER_CLIENT_CERT}:ro
+      - ./ssl/certs/timescale-writer-fluxmq-client.key:${MG_TIMESCALE_WRITER_BROKER_CLIENT_KEY}:ro
+      - ./ssl/certs/ca.crt:${MG_TIMESCALE_WRITER_BROKER_CA_CERTS}:ro
+
   re-db:
     image: docker.io/postgres:18.4-alpine3.24
     container_name: magistrala-re-db

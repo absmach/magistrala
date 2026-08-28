@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
-	smqerrors "github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 // HealthInfo contains version endpoint response.
@@ -29,7 +29,7 @@ type HealthInfo struct {
 	BuildTime string `json:"build_time"`
 }
 
-func (sdk mgSDK) Health(service string) (HealthInfo, smqerrors.SDKError) {
+func (sdk mgSDK) Health(service string) (HealthInfo, errors.SDKError) {
 	var url string
 	switch service {
 	case "certs":
@@ -37,22 +37,22 @@ func (sdk mgSDK) Health(service string) (HealthInfo, smqerrors.SDKError) {
 	case "fluxmq":
 		url = fmt.Sprintf("%s/health", sdk.httpAdapterURL)
 	default:
-		return HealthInfo{}, smqerrors.NewSDKError(fmt.Errorf("unsupported health service %q", service))
+		return HealthInfo{}, errors.NewSDKError(fmt.Errorf("unsupported health service %q", service))
 	}
 
 	resp, err := sdk.client.Get(url)
 	if err != nil {
-		return HealthInfo{}, smqerrors.NewSDKError(err)
+		return HealthInfo{}, errors.NewSDKError(err)
 	}
 	defer resp.Body.Close()
 
-	if err := smqerrors.CheckError(resp, http.StatusOK); err != nil {
+	if err := errors.CheckError(resp, http.StatusOK); err != nil {
 		return HealthInfo{}, err
 	}
 
 	var h HealthInfo
 	if err := json.NewDecoder(resp.Body).Decode(&h); err != nil {
-		return HealthInfo{}, smqerrors.NewSDKError(err)
+		return HealthInfo{}, errors.NewSDKError(err)
 	}
 
 	return h, nil

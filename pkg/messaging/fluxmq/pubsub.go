@@ -101,18 +101,7 @@ func (ps *pubsub) Subscribe(_ context.Context, cfg messaging.SubscriberConfig) e
 	sub := subscription{}
 
 	if !ps.directTopicOnly {
-		opts := &fluxamqp.StreamConsumeOptions{
-			QueueName:     ps.prefix,
-			Filter:        streamFilter(ps.prefix, cfg.Topic),
-			ConsumerGroup: group,
-		}
-
-		switch cfg.DeliveryPolicy {
-		case messaging.DeliverNewPolicy:
-			opts.Offset = "last"
-		case messaging.DeliverAllPolicy:
-			opts.Offset = "first"
-		}
+		opts := streamConsumeOptions(ps.prefix, group, cfg)
 
 		if err := ps.client.SubscribeToStream(opts, func(msg *fluxamqp.QueueMessage) {
 			if err := ps.handle(cfg.Handler, msg); err != nil {
@@ -151,6 +140,26 @@ func (ps *pubsub) Subscribe(_ context.Context, cfg messaging.SubscriberConfig) e
 	ps.subscriptions[subscriptionKey(cfg.ID, cfg.Topic)] = sub
 	ps.mu.Unlock()
 	return nil
+}
+
+func streamConsumeOptions(prefix, group string, cfg messaging.SubscriberConfig) *fluxamqp.StreamConsumeOptions {
+	opts := &fluxamqp.StreamConsumeOptions{
+		QueueName:     prefix,
+		Filter:        streamFilter(prefix, cfg.Topic),
+		ConsumerGroup: group,
+	}
+	if cfg.AckPolicy == messaging.AckExplicit {
+		autoCommit := false
+		opts.AutoCommit = &autoCommit
+	}
+
+	switch cfg.DeliveryPolicy {
+	case messaging.DeliverNewPolicy:
+		opts.Offset = "last"
+	case messaging.DeliverAllPolicy:
+		opts.Offset = "first"
+	}
+	return opts
 }
 
 func (ps *pubsub) Unsubscribe(_ context.Context, id, topic string) error {
@@ -304,8 +313,12 @@ func (ps *pubsub) handleAck(at messaging.AckType, msg *fluxamqp.QueueMessage) er
 	switch at {
 	case messaging.Ack, messaging.DoubleAck:
 		return msg.Ack()
-	case messaging.Nack, messaging.InProgress:
+	case messaging.Nack:
 		return msg.Nack()
+	case messaging.InProgress:
+		// FluxMQ has no delivery lease to extend. Leaving the delivery
+		// outstanding preserves the only safe meaning of InProgress.
+		return nil
 	case messaging.Term:
 		return msg.Reject()
 	case messaging.NoAck:

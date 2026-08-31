@@ -19,6 +19,18 @@ const (
 	DeliverAllPolicy
 )
 
+// AckPolicy controls whether the broker settles a delivery when it is sent or
+// waits for the message handler's AckType.
+type AckPolicy uint8
+
+const (
+	// AckOnDelivery preserves the transport's historical delivery-time
+	// settlement behavior.
+	AckOnDelivery AckPolicy = iota
+	// AckExplicit makes the handler result the durable settlement decision.
+	AckExplicit
+)
+
 // AckType is used for message acknowledgement.
 // It can be used for both successful and unsuccessful handling.
 type AckType int
@@ -77,6 +89,7 @@ type SubscriberConfig struct {
 	Handler        MessageHandler // Function that handles incoming messages.
 	DeliveryPolicy DeliveryPolicy // DeliverPolicy defines from which point to start delivering messages.
 	Ordered        bool           // Whether message delivery must preserve order.
+	AckPolicy      AckPolicy      // Whether delivery or the handler controls durable settlement.
 }
 
 // Subscriber specifies message subscription API.

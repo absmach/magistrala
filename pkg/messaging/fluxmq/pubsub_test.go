@@ -69,6 +69,20 @@ func TestHandleTopicMessageNormalizesAMQPRoutingKey(t *testing.T) {
 	}
 }
 
+func TestStreamConsumeOptionsExplicitAck(t *testing.T) {
+	opts := streamConsumeOptions("m", "rules", messaging.SubscriberConfig{
+		Topic:          "m/#",
+		DeliveryPolicy: messaging.DeliverAllPolicy,
+		AckPolicy:      messaging.AckExplicit,
+	})
+	if opts.AutoCommit == nil || *opts.AutoCommit {
+		t.Fatal("explicit acknowledgement must disable stream auto-commit")
+	}
+	if opts.Offset != "first" {
+		t.Fatalf("offset = %q, want first", opts.Offset)
+	}
+}
+
 func TestHandleTopicMessageUsesMQTTIdentityFields(t *testing.T) {
 	ps := &pubsub{
 		publisher: publisher{

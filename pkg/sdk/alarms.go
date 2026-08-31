@@ -43,6 +43,21 @@ type Alarm struct {
 	Metadata       Metadata  `json:"metadata,omitempty"`
 }
 
+// AlarmUpdate contains mutable alarm fields. Pointers distinguish omitted
+// fields from explicit zero values such as status "active" or severity 0.
+type AlarmUpdate struct {
+	Status         *string    `json:"status,omitempty"`
+	Severity       *uint8     `json:"severity,omitempty"`
+	AssigneeID     *string    `json:"assignee_id,omitempty"`
+	AssignedAt     *time.Time `json:"assigned_at,omitempty"`
+	AssignedBy     *string    `json:"assigned_by,omitempty"`
+	AcknowledgedAt *time.Time `json:"acknowledged_at,omitempty"`
+	AcknowledgedBy *string    `json:"acknowledged_by,omitempty"`
+	ResolvedAt     *time.Time `json:"resolved_at,omitempty"`
+	ResolvedBy     *string    `json:"resolved_by,omitempty"`
+	Metadata       *Metadata  `json:"metadata,omitempty"`
+}
+
 type AlarmsPage struct {
 	Offset uint64  `json:"offset"`
 	Limit  uint64  `json:"limit"`
@@ -50,6 +65,30 @@ type AlarmsPage struct {
 	Alarms []Alarm `json:"alarms"`
 }
 
+// PatchAlarm partially updates an alarm using the canonical PATCH operation.
+func (sdk mgSDK) PatchAlarm(ctx context.Context, id string, update AlarmUpdate, workspaceID, token string) (Alarm, errors.SDKError) {
+	data, err := json.Marshal(update)
+	if err != nil {
+		return Alarm{}, errors.NewSDKError(err)
+	}
+
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.alarmsURL, workspaceID, alarmsEndpoint, id)
+
+	_, body, sdkerr := sdk.processRequest(ctx, http.MethodPatch, url, token, data, nil, http.StatusOK)
+	if sdkerr != nil {
+		return Alarm{}, sdkerr
+	}
+
+	var alarm Alarm
+	if err := json.Unmarshal(body, &alarm); err != nil {
+		return Alarm{}, errors.NewSDKError(err)
+	}
+
+	return alarm, nil
+}
+
+// UpdateAlarm updates an alarm through the legacy PUT compatibility alias.
+// Deprecated: use PatchAlarm for new integrations.
 func (sdk mgSDK) UpdateAlarm(ctx context.Context, alarm Alarm, workspaceID, token string) (Alarm, errors.SDKError) {
 	data, err := json.Marshal(alarm)
 	if err != nil {

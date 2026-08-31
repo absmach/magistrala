@@ -4,10 +4,7 @@
 openapi: 3.0.1
 info:
   title: Magistrala Rules Engine API
-  description: |
-    HTTP API for managing rules engine service.
-    Some useful links:
-    - [The Magistrala repository](https://github.com/absmach/magistrala)
+  description: HTTP API for configuring and managing message-processing rules.
   contact:
     email: info@absmach.eu
   license:
@@ -17,133 +14,154 @@ info:
 
 servers:
   - url: http://localhost:9008
-  - url: http://localhost:9008
+  - url: https://localhost:9008
 
 tags:
-  - name: rules engine
-    description: Everything about your Rules Engine
-    externalDocs:
-      description: Find out more about rules engine
-      url: https://magistrala.absmach.eu/docs/
+  - name: rules
+    description: Rule configuration and lifecycle operations
+  - name: health
+    description: Service health
 
 paths:
   /{workspaceID}/rules:
     post:
       operationId: createRule
-      summary: Create Rule
-      description: |
-        Creates a new rule for message processing
-      tags:
-        - rules
+      summary: Create a rule
+      tags: [rules]
       parameters:
         - $ref: '#/components/parameters/WorkspaceID'
       security:
         - bearerAuth: []
       requestBody:
-        $ref: '#/components/requestBodies/RuleCreateReq'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleCreate'
+            example:
+              name: temperature-alert
+              input_channel: 01J9CHANNEL
+              input_topic: sensors/temperature
+              logic:
+                type: 0
+                value: return message.payload
+                mode: sandboxed
+              outputs:
+                - type: alarms
       responses:
         '201':
-          $ref: '#/components/responses/RuleCreateRes'
+          $ref: '#/components/responses/RuleCreated'
         '400':
-          description: Failed due to malformed JSON
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Missing or invalid access token
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '415':
-          description: Missing or invalid content type
-        "500":
-          $ref: "#/components/responses/ServiceError"
-        "503":
-          description: Failed to receive response from the devices service.
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     get:
       operationId: getRules
-      summary: List Rules
-      description: |
-        Retrieves a list of rules with optional filtering
-      tags:
-        - rules
+      summary: List rules
+      tags: [rules]
       parameters:
         - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/Offset'
-        - $ref: '#/components/parameters/Limit' 
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Name'
         - $ref: '#/components/parameters/InputChannel'
-        - $ref: '#/components/parameters/OutputChannel'
         - $ref: '#/components/parameters/Status'
         - $ref: '#/components/parameters/ExecutionMode'
+        - $ref: '#/components/parameters/Tag'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Dir'
       security:
         - bearerAuth: []
       responses:
         '200':
-          $ref: '#/components/responses/RuleListRes'
+          $ref: '#/components/responses/RuleList'
         '400':
-          description: Failed due to malformed query parameters
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Missing or invalid access token
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /{workspaceID}/rules/{ruleID}:
     get:
       operationId: getRule
-      summary: View Rule
-      description: Retrieves a rule by ID
-      tags:
-        - rules
+      summary: View a rule
+      tags: [rules]
       parameters:
         - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/RuleID'
+        - $ref: '#/components/parameters/Roles'
       security:
         - bearerAuth: []
       responses:
         '200':
-          $ref: '#/components/responses/RuleRes'
-        "400":
-          description: Missing or invalid rule
-        "403":
-          description: Failed to perform authorization over the entity
+          $ref: '#/components/responses/RuleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Missing or invalid access token
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
-          description: Rule does not exist
-        "422":
-          description: Database can't process request
-        "500":
-          $ref: "#/components/responses/ServiceError"
-    put:
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    patch:
       operationId: updateRule
-      summary: Update Rule
-      description: Updates an existing rule
-      tags:
-        - rules
+      summary: Update a rule
+      description: |
+        Updates the rule's main mutable fields. Use the dedicated tags and
+        schedule operations for those fields. An omitted `logic.mode` preserves
+        the stored execution mode.
+      tags: [rules]
       parameters:
         - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/RuleID'
       security:
         - bearerAuth: []
       requestBody:
-        $ref: '#/components/requestBodies/RuleUpdateReq'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleUpdate'
       responses:
         '200':
-          $ref: '#/components/responses/RuleRes'
+          $ref: '#/components/responses/RuleResponse'
         '400':
-          description: Failed due to malformed JSON
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Missing or invalid access token
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
-          description: Rule does not exist
-        "415":
-          description: Missing or invalid content type.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
+          $ref: '#/components/responses/NotFound'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     delete:
       operationId: removeRule
-      summary: Delete Rule
-      description: Deletes a rule
-      tags:
-        - rules
+      summary: Delete a rule
+      tags: [rules]
       parameters:
         - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/RuleID'
@@ -151,25 +169,95 @@ paths:
         - bearerAuth: []
       responses:
         '204':
-          description: Rule deleted successfully
-        "400":
-          description: Failed due to malformed rule ID
+          description: Rule deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Missing or invalid access token
-        "403":
-          description: Failed to perform authorization over the entity
-        "422":
-          description: Database can't process request
-        "500":
-          $ref: "#/components/responses/ServiceError"
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{workspaceID}/rules/{ruleID}/tags:
+    patch:
+      operationId: updateRuleTags
+      summary: Replace rule tags
+      tags: [rules]
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceID'
+        - $ref: '#/components/parameters/RuleID'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleTagsUpdate'
+            example:
+              tags: [production, temperature]
+      responses:
+        '200':
+          $ref: '#/components/responses/RuleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{workspaceID}/rules/{ruleID}/schedule:
+    patch:
+      operationId: updateRuleSchedule
+      summary: Replace a rule schedule
+      tags: [rules]
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceID'
+        - $ref: '#/components/parameters/RuleID'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleUpdate'
+      responses:
+        '200':
+          $ref: '#/components/responses/RuleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /{workspaceID}/rules/{ruleID}/enable:
-    put:
+    post:
       operationId: enableRule
-      summary: Enable Rule
-      description: Enables a rule for processing
-      tags:
-        - rules
+      summary: Enable a rule
+      tags: [rules]
       parameters:
         - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/RuleID'
@@ -177,27 +265,25 @@ paths:
         - bearerAuth: []
       responses:
         '200':
-          description: Rule enabled successfully
-        "400":
-          description: Failed due to malformed JSON
+          $ref: '#/components/responses/RuleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Missing or invalid access token
-        "403":
-          description: Failed to perform authorization over the entity
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
-          description: Rule does not exist
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /{workspaceID}/rules/{ruleID}/disable:
-    put:
+    post:
       operationId: disableRule
-      summary: Disable Rule
-      description: Disables a rule from processing
-      tags:
-        - Rules
+      summary: Disable a rule
+      tags: [rules]
       parameters:
         - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/RuleID'
@@ -205,421 +291,514 @@ paths:
         - bearerAuth: []
       responses:
         '200':
-          description: Rule disabled successfully
-        "400":
-          description: Failed due to malformed JSON
+          $ref: '#/components/responses/RuleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Missing or invalid access token
-        "403":
-          description: Failed to perform authorization over the entity
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
-          description: Rule does not exist
-        "422":
-          description: Database can't process request
-        "500":
-          $ref: "#/components/responses/ServiceError"
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /health:
     get:
-      summary: Retrieves service health check info.
-      tags:
-        - health
+      operationId: rulesHealth
+      summary: Get service health
+      tags: [health]
       security: []
       responses:
-        "200":
-          $ref: "#/components/responses/HealthRes"
-        "500":
-          $ref: "#/components/responses/ServiceError"
+        '200':
+          $ref: '#/components/responses/HealthResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 components:
   schemas:
-    RulesListRes:
-      type: object
-      properties:
-        total:
-          type: integer
-          description: Total number of results
-          minimum: 0
-        offset:
-          type: integer
-          description: Number of items to skip during retrieval
-          minimum: 0
-          default: 0
-        limit:
-          type: integer
-          description: Size of the subset to retrieve
-          maximum: 100
-          default: 10
-        rules:
-          type: array
-          minItems: 0
-          uniqueItems: true
-          items:
-            $ref: '#/components/schemas/Rule'
-      required:
-        - rules
-
     Rule:
       type: object
+      required: [id, name, workspace, input_channel, input_topic, logic, schedule, status, created_at, created_by, updated_at, updated_by]
       properties:
         id:
           type: string
-          description: Unique rule identifier
+          readOnly: true
+          example: 01J9RULE
         name:
           type: string
-          description: Rule name
+          maxLength: 1024
+          example: temperature-alert
         workspace:
           type: string
-          description: Workspace ID this rule belongs to
+          readOnly: true
+          example: 01J9WORKSPACE
         metadata:
-          type: object
-          description: Custom metadata
-          additionalProperties:
+          $ref: '#/components/schemas/Metadata'
+        tags:
+          type: array
+          items:
             type: string
+          example: [production, temperature]
         input_channel:
           type: string
-          description: Input channel for receiving messages
+          example: 01J9CHANNEL
         input_topic:
           type: string
-          description: Input topic for receiving messages
+          example: sensors/temperature
         logic:
-          type: object
-          description: Rule processing logic script
-          properties:
-            type:
-              type: integer
-              enum: [0, 1]
-              description: Script runtime (0 = Lua, 1 = Go)
-            value:
-              type: string
-              description: Script content
-            mode:
-              type: string
-              enum: [sandboxed, unrestricted]
-              description: Execution security mode
-          required: [type, value, mode]
-        output_channel:
-          type: string
-          description: Output channel for processed messages
-        output_topic:
-          type: string
-          description: Output topic for processed messages
+          $ref: '#/components/schemas/Script'
+        outputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleOutput'
         schedule:
-          type: object
-          description: Rule execution schedule
-          properties:
-            start_datetime:
-              type: string
-              format: date-time
-              description: When the schedule becomes active
-            time:
-              type: string
-              format: date-time
-              description: Specific time for the rule to run
-            recurring:
-              type: string
-              description: Schedule recurrence pattern
-              enum: [None, Daily, Weekly, Monthly]
-            recurring_period:
-              type: integer
-              minimum: 1
-              description: Controls how many intervals to skip between executions (1 = every interval, 2 = every second interval, etc.)
+          $ref: '#/components/schemas/Schedule'
         status:
-          type: string
-          description: Rule status
-          enum: [enabled, disabled]
+          $ref: '#/components/schemas/RuleStatus'
         created_at:
           type: string
           format: date-time
-          description: Creation timestamp
           readOnly: true
         created_by:
           type: string
-          description: User who created the rule
+          readOnly: true
         updated_at:
           type: string
           format: date-time
-          description: Last update timestamp
           readOnly: true
         updated_by:
           type: string
-          description: User who last updated the rule
-      required:
-        - name
-        - workspace
-        - input_channel
-        - input_topic
-        - logic
-        - status
+          readOnly: true
+
+    RuleCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 1024
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        tags:
+          type: array
+          items:
+            type: string
+        input_channel:
+          type: string
+        input_topic:
+          type: string
+        logic:
+          $ref: '#/components/schemas/Script'
+        outputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleOutput'
+        schedule:
+          $ref: '#/components/schemas/Schedule'
+
+    RuleUpdate:
+      type: object
+      description: |
+        Main rule update. Tags and schedule are updated through their dedicated
+        operations. The current runtime replaces `input_channel` and
+        `input_topic` on every update, so clients should always send both.
+      required: [input_channel, input_topic]
+      properties:
+        name:
+          type: string
+          maxLength: 1024
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        input_channel:
+          type: string
+        input_topic:
+          type: string
+        logic:
+          $ref: '#/components/schemas/Script'
+        outputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleOutput'
+
+    RulesPage:
+      type: object
+      required: [total, offset, limit, rules]
+      properties:
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        offset:
+          type: integer
+          format: int64
+          minimum: 0
+        limit:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 1000
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rule'
+
+    Metadata:
+      type: object
+      additionalProperties: true
+      example:
+        owner: operations
+        retry_count: 3
+
+    Script:
+      type: object
+      required: [type, value]
+      properties:
+        type:
+          type: integer
+          enum: [0, 1]
+          description: Script runtime; 0 is Lua and 1 is Go.
+        value:
+          type: string
+          description: Script source.
+        mode:
+          type: string
+          enum: [sandboxed, unrestricted]
+          description: Creation defaults to unrestricted when omitted; updates preserve the stored mode when omitted.
+
+    RuleStatus:
+      type: string
+      enum: [enabled, disabled, deleted]
+
+    Schedule:
+      type: object
+      properties:
+        start_datetime:
+          type: string
+          format: date-time
+          nullable: true
+          description: Activation time. A supplied value cannot be in the past.
+        time:
+          type: string
+          format: date-time
+          description: Next scheduled execution time.
+        recurring:
+          type: string
+          enum: [none, hourly, daily, weekly, monthly]
+          default: none
+        recurring_period:
+          type: integer
+          minimum: 0
+          description: Number of recurrence intervals between executions.
+      example:
+        start_datetime: '2026-09-01T08:00:00Z'
+        time: '2026-09-01T08:00:00Z'
+        recurring: daily
+        recurring_period: 1
+
+    RuleTagsUpdate:
+      type: object
+      required: [tags]
+      properties:
+        tags:
+          type: array
+          items:
+            type: string
+
+    ScheduleUpdate:
+      type: object
+      required: [schedule]
+      properties:
+        schedule:
+          $ref: '#/components/schemas/Schedule'
+
+    RuleOutput:
+      oneOf:
+        - $ref: '#/components/schemas/ChannelOutput'
+        - $ref: '#/components/schemas/AlarmOutput'
+        - $ref: '#/components/schemas/SenMLOutput'
+        - $ref: '#/components/schemas/JSONOutput'
+        - $ref: '#/components/schemas/EmailOutput'
+        - $ref: '#/components/schemas/PostgresOutput'
+        - $ref: '#/components/schemas/SlackOutput'
+      discriminator:
+        propertyName: type
+        mapping:
+          channels: '#/components/schemas/ChannelOutput'
+          alarms: '#/components/schemas/AlarmOutput'
+          save_senml: '#/components/schemas/SenMLOutput'
+          save_json: '#/components/schemas/JSONOutput'
+          email: '#/components/schemas/EmailOutput'
+          save_remote_pg: '#/components/schemas/PostgresOutput'
+          slack: '#/components/schemas/SlackOutput'
+
+    ChannelOutput:
+      type: object
+      required: [type, channel, topic]
+      properties:
+        type:
+          type: string
+          enum: [channels]
+        channel:
+          type: string
+        topic:
+          type: string
+
+    AlarmOutput:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [alarms]
+
+    SenMLOutput:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [save_senml]
+
+    JSONOutput:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [save_json]
+
+    EmailOutput:
+      type: object
+      required: [type, to, subject, content]
+      properties:
+        type:
+          type: string
+          enum: [email]
+        to:
+          type: array
+          items:
+            type: string
+            format: email
+        subject:
+          type: string
+        content:
+          type: string
+          description: Go template used to render the email body.
+
+    PostgresOutput:
+      type: object
+      required: [type, host, port, user, password, database, table, mapping]
+      properties:
+        type:
+          type: string
+          enum: [save_remote_pg]
+        host:
+          type: string
+        port:
+          type: integer
+        user:
+          type: string
+        password:
+          type: string
+          format: password
+        database:
+          type: string
+        table:
+          type: string
+        mapping:
+          type: string
+          description: Go template that renders a JSON object of column values.
+
+    SlackOutput:
+      type: object
+      required: [type, token, channel_id, message]
+      properties:
+        type:
+          type: string
+          enum: [slack]
+        token:
+          type: string
+          format: password
+        channel_id:
+          type: string
+        message:
+          type: string
+          description: Go template that renders a Slack message JSON object.
+
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          example: entity not found
 
   parameters:
     WorkspaceID:
       name: workspaceID
-      description: Workspace ID
       in: path
       required: true
       schema:
         type: string
     RuleID:
       name: ruleID
-      description: Rule ID
       in: path
       required: true
       schema:
         type: string
     Offset:
       name: offset
-      description: Number of items to skip
       in: query
-      required: false
       schema:
         type: integer
-        default: 0
+        format: int64
         minimum: 0
+        default: 0
     Limit:
       name: limit
-      description: Size of the subset
       in: query
-      required: false
       schema:
         type: integer
-        default: 10
+        format: int64
         minimum: 1
+        maximum: 1000
+        default: 10
+    Name:
+      name: name
+      in: query
+      schema:
+        type: string
     InputChannel:
       name: input_channel
-      description: Filter by input channel
       in: query
-      required: false
-      schema:
-        type: string
-    ExecutionMode:
-      name: mode
-      description: |
-        Filter by execution mode. Omit the parameter to return rules in every
-        mode. Rules stored before execution modes were introduced, and rules
-        created without an explicit mode, are returned by `unrestricted`.
-      in: query
-      required: false
-      schema:
-        type: string
-        enum: [sandboxed, unrestricted]
-    OutputChannel:
-      name: output_channel
-      description: Filter by output channel
-      in: query
-      required: false
       schema:
         type: string
     Status:
       name: status
-      description: Filter by rule status
       in: query
-      required: false
       schema:
         type: string
-        enum: [enabled, disabled]
+        enum: [enabled, disabled, deleted, all]
         default: enabled
-
-  requestBodies:
-    RuleCreateReq:
-      description: JSON-formatted document describing the new rule
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              name:
-                type: string
-                description: Rule name
-              workspace:
-                type: string
-                description: Workspace ID this rule belongs to
-              metadata:
-                type: object
-                description: Custom metadata
-                additionalProperties:
-                  type: string
-              input_channel:
-                type: string
-                description: Input channel for receiving messages
-              input_topic:
-                type: string
-                description: Input topic for receiving messages
-              logic:
-                type: object
-                description: Rule processing logic script
-                properties:
-                  type:
-                    type: integer
-                    enum: [0, 1]
-                    description: Script runtime (0 = Lua, 1 = Go)
-                  value:
-                    type: string
-                    description: Script content
-                  mode:
-                    type: string
-                    enum: [sandboxed, unrestricted]
-                    default: unrestricted
-                    description: Per-rule execution security mode; omission preserves backwards-compatible unrestricted execution
-                required: [type, value]
-              output_channel:
-                type: string
-                description: Output channel for processed messages
-              output_topic:
-                type: string
-                description: Output topic for processed messages
-              schedule:
-                type: object
-                description: Rule execution schedule
-                properties:
-                  start_datetime:
-                    type: string
-                    format: date-time
-                    description: When the schedule becomes active
-                  time:
-                    type: string
-                    format: date-time
-                    description: Specific time for the rule to run
-                  recurring:
-                    type: string
-                    description: Schedule recurrence pattern
-                    enum: [None, Daily, Weekly, Monthly]
-                  recurring_period:
-                    type: integer
-                    minimum: 1
-                    description: Controls how many intervals to skip between executions
-              status:
-                type: string
-                description: Rule status
-                enum: [enabled, disabled]
-            required:
-              - name
-              - workspace
-              - input_channel
-              - input_topic
-              - logic
-              - schedule
-    RuleUpdateReq:
-      description: JSON-formatted document describing the rule update
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              name:
-                type: string
-                description: Rule name
-              metadata:
-                type: object
-                description: Custom metadata
-                additionalProperties:
-                  type: string
-              input_channel:
-                type: string
-                description: Input channel for receiving messages
-              input_topic:
-                type: string
-                description: Input topic for receiving messages
-              logic:
-                type: object
-                description: Rule processing logic script
-                properties:
-                  type:
-                    type: integer
-                    enum: [0, 1]
-                    description: Script runtime (0 = Lua, 1 = Go)
-                  value:
-                    type: string
-                    description: Script content
-                  mode:
-                    type: string
-                    enum: [sandboxed, unrestricted]
-                    description: Per-rule execution security mode; omission preserves the stored mode
-              output_channel:
-                type: string
-                description: Output channel for processed messages
-              output_topic:
-                type: string
-                description: Output topic for processed messages
-              schedule:
-                type: object
-                description: Rule execution schedule
-                properties:
-                  start_datetime:
-                    type: string
-                    format: date-time
-                    description: When the schedule becomes active
-                  time:
-                    type: string
-                    format: date-time
-                    description: Specific time for the rule to run
-                  recurring:
-                    type: string
-                    description: Schedule recurrence pattern
-                    enum: [None, Daily, Weekly, Monthly]
-                  recurring_period:
-                    type: integer
-                    minimum: 1
-                    description: Controls how many intervals to skip between executions
-              status:
-                type: string
-                description: Rule status
-                enum: [enabled, disabled]
+    ExecutionMode:
+      name: mode
+      in: query
+      description: Filter by execution mode. Omit to return every mode.
+      schema:
+        type: string
+        enum: [sandboxed, unrestricted]
+    Tag:
+      name: tag
+      in: query
+      schema:
+        type: string
+    Order:
+      name: order
+      in: query
+      schema:
+        type: string
+        enum: [name, created_at, updated_at]
+        default: updated_at
+    Dir:
+      name: dir
+      in: query
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: desc
+    Roles:
+      name: roles
+      in: query
+      schema:
+        type: boolean
+        default: false
 
   responses:
-    RuleCreateRes:
-      description: Rule registered
+    RuleCreated:
+      description: Rule created
       headers:
         Location:
-          content:
-            text/plain:
-              schema:
-                type: string
-                description: Created rule's relative URL (i.e. /rules/{ruleID})
-    RuleListRes:
-      description: Data retrieved
-      content:
-        application/json:
+          description: Relative URL of the created rule.
           schema:
-            $ref: '#/components/schemas/RulesListRes'
-    RuleRes:
-      description: Data retrieved
+            type: string
+            example: /rules/01J9RULE
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Rule'
-      links:
-        update:
-          operationId: updateRule
-          parameters:
-            ruleID: $response.body#/id
-        enable:
-          operationId: enableRule
-          parameters:
-            ruleID: $response.body#/id
-        disable:
-          operationId: disableRule
-          parameters:
-            ruleID: $response.body#/id
-        delete:
-          operationId: removeRule
-          parameters:
-            ruleID: $response.body#/id
-    ServiceError:
-      description: Unexpected server-side error occurred
-    HealthRes:
-      description: Service Health Check
+    RuleResponse:
+      description: Rule returned
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Rule'
+    RuleList:
+      description: Paginated rules returned
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RulesPage'
+    BadRequest:
+      description: Invalid path, query parameters, or request body
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid authentication credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: The caller is not authorized for this operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Rule not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Rule conflicts with an existing entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnsupportedMediaType:
+      description: Content-Type is missing or is not application/json
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntity:
+      description: The request was valid but could not be processed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Unexpected server-side error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    HealthResponse:
+      description: Service health
       content:
         application/health+json:
           schema:
-            $ref: "./schemas/health_info.yaml"
+            $ref: './schemas/health_info.yaml'
 
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: |
-        * Users access: "Authorization: Bearer <user_token>"

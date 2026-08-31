@@ -88,6 +88,7 @@ func (sdk mgSDK) PatchAlarm(ctx context.Context, id string, update AlarmUpdate, 
 }
 
 // UpdateAlarm updates an alarm through the legacy PUT compatibility alias.
+//
 // Deprecated: use PatchAlarm for new integrations.
 func (sdk mgSDK) UpdateAlarm(ctx context.Context, alarm Alarm, workspaceID, token string) (Alarm, errors.SDKError) {
 	data, err := json.Marshal(alarm)

@@ -447,6 +447,7 @@ type SDK interface {
 	PatchAlarm(ctx context.Context, id string, update AlarmUpdate, workspaceID, token string) (Alarm, smqerrors.SDKError)
 
 	// UpdateAlarm updates an existing alarm through the legacy PUT alias.
+	//
 	// Deprecated: use PatchAlarm.
 	UpdateAlarm(ctx context.Context, alarm Alarm, workspaceID, token string) (Alarm, smqerrors.SDKError)
 

@@ -120,46 +120,6 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '500':
           $ref: '#/components/responses/InternalServerError'
-    put:
-      operationId: updateAlarmLegacy
-      summary: Partially update an alarm using the legacy verb
-      description: Compatibility alias for PATCH. New clients should use PATCH.
-      deprecated: true
-      tags: [alarms]
-      parameters:
-        - $ref: '#/components/parameters/WorkspaceID'
-        - $ref: '#/components/parameters/AlarmID'
-      security:
-        - bearerAuth: []
-      requestBody:
-        $ref: '#/components/requestBodies/AlarmUpdate'
-      responses:
-        '200':
-          description: Alarm updated. The `Deprecation` response header is `true`.
-          headers:
-            Deprecation:
-              description: Indicates that the PUT compatibility alias is deprecated.
-              schema:
-                type: string
-                enum: ['true']
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Alarm'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '415':
-          $ref: '#/components/responses/UnsupportedMediaType'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
     delete:
       operationId: deleteAlarm
       summary: Delete an alarm
@@ -294,10 +254,20 @@ components:
     AlarmUpdate:
       type: object
       minProperties: 1
-      description: At least one mutable field must be present.
+      additionalProperties: false
+      description: |
+        At least one field must be present. Lifecycle attribution
+        (`assigned_by`/`assigned_at`, `acknowledged_by`/`acknowledged_at`,
+        `resolved_by`/`resolved_at`) is not accepted here: the service records
+        the authenticated caller and the server time whenever `assignee_id`,
+        `acknowledged` or `status` changes.
       properties:
         status:
-          $ref: '#/components/schemas/AlarmStatus'
+          allOf:
+            - $ref: '#/components/schemas/AlarmStatus'
+          description: |
+            Setting `cleared` records the caller as the resolver; setting
+            `active` re-opens the alarm and clears the resolver.
         severity:
           type: integer
           minimum: 0
@@ -305,27 +275,18 @@ components:
         assignee_id:
           type: string
           description: Send an empty string to clear the assignee.
-        assigned_at:
-          type: string
-          format: date-time
-        assigned_by:
-          type: string
-        acknowledged_at:
-          type: string
-          format: date-time
-        acknowledged_by:
-          type: string
-        resolved_at:
-          type: string
-          format: date-time
-        resolved_by:
-          type: string
+        acknowledged:
+          type: boolean
+          description: |
+            `true` records the caller as the acknowledger, `false` clears the
+            acknowledgement.
         metadata:
           $ref: '#/components/schemas/Metadata'
       example:
         status: active
         severity: 0
         assignee_id: ''
+        acknowledged: false
         metadata: {}
 
     AlarmStatus:
@@ -394,7 +355,7 @@ components:
         type: integer
         format: int64
         minimum: 1
-        maximum: 1000
+        maximum: 100
         default: 10
     Order:
       name: order
@@ -523,12 +484,6 @@ components:
             $ref: '#/components/schemas/Error'
     NotFound:
       description: Alarm not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Conflict:
-      description: Alarm conflicts with an existing entity
       content:
         application/json:
           schema:

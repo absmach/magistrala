@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala/pkg/atom"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -43,4 +44,19 @@ func TestAtomResolverEnforcesTenantAndAllowListsAttributes(t *testing.T) {
 		Requested:  []BindingRequest{{Slot: "device", Type: "device", ResourceID: "device-1"}},
 	})
 	require.Error(t, err)
+}
+
+func TestAtomResolverRejectsUnsupportedBindingTypeAsRequestError(t *testing.T) {
+	resolver := NewAtomResolver(atomReaderStub{})
+	_, err := resolver.Resolve(context.Background(), ResolveRequest{
+		Enrollment: Config{WorkspaceID: "tenant-1"},
+		Requested:  []BindingRequest{{Slot: "sensor", Type: "client", ResourceID: "device-1"}},
+	})
+	require.Error(t, err)
+	// Must be a typed, nestable error so it survives errors.Wrap in the
+	// caller and reaches EncodeError as a *RequestError (400 with a JSON
+	// body), instead of an opaque error that falls through to an empty-body
+	// 500 - see bootstrap.BindResources and api/http.EncodeError.
+	var reqErr *errors.RequestError
+	require.ErrorAs(t, err, &reqErr)
 }

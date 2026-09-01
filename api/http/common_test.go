@@ -6,6 +6,7 @@ package http_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -313,6 +314,17 @@ func TestEncodeError(t *testing.T) {
 			err:     errors.NewInternalError(),
 			code:    http.StatusInternalServerError,
 			hasBody: false,
+		},
+		{
+			// A plain, unwrapped error (e.g. a service that forgot to wrap a
+			// resolver/repository error in one of the typed errors above)
+			// must still produce a valid JSON body, not an empty one: an
+			// empty body previously broke every client that parses error
+			// responses as JSON (SyntaxError: Unexpected end of JSON input).
+			desc:    "Untyped error - falls through to default",
+			err:     fmt.Errorf("some untyped error"),
+			code:    http.StatusInternalServerError,
+			hasBody: true,
 		},
 	}
 

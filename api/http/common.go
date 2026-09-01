@@ -170,6 +170,11 @@ func EncodeResponse(_ context.Context, w http.ResponseWriter, response any) erro
 	return json.NewEncoder(w).Encode(response)
 }
 
+// internalServerErrorMessage is returned for any error that reaches
+// EncodeError without being one of the typed magistrala errors below, so the
+// response body is always valid, parseable JSON instead of empty.
+const internalServerErrorMessage = "internal server error"
+
 // EncodeError encodes an error response.
 func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", ContentType)
@@ -243,6 +248,15 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	default:
+		// err reached here without being classified as one of the typed
+		// magistrala errors above, so it carries no safe-to-expose message.
+		// Still write a JSON body (not just the status) so that every
+		// client parsing an error response as JSON - across every service
+		// using this shared encoder - gets a real message instead of an
+		// empty body that fails to parse.
 		w.WriteHeader(http.StatusInternalServerError)
+		if err := json.NewEncoder(w).Encode(map[string]string{"message": internalServerErrorMessage}); err != nil {
+			return
+		}
 	}
 }

@@ -61,9 +61,12 @@ func (am *atomAuthorizationMiddleware) UpdateCert(ctx context.Context, session a
 }
 
 func (am *atomAuthorizationMiddleware) List(ctx context.Context, session authn.Session, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
-	// Listing reads; requiring tenant write would make the read-only role
-	// that holds the registered tenant "list" capability unable to use it.
-	if err := am.tenant(ctx, session, "list"); err != nil {
+	// Listing reads, so it checks "read" rather than "write" or a distinct
+	// "list" capability. This matches alarms and re: their list operations
+	// resolve through permission.yaml to a "*_read_permission" string, which
+	// CapabilityName collapses to "read" — no tenant role is ever granted a
+	// standalone "list" capability.
+	if err := am.tenant(ctx, session, "read"); err != nil {
 		return bootstrap.ConfigsPage{}, err
 	}
 	return am.Service.List(ctx, session, filter, offset, limit)
@@ -112,8 +115,8 @@ func (am *atomAuthorizationMiddleware) UpdateProfile(ctx context.Context, sessio
 }
 
 func (am *atomAuthorizationMiddleware) ListProfiles(ctx context.Context, session authn.Session, offset, limit uint64, name string) (bootstrap.ProfilesPage, error) {
-	// See List: this reads, so it checks the tenant "list" capability.
-	if err := am.tenant(ctx, session, "list"); err != nil {
+	// See List: this reads, so it checks "read".
+	if err := am.tenant(ctx, session, "read"); err != nil {
 		return bootstrap.ProfilesPage{}, err
 	}
 	return am.Service.ListProfiles(ctx, session, offset, limit, name)

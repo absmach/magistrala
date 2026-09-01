@@ -431,7 +431,7 @@ services:
       - magistrala-base-net
 
   ui:
-    image: ghcr.io/absmach/magistrala/ui-mg:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/ui-community:${MG_RELEASE_TAG}
     container_name: magistrala-ui
     restart: unless-stopped
     ports:

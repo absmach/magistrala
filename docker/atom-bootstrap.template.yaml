@@ -8,6 +8,22 @@
 # and guardrail rules idempotently. Rows are stamped managed_by='config' and
 # become immutable through the Atom API.
 
+# Capabilities added to Atom's system-created tenant-admin role, on top of the
+# built-in TENANT_ADMIN_BASE_CAPABILITIES. The alarm_* family is declared below
+# under `capabilities:` and permitted by the guardrails, but nothing links it to
+# a role by default, so alarm reads are denied and the alarms service returns
+# empty pages. Atom applies this to new tenants at creation and reconciles
+# existing tenant-admin roles at every startup; the set is declarative, so an
+# action added to that role by hand is dropped unless it is also named here.
+tenant_defaults:
+  admin_capabilities:
+    - alarm_read
+    - alarm_update
+    - alarm_delete
+    - alarm_assign
+    - alarm_acknowledge
+    - alarm_resolve
+
 capabilities:
   - name: read
     description: "Read / view an object"

@@ -25,6 +25,24 @@ capabilities:
         object_type: "resource:bootstrap_config"
       - object_kind: resource
         object_type: "resource:bootstrap_profile"
+      # Applicability seeded by Atom's migration 001. Atom's bootstrap refuses
+      # to reconcile a capability whose persisted rows are not all declared
+      # here ("has persisted applicability not declared in config").
+      - object_kind: tenant
+      - object_kind: entity
+        object_type: "entity:human"
+      - object_kind: entity
+        object_type: "entity:service"
+      - object_kind: entity
+        object_type: "entity:workload"
+      - object_kind: entity
+        object_type: "entity:application"
+      - object_kind: resource
+      - object_kind: role
+      - object_kind: policy
+      - object_kind: credential
+      - object_kind: audit_log
+      - object_kind: api_endpoint
 
   - name: write
     description: "Create or update an object"
@@ -43,6 +61,18 @@ capabilities:
         object_type: "resource:bootstrap_config"
       - object_kind: resource
         object_type: "resource:bootstrap_profile"
+      # Applicability seeded by Atom's migration 001. Atom's bootstrap refuses
+      # to reconcile a capability whose persisted rows are not all declared
+      # here ("has persisted applicability not declared in config").
+      - object_kind: entity
+        object_type: "entity:human"
+      - object_kind: entity
+        object_type: "entity:service"
+      - object_kind: entity
+        object_type: "entity:workload"
+      - object_kind: entity
+        object_type: "entity:application"
+      - object_kind: resource
 
   - name: delete
     description: "Delete an object"
@@ -60,6 +90,18 @@ capabilities:
         object_type: "resource:bootstrap_config"
       - object_kind: resource
         object_type: "resource:bootstrap_profile"
+      # Applicability seeded by Atom's migration 001. Atom's bootstrap refuses
+      # to reconcile a capability whose persisted rows are not all declared
+      # here ("has persisted applicability not declared in config").
+      - object_kind: entity
+        object_type: "entity:human"
+      - object_kind: entity
+        object_type: "entity:service"
+      - object_kind: entity
+        object_type: "entity:workload"
+      - object_kind: entity
+        object_type: "entity:application"
+      - object_kind: resource
 
   - name: manage
     description: "Full administrative control"
@@ -77,6 +119,15 @@ capabilities:
         object_type: "resource:bootstrap_config"
       - object_kind: resource
         object_type: "resource:bootstrap_profile"
+      # Applicability seeded by Atom's migration 001. Atom's bootstrap refuses
+      # to reconcile a capability whose persisted rows are not all declared
+      # here ("has persisted applicability not declared in config").
+      - object_kind: tenant
+      - object_kind: entity
+      - object_kind: resource
+      - object_kind: credential
+      - object_kind: policy
+      - object_kind: api_endpoint
 
   - name: publish
     description: "Publish messages to a channel"
@@ -99,6 +150,10 @@ capabilities:
         object_type: "resource:rule"
       - object_kind: resource
         object_type: "resource:report"
+      # Applicability seeded by Atom's migration 001. Atom's bootstrap refuses
+      # to reconcile a capability whose persisted rows are not all declared
+      # here ("has persisted applicability not declared in config").
+      - object_kind: api_endpoint
 
 
   - name: list

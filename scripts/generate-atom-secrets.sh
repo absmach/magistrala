@@ -36,6 +36,9 @@ out_env="${root_dir}/docker/.env.tokens"
 # Well-known service entity id seeded by Atom's migration 001. All Magistrala
 # service tokens attach to this entity, which already carries the
 # `example-service` platform role granting the actions those services need.
+# The name and attributes emitted below must mirror that seeded row exactly:
+# Atom's bootstrap refuses to claim an existing entity whose kind, name, alias,
+# tenant, status or attributes differ ("exists with different semantics").
 service_entity_id="${ATOM_SERVICE_ENTITY_ID:-00000000-0000-0000-0000-000000000003}"
 
 # `<compose-token-env-var>:<credential-name>` pairs, one per Magistrala
@@ -98,7 +101,10 @@ cat >> "${tmp_yaml}" <<EOF
 entities:
   - id: ${service_entity_id}
     kind: service
-    name: magistrala-services
+    name: example-service
+    attributes:
+      system: true
+      purpose: example-service-integration
     credentials:
 EOF
 

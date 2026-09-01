@@ -37,7 +37,7 @@ func (r *atomResolver) Resolve(ctx context.Context, req ResolveRequest) ([]Bindi
 		case "channel":
 			snapshot, err = r.resource(ctx, req.Enrollment.WorkspaceID, binding)
 		default:
-			err = fmt.Errorf("unsupported binding type %q", binding.Type)
+			err = errors.NewRequestError(fmt.Sprintf("unsupported binding type %q", binding.Type))
 		}
 		if err != nil {
 			return nil, err

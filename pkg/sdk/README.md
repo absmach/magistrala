@@ -121,7 +121,7 @@ RefreshBootstrapBindings(ctx context.Context, configID, workspaceID, token strin
 ### Alarms
 
 ```go
-UpdateAlarm(ctx context.Context, alarm Alarm, workspaceID, token string) (Alarm, errors.SDKError)
+PatchAlarm(ctx context.Context, id string, update AlarmUpdate, workspaceID, token string) (Alarm, errors.SDKError)
 ViewAlarm(ctx context.Context, id, workspaceID, token string) (Alarm, errors.SDKError)
 ListAlarms(ctx context.Context, pm PageMetadata, workspaceID, token string) (AlarmsPage, errors.SDKError)
 DeleteAlarm(ctx context.Context, id, workspaceID, token string) errors.SDKError

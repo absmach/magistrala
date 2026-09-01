@@ -43,19 +43,19 @@ type Alarm struct {
 	Metadata       Metadata  `json:"metadata,omitempty"`
 }
 
-// AlarmUpdate contains mutable alarm fields. Pointers distinguish omitted
-// fields from explicit zero values such as status "active" or severity 0.
+// AlarmUpdate contains the client-settable alarm fields. Pointers distinguish
+// omitted fields from explicit zero values such as status "active", severity 0,
+// an empty assignee, or an empty metadata object.
+//
+// Lifecycle attribution (assigned_by/at, acknowledged_by/at, resolved_by/at) is
+// derived by the service from the caller's session and the server clock, so it
+// cannot be set here.
 type AlarmUpdate struct {
-	Status         *string    `json:"status,omitempty"`
-	Severity       *uint8     `json:"severity,omitempty"`
-	AssigneeID     *string    `json:"assignee_id,omitempty"`
-	AssignedAt     *time.Time `json:"assigned_at,omitempty"`
-	AssignedBy     *string    `json:"assigned_by,omitempty"`
-	AcknowledgedAt *time.Time `json:"acknowledged_at,omitempty"`
-	AcknowledgedBy *string    `json:"acknowledged_by,omitempty"`
-	ResolvedAt     *time.Time `json:"resolved_at,omitempty"`
-	ResolvedBy     *string    `json:"resolved_by,omitempty"`
-	Metadata       *Metadata  `json:"metadata,omitempty"`
+	Status       *string   `json:"status,omitempty"`
+	Severity     *uint8    `json:"severity,omitempty"`
+	AssigneeID   *string   `json:"assignee_id,omitempty"`
+	Acknowledged *bool     `json:"acknowledged,omitempty"`
+	Metadata     *Metadata `json:"metadata,omitempty"`
 }
 
 type AlarmsPage struct {
@@ -65,7 +65,8 @@ type AlarmsPage struct {
 	Alarms []Alarm `json:"alarms"`
 }
 
-// PatchAlarm partially updates an alarm using the canonical PATCH operation.
+// PatchAlarm partially updates an alarm. Only the fields present in update
+// are changed.
 func (sdk mgSDK) PatchAlarm(ctx context.Context, id string, update AlarmUpdate, workspaceID, token string) (Alarm, errors.SDKError) {
 	data, err := json.Marshal(update)
 	if err != nil {
@@ -85,30 +86,6 @@ func (sdk mgSDK) PatchAlarm(ctx context.Context, id string, update AlarmUpdate, 
 	}
 
 	return alarm, nil
-}
-
-// UpdateAlarm updates an alarm through the legacy PUT compatibility alias.
-//
-// Deprecated: use PatchAlarm for new integrations.
-func (sdk mgSDK) UpdateAlarm(ctx context.Context, alarm Alarm, workspaceID, token string) (Alarm, errors.SDKError) {
-	data, err := json.Marshal(alarm)
-	if err != nil {
-		return Alarm{}, errors.NewSDKError(err)
-	}
-
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.alarmsURL, workspaceID, alarmsEndpoint, alarm.ID)
-
-	_, body, sdkerr := sdk.processRequest(ctx, http.MethodPut, url, token, data, nil, http.StatusOK)
-	if sdkerr != nil {
-		return Alarm{}, sdkerr
-	}
-
-	var a Alarm
-	if err := json.Unmarshal(body, &a); err != nil {
-		return Alarm{}, errors.NewSDKError(err)
-	}
-
-	return a, nil
 }
 
 func (sdk mgSDK) ViewAlarm(ctx context.Context, id, workspaceID, token string) (Alarm, errors.SDKError) {

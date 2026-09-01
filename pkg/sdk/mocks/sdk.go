@@ -2736,6 +2736,92 @@ func (_c *SDK_OCSP_Call) RunAndReturn(run func(ctx context.Context, serialNumber
 	return _c
 }
 
+// PatchAlarm provides a mock function for the type SDK
+func (_mock *SDK) PatchAlarm(ctx context.Context, id string, update sdk.AlarmUpdate, workspaceID string, token string) (sdk.Alarm, errors.SDKError) {
+	ret := _mock.Called(ctx, id, update, workspaceID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PatchAlarm")
+	}
+
+	var r0 sdk.Alarm
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.AlarmUpdate, string, string) (sdk.Alarm, errors.SDKError)); ok {
+		return returnFunc(ctx, id, update, workspaceID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.AlarmUpdate, string, string) sdk.Alarm); ok {
+		r0 = returnFunc(ctx, id, update, workspaceID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Alarm)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, sdk.AlarmUpdate, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, update, workspaceID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_PatchAlarm_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PatchAlarm'
+type SDK_PatchAlarm_Call struct {
+	*mock.Call
+}
+
+// PatchAlarm is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - update sdk.AlarmUpdate
+//   - workspaceID string
+//   - token string
+func (_e *SDK_Expecter) PatchAlarm(ctx any, id any, update any, workspaceID any, token any) *SDK_PatchAlarm_Call {
+	return &SDK_PatchAlarm_Call{Call: _e.mock.On("PatchAlarm", ctx, id, update, workspaceID, token)}
+}
+
+func (_c *SDK_PatchAlarm_Call) Run(run func(ctx context.Context, id string, update sdk.AlarmUpdate, workspaceID string, token string)) *SDK_PatchAlarm_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 sdk.AlarmUpdate
+		if args[2] != nil {
+			arg2 = args[2].(sdk.AlarmUpdate)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_PatchAlarm_Call) Return(alarm sdk.Alarm, sDKError errors.SDKError) *SDK_PatchAlarm_Call {
+	_c.Call.Return(alarm, sDKError)
+	return _c
+}
+
+func (_c *SDK_PatchAlarm_Call) RunAndReturn(run func(ctx context.Context, id string, update sdk.AlarmUpdate, workspaceID string, token string) (sdk.Alarm, errors.SDKError)) *SDK_PatchAlarm_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ReadMessages provides a mock function for the type SDK
 func (_mock *SDK) ReadMessages(ctx context.Context, pm sdk.MessagePageMetadata, chanID string, workspaceID string, token string) (sdk.MessagesPage, errors.SDKError) {
 	ret := _mock.Called(ctx, pm, chanID, workspaceID, token)
@@ -3525,164 +3611,6 @@ func (_c *SDK_SetContentType_Call) Return(sDKError errors.SDKError) *SDK_SetCont
 }
 
 func (_c *SDK_SetContentType_Call) RunAndReturn(run func(ct sdk.ContentType) errors.SDKError) *SDK_SetContentType_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// PatchAlarm provides a mock function for the type SDK
-func (_mock *SDK) PatchAlarm(ctx context.Context, id string, update sdk.AlarmUpdate, workspaceID string, token string) (sdk.Alarm, errors.SDKError) {
-	ret := _mock.Called(ctx, id, update, workspaceID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for PatchAlarm")
-	}
-
-	var r0 sdk.Alarm
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.AlarmUpdate, string, string) (sdk.Alarm, errors.SDKError)); ok {
-		return returnFunc(ctx, id, update, workspaceID, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.AlarmUpdate, string, string) sdk.Alarm); ok {
-		r0 = returnFunc(ctx, id, update, workspaceID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Alarm)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, sdk.AlarmUpdate, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, update, workspaceID, token)
-	} else if ret.Get(1) != nil {
-		r1 = ret.Get(1).(errors.SDKError)
-	}
-	return r0, r1
-}
-
-// SDK_PatchAlarm_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PatchAlarm'
-type SDK_PatchAlarm_Call struct {
-	*mock.Call
-}
-
-// PatchAlarm is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - update sdk.AlarmUpdate
-//   - workspaceID string
-//   - token string
-func (_e *SDK_Expecter) PatchAlarm(ctx any, id any, update any, workspaceID any, token any) *SDK_PatchAlarm_Call {
-	return &SDK_PatchAlarm_Call{Call: _e.mock.On("PatchAlarm", ctx, id, update, workspaceID, token)}
-}
-
-func (_c *SDK_PatchAlarm_Call) Run(run func(ctx context.Context, id string, update sdk.AlarmUpdate, workspaceID string, token string)) *SDK_PatchAlarm_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 sdk.AlarmUpdate
-		if args[2] != nil {
-			arg2 = args[2].(sdk.AlarmUpdate)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		var arg4 string
-		if args[4] != nil {
-			arg4 = args[4].(string)
-		}
-		run(arg0, arg1, arg2, arg3, arg4)
-	})
-	return _c
-}
-
-func (_c *SDK_PatchAlarm_Call) Return(alarm sdk.Alarm, sDKError errors.SDKError) *SDK_PatchAlarm_Call {
-	_c.Call.Return(alarm, sDKError)
-	return _c
-}
-
-func (_c *SDK_PatchAlarm_Call) RunAndReturn(run func(ctx context.Context, id string, update sdk.AlarmUpdate, workspaceID string, token string) (sdk.Alarm, errors.SDKError)) *SDK_PatchAlarm_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// UpdateAlarm provides a mock function for the type SDK
-func (_mock *SDK) UpdateAlarm(ctx context.Context, alarm sdk.Alarm, workspaceID string, token string) (sdk.Alarm, errors.SDKError) {
-	ret := _mock.Called(ctx, alarm, workspaceID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateAlarm")
-	}
-
-	var r0 sdk.Alarm
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Alarm, string, string) (sdk.Alarm, errors.SDKError)); ok {
-		return returnFunc(ctx, alarm, workspaceID, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Alarm, string, string) sdk.Alarm); ok {
-		r0 = returnFunc(ctx, alarm, workspaceID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Alarm)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Alarm, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, alarm, workspaceID, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-	return r0, r1
-}
-
-// SDK_UpdateAlarm_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateAlarm'
-type SDK_UpdateAlarm_Call struct {
-	*mock.Call
-}
-
-// UpdateAlarm is a helper method to define mock.On call
-//   - ctx context.Context
-//   - alarm sdk.Alarm
-//   - workspaceID string
-//   - token string
-func (_e *SDK_Expecter) UpdateAlarm(ctx any, alarm any, workspaceID any, token any) *SDK_UpdateAlarm_Call {
-	return &SDK_UpdateAlarm_Call{Call: _e.mock.On("UpdateAlarm", ctx, alarm, workspaceID, token)}
-}
-
-func (_c *SDK_UpdateAlarm_Call) Run(run func(ctx context.Context, alarm sdk.Alarm, workspaceID string, token string)) *SDK_UpdateAlarm_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 sdk.Alarm
-		if args[1] != nil {
-			arg1 = args[1].(sdk.Alarm)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_UpdateAlarm_Call) Return(alarm1 sdk.Alarm, sDKError errors.SDKError) *SDK_UpdateAlarm_Call {
-	_c.Call.Return(alarm1, sDKError)
-	return _c
-}
-
-func (_c *SDK_UpdateAlarm_Call) RunAndReturn(run func(ctx context.Context, alarm sdk.Alarm, workspaceID string, token string) (sdk.Alarm, errors.SDKError)) *SDK_UpdateAlarm_Call {
 	_c.Call.Return(run)
 	return _c
 }

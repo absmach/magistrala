@@ -119,7 +119,7 @@ func TestCreate(t *testing.T) {
 			req:         data,
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusBadRequest,
+			status:      http.StatusConflict,
 			location:    "",
 			err:         svcerr.ErrConflict,
 		},

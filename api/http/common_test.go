@@ -243,9 +243,9 @@ func TestEncodeError(t *testing.T) {
 			hasBody: true,
 		},
 		{
-			desc:    "RequestError - Conflict",
+			desc:    "ConflictError - Conflict",
 			err:     svcerr.ErrConflict,
-			code:    http.StatusBadRequest,
+			code:    http.StatusConflict,
 			hasBody: true,
 		},
 		{

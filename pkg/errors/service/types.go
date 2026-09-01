@@ -74,7 +74,7 @@ var (
 	ErrNotFound = errors.NewNotFoundError("entity not found")
 
 	// ErrConflict indicates that entity already exists.
-	ErrConflict = errors.NewRequestError("entity already exists")
+	ErrConflict = errors.NewConflictError("entity already exists")
 
 	// ErrInvalidPolicy indicates that an invalid policy.
 	ErrInvalidPolicy = errors.New("invalid policy")

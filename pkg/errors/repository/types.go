@@ -14,7 +14,7 @@ var (
 	ErrNotFound = errors.NewNotFoundError("entity not found")
 
 	// ErrConflict indicates that entity already exists.
-	ErrConflict = errors.New("entity already exists")
+	ErrConflict = errors.NewConflictError("entity already exists")
 
 	// ErrCreateEntity indicates error in creating entity or entities.
 	ErrCreateEntity = errors.New("failed to create entity in the db")

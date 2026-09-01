@@ -6,6 +6,7 @@ package sdk_test
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -28,14 +29,16 @@ func TestPatchAlarmPreservesExplicitZeroValues(t *testing.T) {
 	status := "active"
 	severity := uint8(0)
 	assignee := ""
+	acknowledged := false
 	metadata := sdk.Metadata{}
 	client := sdk.NewSDK(sdk.Config{AlarmsURL: server.URL})
 
 	alarm, err := client.PatchAlarm(context.Background(), "alarm-1", sdk.AlarmUpdate{
-		Status:     &status,
-		Severity:   &severity,
-		AssigneeID: &assignee,
-		Metadata:   &metadata,
+		Status:       &status,
+		Severity:     &severity,
+		AssigneeID:   &assignee,
+		Acknowledged: &acknowledged,
+		Metadata:     &metadata,
 	}, "workspace-1", "token")
 
 	require.Nil(t, err)
@@ -46,6 +49,26 @@ func TestPatchAlarmPreservesExplicitZeroValues(t *testing.T) {
 	require.Zero(t, *got.Severity)
 	require.NotNil(t, got.AssigneeID)
 	require.Empty(t, *got.AssigneeID)
+	require.NotNil(t, got.Acknowledged)
+	require.False(t, *got.Acknowledged)
 	require.NotNil(t, got.Metadata)
 	require.Empty(t, *got.Metadata)
+}
+
+// An update that sets nothing must serialise to an empty object, so the server
+// rejects it rather than silently writing defaults.
+func TestPatchAlarmOmitsUnsetFields(t *testing.T) {
+	var raw []byte
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		raw, _ = io.ReadAll(req.Body)
+		w.Header().Set("Content-Type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(sdk.Alarm{ID: "alarm-1"}))
+	}))
+	defer server.Close()
+
+	client := sdk.NewSDK(sdk.Config{AlarmsURL: server.URL})
+	_, err := client.PatchAlarm(context.Background(), "alarm-1", sdk.AlarmUpdate{}, "workspace-1", "token")
+
+	require.Nil(t, err)
+	require.JSONEq(t, `{}`, string(raw))
 }

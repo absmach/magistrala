@@ -191,7 +191,7 @@ func TestAdd(t *testing.T) {
 			workspaceID: workspaceID,
 			token:       validToken,
 			contentType: contentType,
-			status:      http.StatusBadRequest,
+			status:      http.StatusConflict,
 			location:    "",
 			err:         svcerr.ErrConflict,
 		},

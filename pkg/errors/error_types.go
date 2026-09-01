@@ -216,3 +216,24 @@ func (e *NotFoundError) Embed(err error) error {
 }
 
 func (*NotFoundError) isNestable() {}
+
+type ConflictError struct {
+	customError
+}
+
+var _ nestableError = (*ConflictError)(nil)
+
+func NewConflictError(message string) NestError {
+	return &ConflictError{
+		customError: newCustomError(message),
+	}
+}
+
+func (e *ConflictError) Embed(err error) error {
+	embedded := e.customError.Embed(err)
+	return &ConflictError{
+		customError: *embedded.(*customError),
+	}
+}
+
+func (*ConflictError) isNestable() {}

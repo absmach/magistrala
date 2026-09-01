@@ -198,6 +198,15 @@ auth:
         # neither publishes messages nor manages queues.
         subscribe:
           - "writers"
+    - name: "alarms"
+      certificate_uri_san: "spiffe://absmach/magistrala/alarms"
+      role: "service"
+      current_secret_file: "/etc/fluxmq/secrets/alarms-current"
+      permissions:
+        # Alarms is a passive consumer of the broker-provisioned stream the
+        # Rules Engine writes its alarm outputs to.
+        subscribe:
+          - "alarms"
     - name: "fluxmq-auth"
       certificate_uri_san: "spiffe://absmach/magistrala/fluxmq-auth"
       # The publish proxy relays messages a user published over HTTP. Stating

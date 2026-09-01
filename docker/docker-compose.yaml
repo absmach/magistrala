@@ -330,6 +330,7 @@ services:
       - ./fluxmq/secrets/timescale-writer-current:/etc/fluxmq/secrets/timescale-writer-current:ro
       - ./fluxmq/secrets/postgres-writer-current:/etc/fluxmq/secrets/postgres-writer-current:ro
       - ./fluxmq/secrets/fluxmq-auth-current:/etc/fluxmq/secrets/fluxmq-auth-current:ro
+      - ./fluxmq/secrets/alarms-current:/etc/fluxmq/secrets/alarms-current:ro
       - magistrala-fluxmq-node1-volume:/tmp/fluxmq
 
   fluxmq-node2:
@@ -359,6 +360,7 @@ services:
       - ./fluxmq/secrets/timescale-writer-current:/etc/fluxmq/secrets/timescale-writer-current:ro
       - ./fluxmq/secrets/postgres-writer-current:/etc/fluxmq/secrets/postgres-writer-current:ro
       - ./fluxmq/secrets/fluxmq-auth-current:/etc/fluxmq/secrets/fluxmq-auth-current:ro
+      - ./fluxmq/secrets/alarms-current:/etc/fluxmq/secrets/alarms-current:ro
       - magistrala-fluxmq-node2-volume:/tmp/fluxmq
 
   fluxmq-node3:
@@ -388,6 +390,7 @@ services:
       - ./fluxmq/secrets/timescale-writer-current:/etc/fluxmq/secrets/timescale-writer-current:ro
       - ./fluxmq/secrets/postgres-writer-current:/etc/fluxmq/secrets/postgres-writer-current:ro
       - ./fluxmq/secrets/fluxmq-auth-current:/etc/fluxmq/secrets/fluxmq-auth-current:ro
+      - ./fluxmq/secrets/alarms-current:/etc/fluxmq/secrets/alarms-current:ro
       - magistrala-fluxmq-node3-volume:/tmp/fluxmq
 
   fluxmq-auth:
@@ -1013,6 +1016,8 @@ services:
         condition: service_started
       nginx:
         condition: service_started
+      fluxmq-node1:
+        condition: service_started
     restart: on-failure
     environment:
       MG_ALARMS_LOG_LEVEL: ${MG_ALARMS_LOG_LEVEL}
@@ -1035,7 +1040,10 @@ services:
       MG_ALARMS_DB_SSL_CERT: ${MG_ALARMS_DB_SSL_CERT}
       MG_ALARMS_DB_SSL_KEY: ${MG_ALARMS_DB_SSL_KEY}
       MG_ALARMS_DB_SSL_ROOT_CERT: ${MG_ALARMS_DB_SSL_ROOT_CERT}
-      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_MESSAGE_BROKER_URL: ${MG_ALARMS_BROKER_URL}
+      MG_ALARMS_BROKER_CLIENT_CERT: ${MG_ALARMS_BROKER_CLIENT_CERT}
+      MG_ALARMS_BROKER_CLIENT_KEY: ${MG_ALARMS_BROKER_CLIENT_KEY}
+      MG_ALARMS_BROKER_CA_CERTS: ${MG_ALARMS_BROKER_CA_CERTS}
       MG_ES_URL: ${MG_ES_URL}
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
@@ -1049,6 +1057,11 @@ services:
       - magistrala-base-net
     volumes:
       - ./permission.yaml:${MG_PERMISSIONS_FILE}
+      # The URI SAN in this client certificate identifies Alarms to the FluxMQ
+      # local listener; the broker ACL only permits `alarms`.
+      - ./ssl/certs/alarms-fluxmq-client.crt:${MG_ALARMS_BROKER_CLIENT_CERT}:ro
+      - ./ssl/certs/alarms-fluxmq-client.key:${MG_ALARMS_BROKER_CLIENT_KEY}:ro
+      - ./ssl/certs/ca.crt:${MG_ALARMS_BROKER_CA_CERTS}:ro
 
   reports-db:
     image: docker.io/postgres:18.4-alpine3.24

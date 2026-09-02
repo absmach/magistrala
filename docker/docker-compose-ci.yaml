@@ -5,3 +5,10 @@ services:
   atom-ui:
     profiles:
       - atom-ui
+
+  # ui-community is not published as a public package, so an anonymous pull
+  # fails the whole compose run. The API property tests never touch the UI, so
+  # keep it out of CI.
+  ui:
+    profiles:
+      - ui

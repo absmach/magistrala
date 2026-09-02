@@ -55,35 +55,18 @@ To pull images from a specific release in `ghcr.io/absmach/magistrala`, change `
 
 ## Broker Configuration
 
-Magistrala uses a single broker for both message exchange and the events store,
-and it is FluxMQ by default. The broker is selected at build time through
-`MG_MESSAGE_BROKER_TYPE`, the events store through `MG_ES_TYPE`, and both are
-compiled in as Go build tags by the Makefile.
+FluxMQ is the message broker, and it also backs the events store by default.
+The events store is the one part that is selectable: `MG_ES_TYPE` is compiled
+in as a Go build tag by the Makefile.
 
-| Component      | Variable                 | Values                              | Default      |
-| :------------- | :----------------------- | :---------------------------------- | :----------- |
-| Message broker | `MG_MESSAGE_BROKER_TYPE` | `msg_fluxmq`, `msg_nats`            | `msg_fluxmq` |
-| Events store   | `MG_ES_TYPE`             | `es_fluxmq`, `es_nats`, `es_redis`  | `es_fluxmq`  |
+| Component      | Variable     | Values                   | Default     |
+| :------------- | :----------- | :----------------------- | :---------- |
+| Message broker | -            | FluxMQ                   | FluxMQ      |
+| Events store   | `MG_ES_TYPE` | `es_fluxmq`, `es_redis`  | `es_fluxmq` |
 
-`es_redis` selects the Redis events store, which needs a message broker deployed
-alongside it for message exchange.
-
-Changing either one requires rebuilding the images, and the matching URL in
-`docker/.env`:
-
-```bash
-MG_MESSAGE_BROKER_TYPE=msg_nats MG_ES_TYPE=es_nats make dockers
-```
-
-```env
-MG_MESSAGE_BROKER_TYPE=msg_nats
-MG_MESSAGE_BROKER_URL=nats://nats:4222
-MG_ES_TYPE=es_nats
-MG_ES_URL=nats://nats:4222
-```
-
-For Redis as the events store, point `MG_ES_URL` at Redis and keep a message
-broker for message exchange:
+`es_redis` selects the Redis events store, which still needs FluxMQ deployed
+alongside it for message exchange. Changing it requires rebuilding the images,
+and pointing `MG_ES_URL` at Redis in `docker/.env`:
 
 ```bash
 MG_ES_TYPE=es_redis make dockers

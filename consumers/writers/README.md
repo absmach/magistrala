@@ -43,7 +43,7 @@ Values shown are from [docker/.env](https://github.com/absmach/magistrala/blob/m
 
 | Variable                | Description                                   | Default                        |
 | ----------------------- | --------------------------------------------- | ------------------------------ |
-| `MG_MESSAGE_BROKER_URL` | Message broker URL                            | `nats://nats:4222`             |
+| `MG_MESSAGE_BROKER_URL` | Message broker URL                            | `amqp://guest:guest@nginx:5682/`             |
 | `MG_JAEGER_URL`         | Jaeger collector endpoint                     | `http://jaeger:4318/v1/traces` |
 | `MG_JAEGER_TRACE_RATIO` | Trace sampling ratio                          | `1.0`                          |
 | `MG_SEND_TELEMETRY`     | Send telemetry to Magistrala call-home server | `true`                         |
@@ -104,16 +104,13 @@ time_fields = [
 ]
 ```
 
-The topic filter uses slash-delimited MQTT-style syntax (`+`, `#`) in the config file for both backends. Writers do not expose broker mode, delivery policy, or consumer-group settings in this file. They always consume through the stream-backed broker adapter in `pkg/messaging/writers`:
-
-- NATS builds use JetStream streams with durable consumers.
-- FluxMQ builds publish to and consume from the `writers` stream queue while preserving the same `writers/#` config syntax.
+The topic filter uses slash-delimited MQTT-style syntax (`+`, `#`) in the config file. Writers do not expose broker mode, delivery policy, or consumer-group settings in this file. They always consume through the stream-backed broker adapter in `pkg/messaging/writers`, which publishes to and consumes from the `writers` stream queue.
 
 ## Features
 
 - **Message persistence**: Stores incoming SenML messages into PostgreSQL or TimescaleDB.
 - **JSON payload support**: Saves JSON payloads into dynamically created tables.
-- **Stream-backed ingestion**: Consumes through NATS JetStream durable consumers or FluxMQ stream queues.
+- **Stream-backed ingestion**: Consumes through FluxMQ stream queues.
 - **Configurable subscription**: Limits ingestion to specific `writers/<channel>/<subtopic>` topics.
 - **Observability**: Exposes `/health` and `/metrics` endpoints, with Jaeger tracing.
 
@@ -129,7 +126,7 @@ The topic filter uses slash-delimited MQTT-style syntax (`+`, `#`) in the config
 
 ### Components
 
-- **Message broker adapter**: `pkg/messaging/writers` (NATS JetStream or FluxMQ stream queues).
+- **Message broker adapter**: `pkg/messaging/writers` (FluxMQ stream queues).
 - **Writer services**: `consumers/writers/postgres` and `consumers/writers/timescale`.
 - **HTTP API**: `consumers/writers/api` exposes `/health` and `/metrics`.
 - **Migrations**: `consumers/writers/*/init.go` defines the schema and indexes.
@@ -206,7 +203,7 @@ MG_POSTGRES_WRITER_HTTP_PORT=9007 \
 MG_POSTGRES_HOST=localhost \
 MG_POSTGRES_PORT=5432 \
 MG_POSTGRES_USER=magistrala \MG_POSTGRES_PASS=magistrala \MG_POSTGRES_NAME=messages \
-MG_MESSAGE_BROKER_URL=nats://localhost:4222 \
+MG_MESSAGE_BROKER_URL=amqp://guest:guest@localhost:5682/ \
 MG_JAEGER_URL=http://localhost:4318/v1/traces \
 ./build/postgres-writer
 ```
@@ -221,7 +218,7 @@ MG_TIMESCALE_WRITER_CONFIG_PATH=./docker/addons/timescale-writer/config.toml \
 MG_TIMESCALE_WRITER_HTTP_PORT=9012 \
 MG_TIMESCALE_HOST=localhost \
 MG_TIMESCALE_PORT=5432 \
-MG_TIMESCALE_USER=magistrala \MG_TIMESCALE_PASS=magistrala \MG_TIMESCALE_NAME=magistrala \MG_MESSAGE_BROKER_URL=nats://localhost:4222 \
+MG_TIMESCALE_USER=magistrala \MG_TIMESCALE_PASS=magistrala \MG_TIMESCALE_NAME=magistrala \MG_MESSAGE_BROKER_URL=amqp://guest:guest@localhost:5682/ \
 MG_JAEGER_URL=http://localhost:4318/v1/traces \
 ./build/timescale-writer
 ```

@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/absmach/magistrala/pkg/messaging"
-	"github.com/nats-io/nats.go/jetstream"
 )
 
 // ErrInvalidType is returned when the provided value is not of the expected type.
@@ -160,18 +159,5 @@ func DirectTopicOnly() messaging.Option {
 		}
 
 		return nil
-	}
-}
-
-// JSStreamConfig is a no-op for FluxMQ AMQP backend and exists only to keep
-// option-compatibility with legacy NATS broker wrappers.
-func JSStreamConfig(_ jetstream.StreamConfig) messaging.Option {
-	return func(val any) error {
-		switch val.(type) {
-		case *publisher, *pubsub:
-			return nil
-		default:
-			return ErrInvalidType
-		}
 	}
 }

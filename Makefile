@@ -35,19 +35,13 @@ PKG_PROTO_GEN_OUT_DIR=api/grpc
 INTERNAL_PROTO_DIR=internal/proto
 INTERNAL_PROTO_FILES := $(shell find $(INTERNAL_PROTO_DIR) -name "*.proto" | sed 's|$(INTERNAL_PROTO_DIR)/||')
 
-ifneq ($(MG_MESSAGE_BROKER_TYPE),)
-	MG_MESSAGE_BROKER_TYPE := $(MG_MESSAGE_BROKER_TYPE)
-else
-	MG_MESSAGE_BROKER_TYPE=msg_fluxmq
-endif
-
 ifneq ($(MG_ES_TYPE),)
 	MG_ES_TYPE := $(MG_ES_TYPE)
 else
 	MG_ES_TYPE=es_fluxmq
 endif
 
-BUILD_TAGS := $(strip $(MG_MESSAGE_BROKER_TYPE) $(MG_ES_TYPE))
+BUILD_TAGS := $(strip $(MG_ES_TYPE))
 
 define compile_service
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) \
@@ -292,9 +286,6 @@ release:
 		docker tag $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(version); \
 	done
 	$(call docker_push,$(version))
-
-rundev:
-	cd scripts && ./run.sh
 
 grpc_mtls_certs:
 	$(MAKE) -C docker/ssl clients_grpc_certs

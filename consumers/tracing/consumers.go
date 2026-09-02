@@ -21,12 +21,12 @@ const (
 )
 
 var defaultAttributes = []attribute.KeyValue{
-	attribute.String("messaging.system", "nats"),
+	attribute.String("messaging.system", "fluxmq"),
 	attribute.Bool("messaging.destination.anonymous", false),
 	attribute.String("messaging.destination.template", "channels/{channelID}/messages/*"),
 	attribute.Bool("messaging.destination.temporary", true),
-	attribute.String("network.protocol.name", "nats"),
-	attribute.String("network.protocol.version", "2.2.4"),
+	attribute.String("network.protocol.name", "amqp"),
+	attribute.String("network.protocol.version", "0.9.1"),
 	attribute.String("network.transport", "tcp"),
 	attribute.String("network.type", "ipv4"),
 }

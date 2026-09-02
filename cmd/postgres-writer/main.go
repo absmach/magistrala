@@ -44,7 +44,7 @@ const (
 type config struct {
 	LogLevel         string  `env:"MG_POSTGRES_WRITER_LOG_LEVEL"          envDefault:"info"`
 	ConfigPath       string  `env:"MG_POSTGRES_WRITER_CONFIG_PATH"        envDefault:"/config.toml"`
-	BrokerURL        string  `env:"MG_MESSAGE_BROKER_URL"                 envDefault:"nats://localhost:4222"`
+	BrokerURL        string  `env:"MG_MESSAGE_BROKER_URL"                 envDefault:"amqp://guest:guest@localhost:5682/"`
 	BrokerClientCert string  `env:"MG_POSTGRES_WRITER_BROKER_CLIENT_CERT" envDefault:""`
 	BrokerClientKey  string  `env:"MG_POSTGRES_WRITER_BROKER_CLIENT_KEY"  envDefault:""`
 	BrokerCACerts    string  `env:"MG_POSTGRES_WRITER_BROKER_CA_CERTS"    envDefault:""`

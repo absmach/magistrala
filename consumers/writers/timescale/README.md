@@ -25,7 +25,7 @@ default values.
 | MG_TIMESCALE_SSL_CERT                | Timescale SSL certificate path                            | ""                           |
 | MG_TIMESCALE_SSL_KEY                 | Timescale SSL key                                         | ""                           |
 | MG_TIMESCALE_SSL_ROOT_CERT           | Timescale SSL root certificate path                       | ""                           |
-| MG_MESSAGE_BROKER_URL                | Message broker instance URL                               | nats://localhost:4222        |
+| MG_MESSAGE_BROKER_URL                | Message broker instance URL                               | amqp://guest:guest@localhost:5682/        |
 | MG_JAEGER_URL                        | Jaeger server URL                                         | http://jaeger:4318/v1/traces |
 | MG_SEND_TELEMETRY                    | Send telemetry to magistrala call home server                | true                         |
 | MG_TIMESCALE_WRITER_INSTANCE_ID      | Timescale writer instance ID                              | ""                           |

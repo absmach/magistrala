@@ -5,7 +5,7 @@ version: "2"
 run:
   timeout: 10m
   build-tags:
-    - nats
+    - es_fluxmq
 linters:
   default: none
   enable:

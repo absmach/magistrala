@@ -38,7 +38,7 @@ default values.
 | MG_AUTH_GRPC_TIMEOUT              | Auth service gRPC request timeout in seconds                                      | 1s                             |
 | MG_AUTH_GRPC_CLIENT_TLS           | Auth client TLS flag                                                              | false                          |
 | MG_AUTH_GRPC_CA_CERT              | Path to Auth client CA certs in pem format                                        | ""                             |
-| MG_MESSAGE_BROKER_URL             | Message broker URL                                                                | nats://127.0.0.1:4222          |
+| MG_MESSAGE_BROKER_URL             | Message broker URL                                                                | amqp://guest:guest@localhost:5682/          |
 | MG_JAEGER_URL                     | Jaeger server URL                                                                 | http://jaeger:14268/api/traces |
 | MG_SEND_TELEMETRY                 | Send telemetry to magistrala call home server                                     | true                           |
 | MG_SMPP_NOTIFIER_INSTANCE_ID      | SMPP Notifier instance ID                                                         | ""                             |

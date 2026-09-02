@@ -65,7 +65,7 @@ Defined in `consumers/notifiers/smpp/README.md`.
 | `MG_AUTH_GRPC_TIMEOUT`              | Auth gRPC timeout                                             | `1s`                             |
 | `MG_AUTH_GRPC_CLIENT_TLS`           | Auth client TLS flag                                          | `false`                          |
 | `MG_AUTH_GRPC_CA_CERT`              | Auth client CA certs path                                     | ""                               |
-| `MG_MESSAGE_BROKER_URL`             | Message broker URL                                            | `nats://127.0.0.1:4222`          |
+| `MG_MESSAGE_BROKER_URL`             | Message broker URL                                            | `amqp://guest:guest@localhost:5682/`          |
 | `MG_JAEGER_URL`                     | Jaeger tracing URL                                            | `http://jaeger:14268/api/traces` |
 | `MG_SEND_TELEMETRY`                 | Send telemetry to Magistrala call-home server                 | `true`                           |
 | `MG_SMPP_NOTIFIER_INSTANCE_ID`      | SMPP notifier instance ID                                     | ""                               |

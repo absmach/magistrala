@@ -25,7 +25,7 @@ default values.
 | MG_POSTGRES_SSL_CERT                | Postgres SSL certificate path                                                     | ""                           |
 | MG_POSTGRES_SSL_KEY                 | Postgres SSL key                                                                  | ""                           |
 | MG_POSTGRES_SSL_ROOT_CERT           | Postgres SSL root certificate path                                                | ""                           |
-| MG_MESSAGE_BROKER_URL               | Message broker instance URL                                                       | nats://localhost:4222        |
+| MG_MESSAGE_BROKER_URL               | Message broker instance URL                                                       | amqp://guest:guest@localhost:5682/        |
 | MG_JAEGER_URL                       | Jaeger server URL                                                                 | http://jaeger:4318/v1/traces |
 | MG_SEND_TELEMETRY                   | Send telemetry to magistrala call home server                                        | true                         |
 | MG_POSTGRES_WRITER_INSTANCE_ID      | Service instance ID                                                               | ""                           |

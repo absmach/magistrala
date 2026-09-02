@@ -25,7 +25,6 @@ require (
 	github.com/lestrrat-go/jwx/v2 v2.1.7
 	github.com/lib/pq v1.12.3
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/nats-io/nats.go v1.53.1
 	github.com/oklog/ulid/v2 v2.1.2
 	github.com/openbao/openbao/api/v2 v2.6.0
 	github.com/ory/dockertest/v3 v3.12.0
@@ -104,7 +103,6 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
-	github.com/klauspost/compress v1.19.2 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.6 // indirect
@@ -119,8 +117,6 @@ require (
 	github.com/moby/sys/user v0.4.0 // indirect
 	github.com/moby/term v0.5.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/nats-io/nkeys v0.4.16 // indirect
-	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/runc v1.3.6 // indirect

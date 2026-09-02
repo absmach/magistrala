@@ -1,7 +1,7 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build !es_nats && !es_fluxmq
+//go:build !es_fluxmq
 
 package store
 

@@ -25,7 +25,7 @@ const (
 var (
 	// MQTT wildcards are the canonical wildcard characters.
 	mqttWildcards        = "+#"
-	natsWildcards        = "*>"
+	brokerWildcards      = "*>"
 	subtopicInvalidChars = " "
 	subtopicSep          = "/"
 
@@ -269,7 +269,7 @@ func ParsePublishSubtopic(subtopic string) (parseSubTopic string, err error) {
 		return "", errors.Wrap(ErrMalformedSubtopic, err)
 	}
 
-	if strings.ContainsAny(subtopic, subtopicInvalidChars+mqttWildcards+natsWildcards) {
+	if strings.ContainsAny(subtopic, subtopicInvalidChars+mqttWildcards+brokerWildcards) {
 		return "", ErrMalformedSubtopic
 	}
 
@@ -303,7 +303,7 @@ func ParseSubscribeSubtopic(subtopic string) (parseSubTopic string, err error) {
 		return "", errors.Wrap(ErrMalformedSubtopic, err)
 	}
 
-	if strings.ContainsAny(subtopic, subtopicInvalidChars+natsWildcards) {
+	if strings.ContainsAny(subtopic, subtopicInvalidChars+brokerWildcards) {
 		return "", ErrMalformedSubtopic
 	}
 

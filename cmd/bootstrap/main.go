@@ -58,7 +58,7 @@ type config struct {
 	JaegerURL                url.URL  `env:"MG_JAEGER_URL"                envDefault:"http://localhost:4318/v1/traces"`
 	SendTelemetry            bool     `env:"MG_SEND_TELEMETRY"            envDefault:"true"`
 	InstanceID               string   `env:"MG_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
-	ESURL                    string   `env:"MG_ES_URL"                    envDefault:"nats://localhost:4222"`
+	ESURL                    string   `env:"MG_ES_URL"                    envDefault:"amqp://guest:guest@localhost:5682/"`
 	TraceRatio               float64  `env:"MG_JAEGER_TRACE_RATIO"        envDefault:"1.0"`
 }
 

@@ -55,7 +55,6 @@ type config struct {
 	// Retired keys, as "<keyID>:<key>" pairs, kept readable across a
 	// rotation. Format: MG_BOOTSTRAP_DB_ENCRYPTION_PREVIOUS_KEYS=old:<32b>,older:<32b>
 	DBEncryptionPreviousKeys []string `env:"MG_BOOTSTRAP_DB_ENCRYPTION_PREVIOUS_KEYS" envSeparator:","`
-	ESConsumerName           string   `env:"MG_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
 	JaegerURL                url.URL  `env:"MG_JAEGER_URL"                envDefault:"http://localhost:4318/v1/traces"`
 	SendTelemetry            bool     `env:"MG_SEND_TELEMETRY"            envDefault:"true"`
 	InstanceID               string   `env:"MG_BOOTSTRAP_INSTANCE_ID"      envDefault:""`

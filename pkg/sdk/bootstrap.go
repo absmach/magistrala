@@ -31,10 +31,7 @@ const (
 	disableEndpoint          = "disable"
 )
 
-var (
-	errInvalidBootstrapStatus       = errors.New("invalid bootstrap status")
-	errBootstrapConnectionsDisabled = errors.New("bootstrap connection updates are no longer supported")
-)
+var errInvalidBootstrapStatus = errors.New("invalid bootstrap status")
 
 type BootstrapStatus string
 
@@ -355,18 +352,6 @@ func (sdk mgSDK) UpdateBootstrapCerts(ctx context.Context, id, clientCert, clien
 	}
 
 	return bc, nil
-}
-
-func (sdk mgSDK) UpdateBootstrapConnection(ctx context.Context, id string, channels []string, workspaceID, token string) errors.SDKError {
-	if id == "" {
-		return errors.NewSDKError(apiutil.ErrMissingID)
-	}
-	_ = ctx
-	_ = channels
-	_ = workspaceID
-	_ = token
-
-	return errors.NewSDKError(errBootstrapConnectionsDisabled)
 }
 
 func (sdk mgSDK) RemoveBootstrap(ctx context.Context, id, workspaceID, token string) errors.SDKError {

@@ -73,11 +73,10 @@ var cmdBootstrap = []cobra.Command{
 		},
 	},
 	{
-		Use:   "update [config <JSON_config> | connection <id> <channel_ids> | certs  <id> <client_cert> <client_key> <ca> ] <workspace_id> <user_auth_token>",
+		Use:   "update [config <JSON_config> | certs  <id> <client_cert> <client_key> <ca> ] <workspace_id> <user_auth_token>",
 		Short: "Update config",
 		Long: `Updates editable fields of the provided Config.
 				config <JSON_config> - Updates editable fields of the provided Config.
-				connection <id> <channel_ids> - Unsupported legacy operation kept for compatibility.
 				certs  <id> <client_cert> <client_key> <ca> - Update bootstrap config certificates.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 4 {
@@ -92,20 +91,6 @@ var cmdBootstrap = []cobra.Command{
 				}
 
 				if err := sdk.UpdateBootstrap(cmd.Context(), cfg, args[2], args[3]); err != nil {
-					logErrorCmd(*cmd, err)
-					return
-				}
-
-				logOKCmd(*cmd)
-				return
-			}
-			if args[0] == "connection" {
-				var ids []string
-				if err := json.Unmarshal([]byte(args[2]), &ids); err != nil {
-					logErrorCmd(*cmd, err)
-					return
-				}
-				if err := sdk.UpdateBootstrapConnection(cmd.Context(), args[1], ids, args[3], args[4]); err != nil {
 					logErrorCmd(*cmd, err)
 					return
 				}

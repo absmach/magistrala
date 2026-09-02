@@ -121,7 +121,7 @@ type PubSub interface {
 // brokers can be used for event sourcing as well as internal message broker.
 // Using value of type interface is not recommended but is the most suitable
 // for this use case as options should be compiled with respect to the
-// underlying broker which can either be RabbitMQ or NATS.
+// underlying broker which can either be FluxMQ or NATS.
 //
 // The example below shows how to set the prefix and jetstream stream for NATS.
 //

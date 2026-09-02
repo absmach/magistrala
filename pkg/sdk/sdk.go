@@ -394,9 +394,6 @@ type SDK interface {
 	// UpdateBootstrapCerts updates bootstrap config certificates.
 	UpdateBootstrapCerts(ctx context.Context, id string, clientCert, clientKey, ca string, workspaceID, token string) (BootstrapConfig, smqerrors.SDKError)
 
-	// UpdateBootstrapConnection updates connections performs update of the channel list corresponding Client is connected to.
-	UpdateBootstrapConnection(ctx context.Context, id string, channels []string, workspaceID, token string) smqerrors.SDKError
-
 	// RemoveBootstrap removes Config with specified token that belongs to the user identified by the given token.
 	RemoveBootstrap(ctx context.Context, id, workspaceID, token string) smqerrors.SDKError
 

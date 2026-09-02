@@ -328,7 +328,7 @@ func TestList(t *testing.T) {
 		c.ExternalKey = testsutil.GenerateUUID(t)
 		c.Name = fmt.Sprintf("%s-%d", config.Name, i)
 		if i == 41 {
-			c.Status = bootstrap.Active
+			c.Status = bootstrap.EnabledStatus
 		}
 		saved = append(saved, c)
 	}
@@ -518,7 +518,7 @@ func TestList(t *testing.T) {
 				Limit:   20,
 				Configs: []bootstrap.Config{saved[41]},
 			},
-			filter:      bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.Active.String()}},
+			filter:      bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.EnabledStatus.String()}},
 			token:       validToken,
 			userID:      validID,
 			workspaceID: workspaceID,
@@ -535,7 +535,7 @@ func TestList(t *testing.T) {
 				Limit:   20,
 				Configs: []bootstrap.Config{saved[41]},
 			},
-			filter:      bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.Active.String()}},
+			filter:      bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.EnabledStatus.String()}},
 			token:       validToken,
 			userID:      validID,
 			workspaceID: workspaceID,
@@ -552,7 +552,7 @@ func TestList(t *testing.T) {
 				Limit:   20,
 				Configs: []bootstrap.Config{saved[41]},
 			},
-			filter:      bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.Active.String()}},
+			filter:      bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.EnabledStatus.String()}},
 			token:       validToken,
 			userID:      validID,
 			workspaceID: workspaceID,
@@ -645,9 +645,9 @@ func TestEnableConfig(t *testing.T) {
 
 	c := config
 	activeConfig := config
-	activeConfig.Status = bootstrap.Active
+	activeConfig.Status = bootstrap.EnabledStatus
 	inactiveConfig := config
-	inactiveConfig.Status = bootstrap.Inactive
+	inactiveConfig.Status = bootstrap.DisabledStatus
 
 	cases := []struct {
 		desc        string
@@ -714,9 +714,9 @@ func TestDisableConfig(t *testing.T) {
 
 	c := config
 	activeConfig := config
-	activeConfig.Status = bootstrap.Active
+	activeConfig.Status = bootstrap.EnabledStatus
 	inactiveConfig := config
-	inactiveConfig.Status = bootstrap.Inactive
+	inactiveConfig.Status = bootstrap.DisabledStatus
 
 	cases := []struct {
 		desc        string

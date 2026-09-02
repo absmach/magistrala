@@ -113,7 +113,7 @@ func TestDeviceBootstrapChallengeProofAndReplayProtection(t *testing.T) {
 	root := []byte(externalKey)
 	cfg := Config{
 		ID: "config-id", WorkspaceID: "domain-id", ExternalID: "device-1",
-		ExternalKey: externalKey, BootstrapKeyVersion: 4, Content: `{"channels":["channel-1"]}`, Status: Active,
+		ExternalKey: externalKey, BootstrapKeyVersion: 4, Content: `{"channels":["channel-1"]}`, Status: EnabledStatus,
 	}
 	cipher, err := NewSecretCipher([]byte("12345678910111213141516171819202"), "primary")
 	require.NoError(t, err)
@@ -165,7 +165,7 @@ func TestDeviceBootstrapRejectsWrongProofWithoutConsumingChallenge(t *testing.T)
 	root := []byte(externalKey)
 	cfg := Config{
 		ID: "config-id", WorkspaceID: "domain-id", ExternalID: "device-1",
-		ExternalKey: externalKey, BootstrapKeyVersion: 1, Status: Active,
+		ExternalKey: externalKey, BootstrapKeyVersion: 1, Status: EnabledStatus,
 	}
 	cipher, err := NewSecretCipher([]byte("12345678910111213141516171819202"), "primary")
 	require.NoError(t, err)

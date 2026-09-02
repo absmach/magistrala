@@ -190,7 +190,7 @@ func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, to
 
 	cfg.ID = id
 	cfg.WorkspaceID = session.WorkspaceID
-	cfg.Status = Active
+	cfg.Status = EnabledStatus
 	cfg.BootstrapKeyVersion = 1
 	// The profile foreign key is workspace-agnostic, so an unvalidated
 	// ProfileID would let an enrollment reference another workspace's profile

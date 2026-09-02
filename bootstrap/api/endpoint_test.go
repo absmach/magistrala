@@ -619,12 +619,12 @@ func TestList(t *testing.T) {
 			continue
 		}
 		// Odd elements are enabled (active).
-		enabledCfg := bootstrap.Config{ID: list[i].ID, Status: bootstrap.Active}
+		enabledCfg := bootstrap.Config{ID: list[i].ID, Status: bootstrap.EnabledStatus}
 		svcCall := svc.On("EnableConfig", context.Background(), mock.Anything, mock.Anything).Return(enabledCfg, nil)
 		_, err := svc.EnableConfig(context.Background(), smqauthn.Session{}, list[i].ID)
 		assert.Nil(t, err, fmt.Sprintf("Enabling config expected to succeed: %s.\n", err))
 		svcCall.Unset()
-		list[i].Status = bootstrap.Active
+		list[i].Status = bootstrap.EnabledStatus
 		active = append(active, list[i])
 	}
 
@@ -929,8 +929,8 @@ func TestChangeStatus(t *testing.T) {
 	defer bs.Close()
 	c := newConfig()
 
-	activeCfg := bootstrap.Config{ID: c.ID, Status: bootstrap.Active}
-	inactiveCfg := bootstrap.Config{ID: c.ID, Status: bootstrap.Inactive}
+	activeCfg := bootstrap.Config{ID: c.ID, Status: bootstrap.EnabledStatus}
+	inactiveCfg := bootstrap.Config{ID: c.ID, Status: bootstrap.DisabledStatus}
 
 	cases := []struct {
 		desc            string

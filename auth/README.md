@@ -87,10 +87,6 @@ The service is configured using the environment variables presented in the follo
 | `MG_AUTH_INVITATION_DURATION`    | The invitation token expiration period                                               | 168h                           |
 | `MG_AUTH_CACHE_URL`              | Redis URL for caching PAT scopes                                                     | redis://localhost:6379/0       |
 | `MG_AUTH_CACHE_KEY_DURATION`     | Duration for which PAT scope cache keys are valid                                    | 10m                            |
-| `MG_SPICEDB_HOST`                | SpiceDB host address                                                                 | localhost                      |
-| `MG_SPICEDB_PORT`                | SpiceDB host port                                                                    | 50051                          |
-| `MG_SPICEDB_PRE_SHARED_KEY`      | SpiceDB pre-shared key                                                               | 12345678                       |
-| `MG_SPICEDB_SCHEMA_FILE`         | Path to SpiceDB schema file                                                          | ./docker/spicedb/schema.zed    |
 | `MG_JAEGER_URL`                  | Jaeger server URL                                                                    | <http://jaeger:4318/v1/traces> |
 | `MG_JAEGER_TRACE_RATIO`          | Jaeger sampling ratio                                                                | 1.0                            |
 | `MG_SEND_TELEMETRY`              | Send telemetry to magistrala call home server                                        | true                           |
@@ -108,7 +104,7 @@ The service is configured using the environment variables presented in the follo
 
 The service itself is distributed as Docker container. Check the [`auth`](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yaml) service section in docker-compose file to see how service is deployed.
 
-Running this service outside of container requires working instance of the postgres database, SpiceDB, and Jaeger server.
+Running this service outside of container requires working instance of the postgres database and Jaeger server.
 To start the service outside of the container, execute the following shell script:
 
 ```bash
@@ -148,10 +144,6 @@ MG_AUTH_SECRET_KEY=secret \
 MG_AUTH_ACCESS_TOKEN_DURATION=1h \
 MG_AUTH_REFRESH_TOKEN_DURATION=24h \
 MG_AUTH_INVITATION_DURATION=168h \
-MG_SPICEDB_HOST=localhost \
-MG_SPICEDB_PORT=50051 \
-MG_SPICEDB_PRE_SHARED_KEY=12345678 \
-MG_SPICEDB_SCHEMA_FILE=./docker/spicedb/schema.zed \
 MG_JAEGER_URL=http://localhost:14268/api/traces \
 MG_JAEGER_TRACE_RATIO=1.0 \
 MG_SEND_TELEMETRY=true \

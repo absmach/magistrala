@@ -85,7 +85,6 @@ denial of service, so HTTPS should be used whenever the device supports it.
 | MG_BOOTSTRAP_HTTP_PORT        | Bootstrap service HTTP port                                                      | 9013                              |
 | MG_BOOTSTRAP_HTTP_SERVER_CERT | Path to server certificate in pem format                                         | ""                                |
 | MG_BOOTSTRAP_HTTP_SERVER_KEY  | Path to server key in pem format                                                 | ""                                |
-| MG_BOOTSTRAP_EVENT_CONSUMER   | Bootstrap service event source consumer name                                     | bootstrap                         |
 | MG_ES_URL                     | Event store URL                                                                  | <nats://localhost:4222>           |
 | ATOM_URL                      | ATOM HTTP endpoint used for identity, authorization and resource lookup          | required                          |
 | ATOM_SERVICE_TOKEN            | Service token used for ATOM resource lookup and projection                       | required                          |
@@ -131,7 +130,6 @@ MG_BOOTSTRAP_HTTP_HOST=localhost \
 MG_BOOTSTRAP_HTTP_PORT=9010 \
 MG_BOOTSTRAP_HTTP_SERVER_CERT="" \
 MG_BOOTSTRAP_HTTP_SERVER_KEY="" \
-MG_BOOTSTRAP_EVENT_CONSUMER=bootstrap \
 MG_ES_URL=nats://localhost:4222 \
 ATOM_URL=http://localhost:8080 \
 ATOM_SERVICE_TOKEN=<bootstrap-service-token> \

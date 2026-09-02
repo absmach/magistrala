@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //go:build msg_fluxmq
-// +build msg_fluxmq
 
 package writers
 

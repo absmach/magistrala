@@ -27,7 +27,7 @@ var config = bootstrap.Config{
 	ExternalKey: "external-key",
 	WorkspaceID: testsutil.GenerateUUID(&testing.T{}),
 	Content:     "content",
-	Status:      bootstrap.Inactive,
+	Status:      bootstrap.DisabledStatus,
 }
 
 func TestSave(t *testing.T) {
@@ -138,7 +138,7 @@ func TestRetrieveAll(t *testing.T) {
 		c.ID = uid.String()
 
 		if i%2 == 0 {
-			c.Status = bootstrap.Active
+			c.Status = bootstrap.EnabledStatus
 		}
 
 		_, err = repo.Save(context.Background(), c)
@@ -178,7 +178,7 @@ func TestRetrieveAll(t *testing.T) {
 			workspaceID: config.WorkspaceID,
 			offset:      0,
 			limit:       uint64(numConfigs),
-			filter:      bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.Active.String()}},
+			filter:      bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.EnabledStatus.String()}},
 			size:        numConfigs / 2,
 		},
 		{
@@ -446,14 +446,14 @@ func TestChangeStatus(t *testing.T) {
 			desc:        "change status to Active",
 			id:          saved,
 			workspaceID: c.WorkspaceID,
-			status:      bootstrap.Active,
+			status:      bootstrap.EnabledStatus,
 			err:         nil,
 		},
 		{
 			desc:        "change status to Inactive",
 			id:          saved,
 			workspaceID: c.WorkspaceID,
-			status:      bootstrap.Inactive,
+			status:      bootstrap.DisabledStatus,
 			err:         nil,
 		},
 	}

@@ -31,12 +31,6 @@ const (
 	Unknown  = "unknown"
 )
 
-// Backward-compatible aliases kept while callers move off the old names.
-const (
-	Inactive = DisabledStatus
-	Active   = EnabledStatus
-)
-
 // String returns string representation of Status.
 func (s Status) String() string {
 	switch s {

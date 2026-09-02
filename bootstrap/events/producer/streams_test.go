@@ -436,7 +436,7 @@ func TestList(t *testing.T) {
 		c.ExternalKey = testsutil.GenerateUUID(t)
 		c.Name = fmt.Sprintf("%s-%d", config.Name, i)
 		if i == 41 {
-			c.Status = bootstrap.Active
+			c.Status = bootstrap.EnabledStatus
 		}
 		saved = append(saved, c)
 	}

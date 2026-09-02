@@ -69,7 +69,6 @@ type config struct {
 	RetiringKeyPath               string        `env:"MG_AUTH_KEYS_RETIRING_KEY_PATH"            envDefault:""`
 	InvitationDuration            time.Duration `env:"MG_AUTH_INVITATION_DURATION"               envDefault:"168h"`
 	TraceRatio                    float64       `env:"MG_JAEGER_TRACE_RATIO"                     envDefault:"1.0"`
-	ESURL                         string        `env:"MG_ES_URL"                                 envDefault:"amqp://guest:guest@localhost:5682/"`
 	CacheURL                      string        `env:"MG_AUTH_CACHE_URL"                         envDefault:"redis://localhost:6379/0"`
 	CacheKeyDuration              time.Duration `env:"MG_AUTH_CACHE_KEY_DURATION"                envDefault:"10m"`
 	JWKSCacheMaxAge               int           `env:"MG_AUTH_JWKS_CACHE_MAX_AGE"                envDefault:"900"`

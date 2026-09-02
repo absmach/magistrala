@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //go:build es_fluxmq
-// +build es_fluxmq
 
 package store
 

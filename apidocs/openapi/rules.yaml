@@ -473,7 +473,11 @@ components:
         mode:
           type: string
           enum: [sandboxed, unrestricted]
-          description: Creation defaults to unrestricted when omitted; updates preserve the stored mode when omitted.
+          description: >-
+            Creation defaults to sandboxed when omitted; unrestricted must be
+            asked for, since it gives the script the same access as the Rules
+            Engine process itself. An update that omits the mode preserves the
+            stored one.
 
     RuleStatus:
       type: string

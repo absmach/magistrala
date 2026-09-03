@@ -6,7 +6,7 @@ require (
 	connectrpc.com/connect v1.20.0
 	connectrpc.com/otelconnect v0.9.0
 	github.com/absmach/callhome v0.18.2
-	github.com/absmach/fluxmq v0.51.1-0.20260903165945-abf75b08be7f
+	github.com/absmach/fluxmq v1.0.0
 	github.com/absmach/senml v1.0.8
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/caarlos0/env/v11 v11.4.1
@@ -120,7 +120,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/runc v1.3.6 // indirect
-	github.com/pion/dtls/v3 v3.1.6 // indirect
+	github.com/pion/dtls/v3 v3.1.8 // indirect
 	github.com/pion/logging v0.2.4 // indirect
 	github.com/pion/transport/v4 v4.0.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect

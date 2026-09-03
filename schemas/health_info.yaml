@@ -11,7 +11,7 @@ properties:
   version:
     type: string
     description: Service version.
-    example: v0.18.0
+    example: v1.0.0
   commit:
     type: string
     description: Service commit hash.

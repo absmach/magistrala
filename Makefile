@@ -15,6 +15,9 @@ GOARCH ?= amd64
 GOOS ?= linux
 DETECTED_ARCH := $(shell uname -m)
 VERSION ?= $(shell git describe --abbrev=0 --tags 2>/dev/null || echo 'unknown')
+# The tag `make release` builds from. Override to release something other than
+# the most recent tag: make release RELEASE_VERSION=v0.0.0
+RELEASE_VERSION ?= $(shell git describe --abbrev=0 --tags)
 COMMIT ?= $(shell git rev-parse HEAD)
 TIME ?= $(shell date +%F_%T)
 USER_REPO ?= $(shell git remote get-url origin | sed -E 's@.*/([^/]+)/([^/.]+)(\.git)?@\1_\2@')
@@ -170,7 +173,7 @@ FILTERED_SERVICES = $(filter-out $(RUN_ADDON_ARGS), $(SERVICES))
 
 all: $(SERVICES) $(CLI)
 
-.PHONY: all help $(SERVICES) $(CLI) dockers dockers_dev latest release migrate_atom run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs check_fluxmq_service_certs check_re_trace_key test_api mocks
+.PHONY: all help $(SERVICES) $(CLI) dockers dockers_dev latest push_latest release migrate_atom run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs check_fluxmq_service_certs check_re_trace_key test_api mocks
 
 help:
 	@printf 'Usage:\n  make <target> [VARIABLE=value ...]\n\nAvailable targets:\n'
@@ -266,7 +269,11 @@ endef
 changelog:
 	git log $(shell git describe --tags --abbrev=0)..HEAD --pretty=format:"- %s"
 
+# Build the :latest images without pushing them.
 latest: dockers
+
+# Build the :latest images and push them to GHCR.
+push_latest: dockers
 	$(call docker_push,latest)
 
 publish_arch:
@@ -278,14 +285,14 @@ publish_arch:
 		docker push $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:latest-$(GOARCH); \
 	done
 
+# Check out the most recent tag, then build and push the images for it.
 release:
-	$(eval version = $(shell git describe --abbrev=0 --tags))
-	git checkout $(version)
+	git checkout $(RELEASE_VERSION)
 	$(MAKE) dockers
 	for svc in $(SERVICES); do \
-		docker tag $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(version); \
+		docker tag $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(RELEASE_VERSION); \
 	done
-	$(call docker_push,$(version))
+	$(call docker_push,$(RELEASE_VERSION))
 
 grpc_mtls_certs:
 	$(MAKE) -C docker/ssl clients_grpc_certs

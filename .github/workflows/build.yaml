@@ -56,4 +56,4 @@ jobs:
 
       - name: Build and push Docker images
         run: |
-          make latest -j $(nproc)
+          make push_latest -j $(nproc)

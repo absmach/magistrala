@@ -8,11 +8,17 @@ import (
 	migrate "github.com/rubenv/sql-migrate"
 )
 
+// Migration of Certs service.
+//
+// sql-migrate orders migrations lexicographically unless the id starts with a
+// number, so the sequence is zero padded: without the padding "certs_10" would
+// sort before "certs_2". Keep the same width when adding migrations, and never
+// renumber an id that has already shipped.
 func Migration() *migrate.MemoryMigrationSource {
 	return &migrate.MemoryMigrationSource{
 		Migrations: []*migrate.Migration{
 			{
-				Id: "certs_1",
+				Id: "certs_0001",
 				Up: []string{
 					`CREATE TABLE IF NOT EXISTS cert_entity_mappings (
 						serial_number VARCHAR(255) UNIQUE NOT NULL,

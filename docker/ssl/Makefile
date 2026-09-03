@@ -10,12 +10,6 @@ CN_CA = Magistrala_Self_Signed_CA
 CN_SRV ?= localhost
 CLIENT_SECRET ?= "" # e.g. 8f65ed04-0770-4ce4-a291-6d1bf2000f4d
 CRT_FILE_NAME = client
-AUTH_GRPC_SERVER_CONF_FILE_NAME=auth-grpc-server.conf
-AUTH_GRPC_CLIENT_CONF_FILE_NAME=auth-grpc-client.conf
-AUTH_GRPC_SERVER_CN=auth
-AUTH_GRPC_CLIENT_CN=auth-client
-AUTH_GRPC_SERVER_CRT_FILE_NAME=auth-grpc-server
-AUTH_GRPC_CLIENT_CRT_FILE_NAME=auth-grpc-client
 WORKSPACES_GRPC_SERVER_CONF_FILE_NAME=workspaces-grpc-server.conf
 WORKSPACES_GRPC_CLIENT_CONF_FILE_NAME=workspaces-grpc-client.conf
 WORKSPACES_GRPC_SERVER_CN=workspaces
@@ -143,7 +137,7 @@ It can be downloaded from $(DOWNLOAD_URL).
 
 etc, etc.
 endef
-all: clean_certs ca server_cert auth_grpc_certs workspaces_grpc_certs groups_grpc_certs devices_grpc_certs channels_grpc_certs coap_dtls_certs fluxmq_service_certs fluxmq_service_secret timescale_writer_fluxmq_service_secret postgres_writer_fluxmq_service_secret fluxmq_auth_fluxmq_service_secret alarms_fluxmq_service_secret re_trace_key
+all: clean_certs ca server_cert workspaces_grpc_certs groups_grpc_certs devices_grpc_certs channels_grpc_certs coap_dtls_certs fluxmq_service_certs fluxmq_service_secret timescale_writer_fluxmq_service_secret postgres_writer_fluxmq_service_secret fluxmq_auth_fluxmq_service_secret alarms_fluxmq_service_secret re_trace_key
 
 # CA name and key is "ca".
 ca:
@@ -330,9 +324,6 @@ re_trace_key:
 	else \
 		echo "preserving docker/re/secrets/trace.key"; \
 	fi
-
-auth_grpc_certs:
-	$(call gen_grpc_cert_pair,$(AUTH_GRPC_SERVER_CRT_FILE_NAME),$(AUTH_GRPC_SERVER_CN),$(AUTH_GRPC_CLIENT_CRT_FILE_NAME),$(AUTH_GRPC_CLIENT_CN))
 
 workspaces_grpc_certs:
 	$(call gen_grpc_cert_pair,$(WORKSPACES_GRPC_SERVER_CRT_FILE_NAME),$(WORKSPACES_GRPC_SERVER_CN),$(WORKSPACES_GRPC_CLIENT_CRT_FILE_NAME),$(WORKSPACES_GRPC_CLIENT_CN))

@@ -44,8 +44,6 @@ jobs:
           filters: |
             proto:
               - ".github/workflows/check-generated-files.yaml"
-              - "auth.proto"
-              - "auth/*.pb.go"
               - "pkg/messaging/message.proto"
               - "pkg/messaging/*.pb.go"
 
@@ -62,8 +60,6 @@ jobs:
               - "pkg/authz.go"
               - "pkg/authn.go"
               - "auth/workspaces.go"
-              - "auth/keys.go"
-              - "auth/service.go"
               - "pkg/events/events.go"
               - "pkg/groups/groups.go"
               - "users/emailer.go"

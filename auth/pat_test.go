@@ -132,6 +132,15 @@ func TestParseEntityType(t *testing.T) {
 			err:      false,
 		},
 		{
+			// ClientsType was removed in favour of DevicesType; a scope still
+			// spelled the old way is rejected rather than silently accepted
+			// under the old vocabulary (edge/architecture.md §8 C2).
+			desc:     "Parse removed clients entity type",
+			et:       "clients",
+			expected: auth.EntityType(0),
+			err:      true,
+		},
+		{
 			desc:     "Parse unknown entity type",
 			et:       "unknown",
 			expected: auth.EntityType(0),

@@ -5,11 +5,17 @@ package postgres
 
 import migrate "github.com/rubenv/sql-migrate"
 
+// Migration of the Notifiers service.
+//
+// sql-migrate orders migrations lexicographically unless the id starts with a
+// number, so the sequence is zero padded: without the padding
+// "subscriptions_10" would sort before "subscriptions_2". Keep the same width
+// when adding migrations, and never renumber an id that has already shipped.
 func Migration() *migrate.MemoryMigrationSource {
 	return &migrate.MemoryMigrationSource{
 		Migrations: []*migrate.Migration{
 			{
-				Id: "subscriptions_1",
+				Id: "subscriptions_0001",
 				Up: []string{
 					`CREATE TABLE IF NOT EXISTS subscriptions (
                         id          VARCHAR(254) PRIMARY KEY,
@@ -21,20 +27,6 @@ func Migration() *migrate.MemoryMigrationSource {
 				},
 				Down: []string{
 					"DROP TABLE IF EXISTS subscriptions",
-				},
-			},
-			{
-				Id: "subscriptions_2",
-				Up: []string{
-					// Canonicalize legacy dot-delimited topics to slash-delimited topics.
-					`UPDATE subscriptions
-							SET topic = REPLACE(topic, '.', '/')
-							WHERE topic LIKE '%.%'`,
-				},
-				Down: []string{
-					`UPDATE subscriptions
-						SET topic = REPLACE(topic, '/', '.')
-						WHERE topic LIKE '%/%'`,
 				},
 			},
 		},

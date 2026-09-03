@@ -12,13 +12,6 @@ force-file-write: true
 include-auto-generated: true
 
 packages:
-  github.com/absmach/magistrala/api/grpc/token/v1:
-    interfaces:
-      TokenServiceClient:
-        config:
-          dir: "./auth/mocks"
-          structname: "TokenServiceClient"
-          filename: "token_client.go"
   github.com/absmach/magistrala/api/grpc/certs/v1:
     interfaces:
       CertsServiceClient:
@@ -40,17 +33,6 @@ packages:
           dir: "./pkg/sdk/mocks"
           structname: "SDK"
           filename: "sdk.go"
-  github.com/absmach/magistrala/auth:
-    interfaces:
-      Authz:
-      Cache:
-      Hasher:
-      KeyRepository:
-      UserActiveTokensCache:
-      Tokenizer:
-      PATS:
-      PATSRepository:
-      Service:
   github.com/absmach/magistrala/certs:
     interfaces:
       Agent:

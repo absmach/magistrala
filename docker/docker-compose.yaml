@@ -474,8 +474,6 @@ services:
       MG_UI_CLI_COAP_PORT: ${MG_UI_CLI_COAP_PORT}
       MG_UI_CLI_HTTP_URL: ${MG_UI_CLI_HTTP_URL}
       MG_UI_ALLOW_UNVERIFIED_USER: ${MG_ALLOW_UNVERIFIED_USER}
-      MG_ACCESS_TOKEN_EXPIRY: ${MG_AUTH_ACCESS_TOKEN_DURATION}
-      MG_REFRESH_TOKEN_EXPIRY: ${MG_AUTH_REFRESH_TOKEN_DURATION}
       MG_UI_SMTP_HOST: ${MG_UI_SMTP_HOST}
       MG_UI_SMTP_PORT: ${MG_UI_SMTP_PORT}
       MG_UI_SMTP_SECURE: ${MG_UI_SMTP_SECURE}
@@ -511,11 +509,6 @@ services:
       ATOM_SERVICE_USERNAME: ${ATOM_SERVICE_USERNAME}
       ATOM_SERVICE_SECRET: ${ATOM_SERVICE_SECRET}
       ATOM_TIMEOUT: ${ATOM_TIMEOUT}
-      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
-      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
-      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
-      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
-      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
       MG_UI_VERIFICATION_TLS: ${MG_UI_VERIFICATION_TLS}
       MG_UI_CONTENT_TYPE: ${MG_UI_CONTENT_TYPE}
       MG_READER_URL: ${MG_READER_URL}
@@ -550,22 +543,6 @@ services:
       seaweedfs-s3:
         condition: service_started
     volumes:
-      # Auth gRPC client certificates
-      - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
-        target: /auth-grpc-client.crt
-        bind:
-          create_host_path: true
-      - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
-        target: /auth-grpc-client.key
-        bind:
-          create_host_path: true
-      - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
-        target: /auth-grpc-server-ca.crt
-        bind:
-          create_host_path: true
       # Channels gRPC client certificates
       - type: bind
         source: ${MG_CHANNELS_GRPC_CLIENT_CERT:-./ssl/placeholder}

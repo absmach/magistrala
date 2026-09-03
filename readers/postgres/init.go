@@ -44,11 +44,29 @@ func Connect(cfg Config) (*sqlx.DB, error) {
 	return db, nil
 }
 
+// migrateDB applies the reader's own migrations.
+//
+// sql-migrate orders migrations lexicographically unless the id starts with a
+// number, so the sequence is zero padded: without the padding
+// "messages_reader_10" would sort before "messages_reader_2". Keep the same
+// width when adding migrations, and never renumber an id that has already
+// shipped.
 func migrateDB(db *sqlx.DB) error {
 	migrations := &migrate.MemoryMigrationSource{
 		Migrations: []*migrate.Migration{
 			{
-				Id: "messages_1",
+				// The Id must not collide with any Id in
+				// consumers/writers/postgres's migration set: both packages
+				// record into the same gorp_migrations table, so a
+				// reader-applied Id would shadow the writer's same-Id migration
+				// and the writer would silently skip it. The "messages_reader_"
+				// prefix keeps this sequence out of the writer's namespace for
+				// good, whichever side connects first.
+				//
+				// Everything here is IF NOT EXISTS because the writer creates
+				// the same table and the same pair of indexes: whichever side
+				// applies first, the other's statements are no-ops.
+				Id: "messages_reader_0001",
 				Up: []string{
 					`CREATE TABLE IF NOT EXISTS messages (
             			id            UUID,
@@ -68,46 +86,13 @@ func migrateDB(db *sqlx.DB) error {
             			device_id     TEXT NOT NULL DEFAULT '',
             			PRIMARY KEY (id)
 					)`,
-				},
-				Down: []string{
-					"DROP TABLE messages",
-				},
-			},
-			{
-				// Creates the indexes the MG-15 observed-device aggregation
-				// queries need. The Id must not collide with any Id in
-				// consumers/writers/postgres's migration set: both packages
-				// record into the same gorp_migrations table, so a
-				// reader-applied Id would shadow the writer's same-Id
-				// migration and the writer would silently skip it. Ids live
-				// outside the writer's [messages_1..4] range so the reader
-				// can connect before the writer without suppressing the
-				// writer's PRIMARY KEY change (messages_2). The indexes are
-				// the same pair the writer's messages_4 creates, so
-				// whichever side applies first, the other's CREATE INDEX IF
-				// NOT EXISTS is a no-op.
-				//
-				// The ALTER TABLE is what makes this self-sufficient on an
-				// existing deployment: messages_1 above already declares
-				// device_id, but on any stack upgraded from before this PR
-				// that Id is already recorded in gorp_migrations from when
-				// messages_1 ran without it, so the edit above is dead code
-				// there -- migrate.Up never re-runs an applied Id's body, it
-				// only records new ones. Without this statement, a reader
-				// started before the writer has upgraded hits "column
-				// device_id does not exist" on its own CREATE INDEX and
-				// fails to boot (N1). IF NOT EXISTS makes this a no-op
-				// wherever messages_3 (the writer's own migration adding
-				// this column) has already run, in either order.
-				Id: "messages_5",
-				Up: []string{
-					`ALTER TABLE messages ADD COLUMN IF NOT EXISTS device_id TEXT NOT NULL DEFAULT ''`,
 					`CREATE INDEX IF NOT EXISTS idx_channel_publisher_device_id ON messages (channel, publisher, device_id)`,
 					`CREATE INDEX IF NOT EXISTS idx_channel_device_id_publisher ON messages (channel, device_id, publisher)`,
 				},
 				Down: []string{
 					`DROP INDEX IF EXISTS idx_channel_publisher_device_id`,
 					`DROP INDEX IF EXISTS idx_channel_device_id_publisher`,
+					"DROP TABLE messages",
 				},
 			},
 		},

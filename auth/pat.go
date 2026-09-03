@@ -4,7 +4,6 @@
 package auth
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -19,6 +18,41 @@ const (
 	AnyIDs              = "*"
 	RoleOperationPrefix = "role_"
 )
+
+var errInvalidScope = errors.New("invalid scope")
+
+// Role is the privilege level a PAT is issued at.
+type Role uint32
+
+const (
+	UserRole Role = iota + 1
+	AdminRole
+)
+
+func (r Role) String() string {
+	switch r {
+	case UserRole:
+		return "user"
+	case AdminRole:
+		return "admin"
+	default:
+		return "unknown"
+	}
+}
+
+func (r Role) Validate() bool {
+	return UserRole <= r && r <= AdminRole
+}
+
+// EncodeWorkspaceUserID builds the composite identity a workspace-scoped user
+// is authorized under. An empty workspace or user makes it empty rather than a
+// half-formed identity that would match the wrong subject.
+func EncodeWorkspaceUserID(workspaceID, userID string) string {
+	if workspaceID == "" || userID == "" {
+		return ""
+	}
+	return workspaceID + "_" + userID
+}
 
 const (
 	OpCreate = "create"
@@ -414,111 +448,4 @@ func (pat *PAT) Validate() error {
 		return errors.New("PAT user cannot be empty")
 	}
 	return nil
-}
-
-// PATS specifies function which are required for Personal access Token implementation.
-type PATS interface {
-	// Create function creates new PAT for given valid inputs.
-	CreatePAT(ctx context.Context, token, name, description string, duration time.Duration) (PAT, error)
-
-	// UpdateName function updates the name for the given PAT ID.
-	UpdatePATName(ctx context.Context, token, patID, name string) (PAT, error)
-
-	// UpdateDescription function updates the description for the given PAT ID.
-	UpdatePATDescription(ctx context.Context, token, patID, description string) (PAT, error)
-
-	// Retrieve function retrieves the PAT for given ID.
-	RetrievePAT(ctx context.Context, userID string, patID string) (PAT, error)
-
-	// RemoveAllPAT function removes all PATs of user.
-	RemoveAllPAT(ctx context.Context, token string) error
-
-	// ListPATS function lists all the PATs for the user.
-	ListPATS(ctx context.Context, token string, pm PATSPageMeta) (PATSPage, error)
-
-	// Delete function deletes the PAT for given ID.
-	DeletePAT(ctx context.Context, token, patID string) error
-
-	// ResetSecret function reset the secret and creates new secret for the given ID.
-	ResetPATSecret(ctx context.Context, token, patID string, duration time.Duration) (PAT, error)
-
-	// RevokeSecret function revokes the secret for the given ID.
-	RevokePATSecret(ctx context.Context, token, patID string) error
-
-	// AddScope function adds a new scope.
-	AddScope(ctx context.Context, token, patID string, scopes []Scope) error
-
-	// RemoveScope function removes a scope.
-	RemoveScope(ctx context.Context, token string, patID string, scopeIDs ...string) error
-
-	// RemovePATAllScope function removes all scope.
-	RemovePATAllScope(ctx context.Context, token, patID string) error
-
-	// List function lists all the Scopes for the patID.
-	ListScopes(ctx context.Context, token string, pm ScopesPageMeta) (ScopesPage, error)
-
-	// IdentifyPAT function will valid the secret.
-	IdentifyPAT(ctx context.Context, paToken string) (PAT, error)
-
-	// AuthorizePAT function will valid the secret and check the given scope exists.
-	AuthorizePAT(ctx context.Context, userID, patID string, entityType EntityType, workspaceID string, operation string, entityID string) error
-}
-
-// PATSRepository specifies PATS persistence API.
-type PATSRepository interface {
-	// Save persists the PAT
-	Save(ctx context.Context, pat PAT) (err error)
-
-	// Retrieve retrieves users PAT by its unique identifier.
-	Retrieve(ctx context.Context, userID, patID string) (pat PAT, err error)
-
-	// RetrieveScope retrieves PAT scopes by its unique identifier.
-	RetrieveScope(ctx context.Context, pm ScopesPageMeta) (scopes ScopesPage, err error)
-
-	// RetrieveSecretAndRevokeStatus retrieves secret and revoke status of PAT by its unique identifier.
-	RetrieveSecretAndRevokeStatus(ctx context.Context, userID, patID string) (string, bool, bool, error)
-
-	// UpdateName updates the name of a PAT.
-	UpdateName(ctx context.Context, userID, patID, name string) (PAT, error)
-
-	// UpdateDescription updates the description of a PAT.
-	UpdateDescription(ctx context.Context, userID, patID, description string) (PAT, error)
-
-	// UpdateTokenHash updates the token hash of a PAT.
-	UpdateTokenHash(ctx context.Context, userID, patID, tokenHash string, expiryAt time.Time) (PAT, error)
-
-	// RetrieveAll retrieves all PATs belongs to userID.
-	RetrieveAll(ctx context.Context, userID string, pm PATSPageMeta) (pats PATSPage, err error)
-
-	// Revoke PAT with provided ID.
-	Revoke(ctx context.Context, userID, patID string) error
-
-	// Reactivate PAT with provided ID.
-	Reactivate(ctx context.Context, userID, patID string) error
-
-	// Remove removes Key with provided ID.
-	Remove(ctx context.Context, userID, patID string) error
-
-	// RemoveAllPAT removes all PAT for a given user.
-	RemoveAllPAT(ctx context.Context, userID string) error
-
-	AddScope(ctx context.Context, userID string, scopes []Scope) error
-
-	RemoveScope(ctx context.Context, userID string, scopesIDs ...string) error
-
-	CheckScope(ctx context.Context, userID, patID string, entityType EntityType, workspaceID string, operation string, entityID string) error
-
-	RemoveAllScope(ctx context.Context, patID string) error
-}
-
-type Cache interface {
-	Save(ctx context.Context, userID string, scopes []Scope) error
-
-	CheckScope(ctx context.Context, userID, patID, optionalWorkspaceID string, entityType EntityType, operation string, entityID string) bool
-
-	Remove(ctx context.Context, userID string, scopesID []string) error
-
-	RemoveUserAllScope(ctx context.Context, userID string) error
-
-	RemoveAllScope(ctx context.Context, userID, patID string) error
 }

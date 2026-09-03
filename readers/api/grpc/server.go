@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
-	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
 	"github.com/absmach/magistrala/pkg/transformers/senml"
 	"github.com/absmach/magistrala/readers"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
@@ -92,7 +91,7 @@ func encodeReadMessagesResponse(_ context.Context, grpcRes any) (any, error) {
 func (s *readersGrpcServer) ReadMessages(ctx context.Context, req *grpcReadersV1.ReadMessagesReq) (*grpcReadersV1.ReadMessagesRes, error) {
 	_, res, err := s.readMessages.ServeGRPC(ctx, req)
 	if err != nil {
-		return nil, grpcapi.EncodeError(err)
+		return nil, encodeError(err)
 	}
 	return res.(*grpcReadersV1.ReadMessagesRes), nil
 }
@@ -158,7 +157,7 @@ func toResponseDeviceStats(stats []readers.DeviceStat) []*grpcReadersV1.DeviceSt
 func (s *readersGrpcServer) ListGatewayDevices(ctx context.Context, req *grpcReadersV1.ListGatewayDevicesReq) (*grpcReadersV1.DeviceStatsRes, error) {
 	_, res, err := s.listGatewayDevices.ServeGRPC(ctx, req)
 	if err != nil {
-		return nil, grpcapi.EncodeError(err)
+		return nil, encodeError(err)
 	}
 	return res.(*grpcReadersV1.DeviceStatsRes), nil
 }
@@ -166,7 +165,7 @@ func (s *readersGrpcServer) ListGatewayDevices(ctx context.Context, req *grpcRea
 func (s *readersGrpcServer) ListDeviceGateways(ctx context.Context, req *grpcReadersV1.ListDeviceGatewaysReq) (*grpcReadersV1.DeviceStatsRes, error) {
 	_, res, err := s.listDeviceGateways.ServeGRPC(ctx, req)
 	if err != nil {
-		return nil, grpcapi.EncodeError(err)
+		return nil, encodeError(err)
 	}
 	return res.(*grpcReadersV1.DeviceStatsRes), nil
 }

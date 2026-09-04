@@ -13,6 +13,10 @@ import (
 
 // encodeError maps a service error onto the gRPC status the reader returns.
 func encodeError(err error) error {
+	if _, ok := err.(*errors.RequestError); ok {
+		return status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	switch {
 	case errors.Contains(err, nil):
 		return nil

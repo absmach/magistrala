@@ -214,6 +214,10 @@ var (
 	// ErrMissingTo indicates missing to value.
 	ErrMissingTo = errors.NewRequestError("missing to time value")
 
+	// ErrInvalidTimeRange indicates a from/to value outside the range a
+	// stored timestamp can represent.
+	ErrInvalidTimeRange = errors.NewRequestError("invalid time range")
+
 	// ErrEmptyMessage indicates empty message.
 	ErrEmptyMessage = errors.NewRequestError("empty message")
 

@@ -43,6 +43,10 @@ func (req readMessagesReq) validate() error {
 		return apiutil.ErrLimitSize
 	}
 
+	if !readers.ValidTimeRange(req.pageMeta.From) || !readers.ValidTimeRange(req.pageMeta.To) {
+		return apiutil.ErrInvalidTimeRange
+	}
+
 	if req.pageMeta.Comparator != "" &&
 		req.pageMeta.Comparator != readers.EqualKey &&
 		req.pageMeta.Comparator != readers.LowerThanKey &&
@@ -112,6 +116,10 @@ func (req deviceViewReq) validate() error {
 
 	if req.pageMeta.Limit < 1 || req.pageMeta.Limit > maxLimitSize {
 		return apiutil.ErrLimitSize
+	}
+
+	if !readers.ValidTimeRange(req.pageMeta.From) || !readers.ValidTimeRange(req.pageMeta.To) {
+		return apiutil.ErrInvalidTimeRange
 	}
 
 	return nil

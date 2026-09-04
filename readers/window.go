@@ -3,7 +3,10 @@
 
 package readers
 
-import "time"
+import (
+	"math"
+	"time"
+)
 
 // DeviceViewDefaultWindow bounds an MG-15 observed-device query, and is also
 // the width DefaultTimeWindow falls back to when a caller supplies neither
@@ -20,6 +23,22 @@ import "time"
 // the default would get an empty roster for the last 24h; supply from/to
 // explicitly in your own unit.
 const DeviceViewDefaultWindow = 24 * time.Hour
+
+// minStorableTime and maxStorableTime bound from/to values to timestamps that
+// can safely be represented as int64 Unix nanoseconds. Timescale stores time
+// as BIGINT, so binding values outside this range can otherwise fail in the
+// database driver or wrap instead of returning a request error.
+var (
+	minStorableTime = float64(math.MinInt64)
+	maxStorableTime = float64(math.MaxInt64)
+)
+
+// ValidTimeRange reports whether v fits in the stored timestamp's int64 range.
+// MaxInt64 is not exactly representable as float64: it rounds to 2^63, one past
+// the largest int64, so the upper bound must be strict.
+func ValidTimeRange(v float64) bool {
+	return v == 0 || (v >= minStorableTime && v < maxStorableTime)
+}
 
 // DefaultTimeWindow fills in whichever of the two bounds the caller left at
 // zero so the resulting query is always bounded to DeviceViewDefaultWindow:

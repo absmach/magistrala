@@ -4,6 +4,7 @@
 package grpc
 
 import (
+	"math"
 	"slices"
 	"strings"
 	"time"
@@ -25,6 +26,24 @@ const (
 
 var validAggregations = []string{aggregationMax, aggregationMin, aggregationAvg, aggregationSum, aggregationCount}
 
+// minStorableTime and maxStorableTime bound the from/to page metadata to
+// what the stored "time" column -- a BIGINT of Unix nanoseconds (see
+// consumers/writers/timescale and readers/postgres migrations) -- can
+// represent. Binding an out-of-range float64 against that int64 column
+// fails in the database driver rather than here, which the HTTP layer
+// surfaces as a 500; validating it up front turns that into a normal
+// request error instead.
+var (
+	minStorableTime = float64(math.MinInt64)
+	maxStorableTime = float64(math.MaxInt64)
+)
+
+// validTimeRange reports whether v -- an optional (zero-means-unset) from/to
+// bound -- fits in the stored timestamp's int64 range.
+func validTimeRange(v float64) bool {
+	return v == 0 || (v >= minStorableTime && v <= maxStorableTime)
+}
+
 type readMessagesReq struct {
 	chanID    string
 	workspace string
@@ -41,6 +60,10 @@ func (req readMessagesReq) validate() error {
 
 	if req.pageMeta.Limit < 1 || req.pageMeta.Limit > maxLimitSize {
 		return apiutil.ErrLimitSize
+	}
+
+	if !validTimeRange(req.pageMeta.From) || !validTimeRange(req.pageMeta.To) {
+		return apiutil.ErrInvalidTimeRange
 	}
 
 	if req.pageMeta.Comparator != "" &&
@@ -112,6 +135,10 @@ func (req deviceViewReq) validate() error {
 
 	if req.pageMeta.Limit < 1 || req.pageMeta.Limit > maxLimitSize {
 		return apiutil.ErrLimitSize
+	}
+
+	if !validTimeRange(req.pageMeta.From) || !validTimeRange(req.pageMeta.To) {
+		return apiutil.ErrInvalidTimeRange
 	}
 
 	return nil

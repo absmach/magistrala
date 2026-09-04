@@ -139,3 +139,32 @@ func TestDeviceViewReqValidateRejectsMalformedPublisherID(t *testing.T) {
 	}
 	require.NoError(t, serial.validate())
 }
+
+// A from/to bound outside the int64 range of the stored "time" column must
+// be rejected as a request error: the column is a BIGINT of Unix
+// nanoseconds, and binding an out-of-range float64 against it fails in the
+// database driver rather than here.
+func TestDeviceViewReqValidateRejectsOutOfRangeTimeBounds(t *testing.T) {
+	valid := deviceViewReq{
+		chanID:            "channel",
+		workspace:         "workspace",
+		filterVal:         "1dcf1a0e-7a9d-4b1e-8d5f-9c2e6a3b4d01",
+		filterIsPublisher: true,
+		pageMeta:          readers.PageMetadata{Limit: 10, From: 100, To: 200},
+	}
+	require.NoError(t, valid.validate())
+
+	tooLarge := valid
+	tooLarge.pageMeta.To = 9999999999999999999
+	require.Error(t, tooLarge.validate())
+}
+
+// Same bound, on the plain ReadMessages request.
+func TestReadMessagesReqValidateRejectsOutOfRangeTimeBounds(t *testing.T) {
+	req := readMessagesReq{
+		chanID:    "channel",
+		workspace: "workspace",
+		pageMeta:  readers.PageMetadata{Limit: 10, To: 9999999999999999999},
+	}
+	require.Error(t, req.validate())
+}

@@ -308,6 +308,45 @@ func TestDeviceViewReqValidateRejectsMalformedPublisherID(t *testing.T) {
 	require.NoError(t, serial.validate())
 }
 
+// A from/to bound outside the int64 range of the stored "time" column must
+// be rejected as a request error, not reach the repository: the column is a
+// BIGINT of Unix nanoseconds, and binding an out-of-range float64 against it
+// fails in the database driver, which previously surfaced as a 500 instead
+// of a 400.
+func TestDeviceViewReqValidateRejectsOutOfRangeTimeBounds(t *testing.T) {
+	valid := deviceViewReq{
+		chanID:            e2eChanID,
+		token:             "token",
+		workspace:         e2eWorkspace,
+		filterVal:         "1dcf1a0e-7a9d-4b1e-8d5f-9c2e6a3b4d01",
+		filterIsPublisher: true,
+		pageMeta:          readers.PageMetadata{Limit: 10, From: 100, To: 200},
+	}
+	require.NoError(t, valid.validate())
+
+	tooLargeTo := valid
+	tooLargeTo.pageMeta.To = 9999999999999999999
+	require.Error(t, tooLargeTo.validate())
+
+	tooLargeFrom := valid
+	tooLargeFrom.pageMeta.From = -9999999999999999999
+	require.Error(t, tooLargeFrom.validate())
+}
+
+// End-to-end repro of the reported bug: a valid publisher id with an
+// unparseable-by-the-database `to` must not reach the repository at all.
+func TestListGatewayDevicesRejectsOutOfRangeTimeBounds(t *testing.T) {
+	deps := newDeviceViewDeps(t, true)
+	// No authn/repo expectations: validate() must reject before either is reached.
+
+	req := gatewayDevicesReq("1dcf1a0e-7a9d-4b1e-8d5f-9c2e6a3b4d01")
+	req.pageMeta.To = 9999999999999999999
+
+	_, err := deps.gatewayDevicesEP(context.Background(), req)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "invalid time range")
+}
+
 // The unbounded form must not be the easy one to call: omitting both from
 // and to bounds the query to the last 24h rather than the whole table.
 func TestDecodeGatewayDevicesAppliesDefaultWindow(t *testing.T) {

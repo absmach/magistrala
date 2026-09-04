@@ -116,6 +116,23 @@ func TestDecodeListWithoutDeviceIDFilterLeavesItUnset(t *testing.T) {
 	assert.Nil(t, req.pageMeta.Publishers)
 }
 
+// A from/to value outside the int64 range of the stored "time" column (e.g.
+// a client sending `to=9999999999999999999`) must be rejected as a request
+// error before it reaches the repository, not surface as a database error.
+// decodeList's ReadNumQuery decodes it fine (it's a valid float64), so the
+// rejection has to happen in validate().
+func TestListMessagesRejectsOutOfRangeTimeBounds(t *testing.T) {
+	deps := newTestDeps(t)
+	// No authn/repo expectations: validate() must reject before either is reached.
+
+	req := tokenReq("", nil)
+	req.pageMeta.To = 9999999999999999999
+
+	_, err := deps.endpoint(context.Background(), req)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "invalid time range")
+}
+
 func tokenReq(publisher string, publishers []string) listMessagesReq {
 	return listMessagesReq{
 		chanID:    e2eChanID,

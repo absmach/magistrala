@@ -14,6 +14,8 @@ on:
       - "certs/api/http/**"
       - "readers/api/http/**"
       - "apidocs/openapi/**"
+      - "Makefile"
+      - "docker/**"
   pull_request:
     branches:
       - main
@@ -24,6 +26,8 @@ on:
       - "certs/api/http/**"
       - "readers/api/http/**"
       - "apidocs/openapi/**"
+      - "Makefile"
+      - "docker/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -68,17 +72,21 @@ jobs:
             readers:
               - "apidocs/openapi/readers.yaml"
               - "readers/api/http/**"
+            stack:
+              - ".github/workflows/api-tests.yaml"
+              - "Makefile"
+              - "docker/**"
 
       - name: Build images
         if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.certs == 'true' || steps.changes.outputs.readers == 'true'
         run: make all -j $(nproc) && make dockers_dev -j $(nproc)
 
       - name: Start containers
-        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.certs == 'true' || steps.changes.outputs.readers == 'true'
+        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.certs == 'true' || steps.changes.outputs.readers == 'true' || steps.changes.outputs.stack == 'true'
         run: make run_latest_ci up args="-d" && make run_addons up args="-d"
 
       - name: Wait for services to be ready
-        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.certs == 'true' || steps.changes.outputs.readers == 'true'
+        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.certs == 'true' || steps.changes.outputs.readers == 'true' || steps.changes.outputs.stack == 'true'
         run: |
           echo "Waiting for services to start..."
           sleep 15
@@ -100,7 +108,7 @@ jobs:
           exit 1
 
       - name: Set access token
-        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.certs == 'true' || steps.changes.outputs.readers == 'true'
+        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.certs == 'true' || steps.changes.outputs.readers == 'true' || steps.changes.outputs.stack == 'true'
         run: |
           export USER_TOKEN=$(curl -fsS -X POST "$ATOM_LOGIN_URL" -H "Content-Type: application/json" -d "{\"identifier\":\"$USER_IDENTITY\",\"secret\":\"$USER_SECRET\",\"kind\":\"password\"}" | jq -er .token)
           echo "USER_TOKEN=$USER_TOKEN" >> $GITHUB_ENV
@@ -172,7 +180,7 @@ jobs:
           coverage-pr-comment: false
 
       - name: Run Readers API tests
-        if: steps.changes.outputs.readers == 'true'
+        if: steps.changes.outputs.readers == 'true' || steps.changes.outputs.stack == 'true'
         uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/readers.yaml
@@ -183,5 +191,5 @@ jobs:
           coverage-pr-comment: false
 
       - name: Stop containers
-        if: always() && (steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.certs == 'true' || steps.changes.outputs.readers == 'true')
+        if: always() && (steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.certs == 'true' || steps.changes.outputs.readers == 'true' || steps.changes.outputs.stack == 'true')
         run: make run_latest_ci down args="-v" && make run_addons down args="-v"

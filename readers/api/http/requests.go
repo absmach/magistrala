@@ -4,7 +4,6 @@
 package http
 
 import (
-	"math"
 	"regexp"
 	"slices"
 	"strings"
@@ -16,24 +15,6 @@ import (
 )
 
 const maxLimitSize = 1000
-
-// minStorableTime and maxStorableTime bound the from/to query parameters to
-// what the stored "time" column -- a BIGINT of Unix nanoseconds (see
-// consumers/writers/timescale and readers/postgres migrations) -- can
-// represent. from/to are decoded as float64 (api/http/util.ReadNumQuery), so
-// an out-of-range value such as `to=9999999999999999999` parses without
-// error and would otherwise only fail once the database driver tries to bind
-// it against that int64 column, surfacing as a 500 instead of a 400.
-var (
-	minStorableTime = float64(math.MinInt64)
-	maxStorableTime = float64(math.MaxInt64)
-)
-
-// validTimeRange reports whether v -- an optional (zero-means-unset) from/to
-// bound -- fits in the stored timestamp's int64 range.
-func validTimeRange(v float64) bool {
-	return v == 0 || (v >= minStorableTime && v <= maxStorableTime)
-}
 
 var validAggregations = []string{"MAX", "MIN", "AVG", "SUM", "COUNT"}
 
@@ -73,7 +54,7 @@ func (req listMessagesReq) validate() error {
 		return apiutil.ErrInvalidFormat
 	}
 
-	if !validTimeRange(req.pageMeta.From) || !validTimeRange(req.pageMeta.To) {
+	if !readers.ValidTimeRange(req.pageMeta.From) || !readers.ValidTimeRange(req.pageMeta.To) {
 		return apiutil.ErrInvalidTimeRange
 	}
 
@@ -153,7 +134,7 @@ func (req deviceViewReq) validate() error {
 		return apiutil.ErrLimitSize
 	}
 
-	if !validTimeRange(req.pageMeta.From) || !validTimeRange(req.pageMeta.To) {
+	if !readers.ValidTimeRange(req.pageMeta.From) || !readers.ValidTimeRange(req.pageMeta.To) {
 		return apiutil.ErrInvalidTimeRange
 	}
 

@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"math"
 	"net/http/httptest"
 	"testing"
 
@@ -122,15 +123,22 @@ func TestDecodeListWithoutDeviceIDFilterLeavesItUnset(t *testing.T) {
 // decodeList's ReadNumQuery decodes it fine (it's a valid float64), so the
 // rejection has to happen in validate().
 func TestListMessagesRejectsOutOfRangeTimeBounds(t *testing.T) {
-	deps := newTestDeps(t)
-	// No authn/repo expectations: validate() must reject before either is reached.
+	for _, value := range []float64{
+		float64(math.MaxInt64),
+		9999999999999999999,
+	} {
+		t.Run("", func(t *testing.T) {
+			deps := newTestDeps(t)
+			// No authn/repo expectations: validate() must reject before either is reached.
 
-	req := tokenReq("", nil)
-	req.pageMeta.To = 9999999999999999999
+			req := tokenReq("", nil)
+			req.pageMeta.To = value
 
-	_, err := deps.endpoint(context.Background(), req)
-	require.Error(t, err)
-	assert.ErrorContains(t, err, "invalid time range")
+			_, err := deps.endpoint(context.Background(), req)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, "invalid time range")
+		})
+	}
 }
 
 func tokenReq(publisher string, publishers []string) listMessagesReq {

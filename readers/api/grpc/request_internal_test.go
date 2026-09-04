@@ -5,6 +5,7 @@ package grpc
 
 import (
 	"context"
+	"math"
 	"testing"
 	"time"
 
@@ -157,14 +158,25 @@ func TestDeviceViewReqValidateRejectsOutOfRangeTimeBounds(t *testing.T) {
 	tooLarge := valid
 	tooLarge.pageMeta.To = 9999999999999999999
 	require.Error(t, tooLarge.validate())
+
+	roundedMaxInt64 := valid
+	roundedMaxInt64.pageMeta.To = float64(math.MaxInt64)
+	require.Error(t, roundedMaxInt64.validate())
 }
 
 // Same bound, on the plain ReadMessages request.
 func TestReadMessagesReqValidateRejectsOutOfRangeTimeBounds(t *testing.T) {
-	req := readMessagesReq{
-		chanID:    "channel",
-		workspace: "workspace",
-		pageMeta:  readers.PageMetadata{Limit: 10, To: 9999999999999999999},
+	for _, value := range []float64{
+		float64(math.MaxInt64),
+		9999999999999999999,
+	} {
+		t.Run("", func(t *testing.T) {
+			req := readMessagesReq{
+				chanID:    "channel",
+				workspace: "workspace",
+				pageMeta:  readers.PageMetadata{Limit: 10, To: value},
+			}
+			require.Error(t, req.validate())
+		})
 	}
-	require.Error(t, req.validate())
 }

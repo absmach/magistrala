@@ -26,7 +26,7 @@ func TestRootCommandContainsAtomBackedCommands(t *testing.T) {
 	cmd := NewRootCmd()
 	for _, name := range []string{
 		"health", "login", "password", cmdWorkspaces, cmdChannels, cmdGroups,
-		"authz", "devices", "gateways", "devicetypes",
+		"authz", "devices", "gateways", "devicetypes", "users",
 	} {
 		if subcmd, _, err := cmd.Find([]string{name}); err != nil || subcmd == nil || subcmd.Name() != name {
 			t.Fatalf("expected command %q to be registered", name)

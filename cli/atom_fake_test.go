@@ -38,6 +38,8 @@ type fakeAtom struct {
 	typeSeq            int
 	versionSeq         int
 	updateEntityGQLErr string
+
+	passwords map[string]string
 }
 
 // mutateOnNthGet swaps id's attributes in after its nth GetEntity call,
@@ -81,6 +83,7 @@ func newFakeAtom(t *testing.T, seed ...atom.Entity) *fakeAtom {
 		getCount:     map[string]int{},
 		deviceTypes:  map[string]atom.DeviceType{},
 		typeVersions: map[string][]atom.DeviceTypeVersion{},
+		passwords:    map[string]string{},
 	}
 	for _, e := range seed {
 		fa.entities[e.ID] = e
@@ -108,6 +111,8 @@ func (fa *fakeAtom) handle(w http.ResponseWriter, r *http.Request) {
 		fa.handleUpdate(w, req)
 	case strings.Contains(req.Query, "mutation DeleteEntity"):
 		fa.handleDelete(w, req)
+	case strings.Contains(req.Query, "mutation CreatePassword"):
+		fa.handleCreatePassword(w, req)
 	case strings.Contains(req.Query, "query Entity("):
 		fa.handleGet(w, req)
 	case strings.Contains(req.Query, "query EntityExistence("):
@@ -322,6 +327,20 @@ func (fa *fakeAtom) handleDelete(w http.ResponseWriter, req gqlRequest) {
 	}
 	delete(fa.entities, id)
 	writeGQLData(fa.t, w, map[string]any{"deleteEntity": true})
+}
+
+// handleCreatePassword also handles a password change: createPassword is
+// the one mutation for both, matching pkg/atom.Client.CreatePassword's doc
+// comment.
+func (fa *fakeAtom) handleCreatePassword(w http.ResponseWriter, req gqlRequest) {
+	entityID, _ := req.Variables["entityId"].(string)
+	if _, ok := fa.entities[entityID]; !ok {
+		writeGQLError(fa.t, w, "entity not found")
+		return
+	}
+	password, _ := req.Variables["password"].(string)
+	fa.passwords[entityID] = password
+	writeGQLData(fa.t, w, map[string]any{"createPassword": true})
 }
 
 func (fa *fakeAtom) handleGet(w http.ResponseWriter, req gqlRequest) {

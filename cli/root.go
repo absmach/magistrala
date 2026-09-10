@@ -77,6 +77,7 @@ func NewRootCmd() *cobra.Command {
 		NewDevicesCmd(),
 		NewGatewaysCmd(),
 		NewDeviceTypesCmd(),
+		NewUsersCmd(),
 	)
 
 	return cmd

@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	connectrpc.com/connect v1.21.0
-	connectrpc.com/otelconnect v0.9.0
+	connectrpc.com/otelconnect v0.10.0
 	github.com/absmach/callhome v0.18.2
 	github.com/absmach/fluxmq v1.0.1-0.20260903192620-2404476fc888
 	github.com/absmach/senml v1.0.8

@@ -67,7 +67,7 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 			format = normalized
 		}
 	}
-	cond := fmtCondition(chanID, rpm)
+	cond := fmtCondition(chanID, rpm, order)
 
 	// format is a request-supplied table name (readers/api/http/requests.go
 	// restricts it to a bare identifier, but that check lives in a different
@@ -174,7 +174,10 @@ func (tr postgresRepository) ListDeviceGateways(chanID, deviceID string, rpm rea
 	return pgutil.DeviceStats(tr.db, defTable, chanID, messageFieldDeviceID, deviceID, messageFieldPublisher, false, rpm)
 }
 
-func fmtCondition(chanID string, rpm readers.PageMetadata) string {
+// fmtCondition builds the WHERE clause. timeColumn is the column the from/to
+// bounds apply to: "time" for SenML and "created" for a JSON format, whose
+// table has no "time" column.
+func fmtCondition(chanID string, rpm readers.PageMetadata, timeColumn string) string {
 	condition := `channel = :channel`
 
 	var query map[string]any
@@ -255,9 +258,9 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 			comparator := readers.ParseValueComparator(query)
 			condition = fmt.Sprintf(`%s AND data_value %s :data_value`, condition, comparator)
 		case "from":
-			condition = fmt.Sprintf(`%s AND time >= :from`, condition)
+			condition = fmt.Sprintf(`%s AND %s >= :from`, condition, timeColumn)
 		case "to":
-			condition = fmt.Sprintf(`%s AND time < :to`, condition)
+			condition = fmt.Sprintf(`%s AND %s < :to`, condition, timeColumn)
 		}
 	}
 	return condition

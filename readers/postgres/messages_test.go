@@ -707,6 +707,86 @@ func TestReadJSON(t *testing.T) {
 	}
 }
 
+// TestReadJSONWithTimeBounds checks that from and to are applied to the
+// created column of a JSON format, which has no time column.
+func TestReadJSONWithTimeBounds(t *testing.T) {
+	writer := pwriter.New(db)
+	reader := preader.New(db)
+
+	chanID := testsutil.GenerateUUID(t)
+	created := time.Now().UnixMilli()
+	messages := json.Messages{Format: format1}
+	msgs := []map[string]any{}
+	for i := 0; i < msgsNum; i++ {
+		msg := json.Message{
+			Channel:   chanID,
+			Publisher: chanID,
+			Created:   created - int64(i),
+			Subtopic:  "subtopic/format/some_json",
+			Protocol:  "coap",
+			Payload:   map[string]any{"field_1": 123.0},
+		}
+		messages.Data = append(messages.Data, msg)
+		msgs = append(msgs, toMap(msg))
+	}
+
+	err := writer.ConsumeBlocking(context.TODO(), messages)
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+
+	cases := map[string]struct {
+		pageMeta readers.PageMetadata
+		page     readers.MessagesPage
+	}{
+		"read message with from": {
+			pageMeta: readers.PageMetadata{
+				Format: messages.Format,
+				Limit:  20,
+				From:   float64(created - 19),
+			},
+			page: readers.MessagesPage{
+				Total:    20,
+				Messages: fromJSON(msgs[:20]),
+			},
+		},
+		"read message with to": {
+			pageMeta: readers.PageMetadata{
+				Format: messages.Format,
+				Limit:  20,
+				To:     float64(created - 79),
+			},
+			page: readers.MessagesPage{
+				Total:    20,
+				Messages: fromJSON(msgs[80:]),
+			},
+		},
+		"read message with from/to": {
+			pageMeta: readers.PageMetadata{
+				Format: messages.Format,
+				Limit:  20,
+				From:   float64(created - 59),
+				To:     float64(created - 39),
+			},
+			page: readers.MessagesPage{
+				Total:    20,
+				Messages: fromJSON(msgs[40:60]),
+			},
+		},
+	}
+
+	for desc, tc := range cases {
+		result, err := reader.ReadAll(chanID, tc.pageMeta)
+		for i := 0; i < len(result.Messages); i++ {
+			m := result.Messages[i]
+			// Remove id as it is not sent by the client.
+			delete(m.(map[string]any), "id")
+			result.Messages[i] = m
+		}
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %s", desc, err))
+		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: got incorrect list of json Messages from ReadAll()", desc))
+		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", desc, tc.page.Total, result.Total))
+	}
+}
+
 func TestReadLegacyJSONByDeviceID(t *testing.T) {
 	reader := preader.New(db)
 

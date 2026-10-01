@@ -930,6 +930,46 @@ func TestReadJSON(t *testing.T) {
 				Messages: fromJSON(deviceMsgsJSON),
 			},
 		},
+		"read message with from": {
+			chanID: id1,
+			pageMeta: readers.PageMetadata{
+				Format: messages1.Format,
+				Offset: 0,
+				Limit:  20,
+				From:   float64(timeNow - 19),
+			},
+			page: readers.MessagesPage{
+				Total:    20,
+				Messages: fromJSON(msgs1[:20]),
+			},
+		},
+		"read message with to": {
+			chanID: id1,
+			pageMeta: readers.PageMetadata{
+				Format: messages1.Format,
+				Offset: 0,
+				Limit:  20,
+				To:     float64(timeNow - 79),
+			},
+			page: readers.MessagesPage{
+				Total:    20,
+				Messages: fromJSON(msgs1[80:]),
+			},
+		},
+		"read message with from/to": {
+			chanID: id1,
+			pageMeta: readers.PageMetadata{
+				Format: messages1.Format,
+				Offset: 0,
+				Limit:  20,
+				From:   float64(timeNow - 59),
+				To:     float64(timeNow - 39),
+			},
+			page: readers.MessagesPage{
+				Total:    20,
+				Messages: fromJSON(msgs1[40:60]),
+			},
+		},
 	}
 
 	for desc, tc := range cases {

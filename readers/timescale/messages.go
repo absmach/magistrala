@@ -100,7 +100,11 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		pgData += "OFFSET :offset"
 	}
 
-	where := fmtCondition(rpm)
+	timeColumn := orderByTime
+	if !isSenml {
+		timeColumn = orderByCreated
+	}
+	where := fmtCondition(rpm, timeColumn)
 
 	// format is a request-supplied table name (readers/api/http/requests.go
 	// restricts it to a bare identifier, but that check lives in a different
@@ -241,7 +245,10 @@ func (tr timescaleRepository) ListDeviceGateways(chanID, deviceID string, rpm re
 	return pgutil.DeviceStats(tr.db, defTable, chanID, messageFieldDeviceID, deviceID, messageFieldPublisher, false, rpm)
 }
 
-func fmtCondition(rpm readers.PageMetadata) string {
+// fmtCondition builds the WHERE clause. timeColumn is the column the from/to
+// bounds apply to: "time" for SenML and "created" for a JSON format, whose
+// table has no "time" column.
+func fmtCondition(rpm readers.PageMetadata, timeColumn string) string {
 	// Indexed columns conditions based on indices order.
 	chCondition := " channel = :channel "
 
@@ -288,11 +295,11 @@ func fmtCondition(rpm readers.PageMetadata) string {
 	}
 
 	if _, ok := query["from"]; ok {
-		conditions = append(conditions, " time >= :from ")
+		conditions = append(conditions, fmt.Sprintf(" %s >= :from ", timeColumn))
 	}
 
 	if _, ok := query["to"]; ok {
-		conditions = append(conditions, " time < :to ")
+		conditions = append(conditions, fmt.Sprintf(" %s < :to ", timeColumn))
 	}
 
 	// Non Indexed columns conditions added after indexed columns conditions order.

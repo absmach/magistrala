@@ -52,7 +52,7 @@ func TestFmtConditionDeviceIDs(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			cond := fmtCondition("chan-1", tc.pageMeta)
+			cond := fmtCondition("chan-1", tc.pageMeta, "time")
 			assert.Equal(t, tc.contains, strings.Contains(cond, deviceIDsClause), "condition was %q", cond)
 			assert.Equal(t, 1, strings.Count(cond, "channel = :channel"), "condition was %q", cond)
 		})
@@ -68,7 +68,7 @@ func TestFmtConditionDeviceIDsComposes(t *testing.T) {
 		Protocol:   "mqtt",
 		From:       1,
 		To:         2,
-	})
+	}, "time")
 
 	for _, want := range []string{
 		deviceIDsClause,
@@ -89,7 +89,7 @@ func TestFmtConditionDeviceIDsWithSingularPublisher(t *testing.T) {
 	cond := fmtCondition("chan-1", readers.PageMetadata{
 		DeviceIDs: []string{"meter-1"},
 		Publisher: "pub-1",
-	})
+	}, "time")
 
 	assert.True(t, strings.Contains(cond, deviceIDsClause), "condition was %q", cond)
 	assert.True(t, strings.Contains(cond, `publisher = :publisher`), "condition was %q", cond)
@@ -141,7 +141,7 @@ func TestFmtConditionDeviceScope(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			cond := fmtCondition("chan-1", tc.pageMeta)
+			cond := fmtCondition("chan-1", tc.pageMeta, "time")
 			assert.Equal(t, tc.contains, strings.Contains(cond, scopeClause), "condition was %q", cond)
 		})
 	}
@@ -156,10 +156,35 @@ func TestFmtConditionDeviceScopeComposesConjunctively(t *testing.T) {
 		DeviceIDs:   []string{"serial-1"},
 		Subtopic:    "sub",
 		From:        1,
-	})
+	}, "time")
 
 	assert.True(t, strings.Contains(cond, scopeClause), "condition was %q", cond)
 	assert.True(t, strings.Contains(cond, deviceIDsClause), "condition was %q", cond)
 	assert.True(t, strings.Contains(cond, "subtopic = :subtopic"), "condition was %q", cond)
 	assert.True(t, strings.Contains(cond, "time >= :from"), "condition was %q", cond)
+}
+
+// TestFmtConditionTimeColumn pins which column the from/to bounds use: a JSON
+// format has no time column, so its bounds must be on created.
+func TestFmtConditionTimeColumn(t *testing.T) {
+	pageMeta := readers.PageMetadata{From: 1, To: 2}
+
+	cases := []struct {
+		desc       string
+		timeColumn string
+	}{
+		{desc: "senml bounds use time", timeColumn: "time"},
+		{desc: "json bounds use created", timeColumn: "created"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			cond := fmtCondition("chan-1", pageMeta, tc.timeColumn)
+			for _, want := range []string{tc.timeColumn + " >= :from", tc.timeColumn + " < :to"} {
+				assert.True(t, strings.Contains(cond, want), "expected %q in %q", want, cond)
+			}
+			assert.Equal(t, 1, strings.Count(cond, ":from"), "condition was %q", cond)
+			assert.Equal(t, 1, strings.Count(cond, ":to"), "condition was %q", cond)
+		})
+	}
 }

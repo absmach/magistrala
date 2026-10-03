@@ -3,7 +3,7 @@
 
 openapi: 3.0.1
 info:
-  title: Magistrala http adapter
+  title: Magistrala FluxMQ HTTP messaging
   description: |
     HTTP API for sending messages through communication channels.
     Some useful links:
@@ -13,7 +13,7 @@ info:
   license:
     name: Apache 2.0
     url: https://github.com/absmach/magistrala/blob/main/LICENSE
-  version: 0.18.0
+  version: 1.0.0
 
 servers:
   - url: http://localhost:8008
@@ -32,27 +32,48 @@ paths:
       summary: Sends message to the communication channel
       description: |
         Sends message to the communication channel. Messages can be sent as
-        JSON formatted SenML or as blob.
+        JSON formatted SenML or as an opaque binary payload. This native route
+        is served by FluxMQ; Magistrala's Nginx /http/ route forwards it unchanged.
+        A successful response confirms broker publication, not downstream SenML
+        validation, rule execution, or persistence. Malformed JSON can therefore
+        be published successfully and fail later in a configured consumer.
       tags:
         - messages
       parameters:
         - $ref: "#/components/parameters/workspacePrefix"
         - $ref: "#/components/parameters/channelPrefix"
+        - name: qos
+          in: query
+          description: Broker delivery quality of service; defaults to 0.
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 2
+            default: 0
+        - name: retain
+          in: query
+          description: Whether the broker retains the message; defaults to false.
+          schema:
+            type: boolean
+            default: false
       requestBody:
         $ref: "#/components/requestBodies/MessageReq"
       responses:
-        "202":
-          description: Message is accepted for processing.
+        "200":
+          description: |
+            Broker publication succeeded. The body is {"status":"ok"}.
+            This does not confirm downstream processing or persistence.
         "400":
-          description: Message discarded due to its malformed content.
+          description: |
+            Request body could not be read (including the configured body-size
+            limit), or the qos or retain query parameter is invalid. This is
+            not a JSON or SenML payload validation response.
         "401":
           description: Missing or invalid access token provided.
         "403":
           description: Access denied to the requested resource.
         "404":
-          description: Message discarded due to invalid channel id.
-        "415":
-          description: Message discarded due to invalid or missing content type.
+          description: Request path is not a recognized messaging route.
         "500":
           $ref: "#/components/responses/ServiceError"
   /health:
@@ -153,15 +174,29 @@ components:
     MessageReq:
       description: |
         Message to be distributed. Since the platform expects messages to be
-        properly formatted SenML in order to be post-processed, clients are
-        obliged to specify Content-Type header for each published message.
-        Note that all messages that aren't SenML will be accepted and published,
-        but no post-processing will be applied.
+        properly formatted SenML for SenML processing, send valid SenML using
+        application/senml+json when targeting a SenML consumer. The native HTTP
+        route treats the body as opaque bytes and does not require or validate
+        Content-Type. A missing or different Content-Type does not produce 415.
+        Downstream processing depends on the configured rules and consumers,
+        not solely on this header: valid SenML sent as text/plain may still be
+        processed, while malformed JSON may fail downstream after HTTP success.
       required: true
       content:
+        application/senml+json:
+          schema:
+            $ref: "#/components/schemas/SenMLArray"
         application/json:
           schema:
             $ref: "#/components/schemas/SenMLArray"
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+        "*/*":
+          schema:
+            type: string
+            format: binary
 
   responses:
     ServiceError:

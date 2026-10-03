@@ -188,7 +188,8 @@ components:
             $ref: "#/components/schemas/SenMLArray"
         application/json:
           schema:
-            $ref: "#/components/schemas/SenMLArray"
+            type: string
+            format: binary
         application/octet-stream:
           schema:
             type: string

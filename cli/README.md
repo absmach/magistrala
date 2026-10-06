@@ -36,8 +36,8 @@ Both settings also have flags, which win over the environment:
 ```
 
 `--graphql-url` also configures the `pkg/atom` client behind `devices`,
-`gateways` and `devicetypes`: the Atom base URL is the endpoint minus its
-trailing `/graphql`.
+`gateways`, `devicetypes` and `users`: the Atom base URL is the endpoint minus
+its trailing `/graphql`.
 
 These persistent flags apply to every listing command:
 
@@ -45,7 +45,7 @@ These persistent flags apply to every listing command:
 | --- | --- |
 | `-l`, `--limit` | page size, `10` by default |
 | `-o`, `--offset` | records to skip |
-| `-n`, `--name` | name search, used by `devices all get` |
+| `-n`, `--name` | name search, used by `devices all get` and `users all get` |
 | `-r`, `--raw` | raw output for easier parsing |
 
 ## Login
@@ -149,6 +149,32 @@ JSON object:
 ./build/cli devicetypes <device_type_id> create-version <JSON_version>
 ./build/cli devicetypes <device_type_id> active-version
 ./build/cli devicetypes <device_type_id> bind <device_id> [version_id]
+```
+
+## Users
+
+`users` goes through the same typed client. Users are Atom entities of kind
+`human`.
+
+```bash
+./build/cli users create <JSON_user> [workspace_id]
+./build/cli users all get [workspace_id]
+./build/cli users <user_id> get
+./build/cli users <user_id> update <JSON_string>
+./build/cli users <user_id> enable
+./build/cli users <user_id> disable
+./build/cli users <user_id> delete
+./build/cli users <user_id> password set <new_password>
+```
+
+`workspace_id` is optional: without it, `create` makes a user that belongs to
+no workspace and `all get` is not limited to one workspace.
+
+A user is created without a password and cannot log in until one is set:
+
+```bash
+./build/cli users create '{"name":"Jane Doe"}' <workspace_id>
+./build/cli users <user_id> password set <new_password>
 ```
 
 ## Health

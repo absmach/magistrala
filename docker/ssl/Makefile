@@ -130,6 +130,12 @@ subjectAltName = @alt_names
 URI.1 = <<URI_SAN>>
 endef
 
+# The recipes below write these configs with printf. $(file ...) would need
+# GNU Make 4.0, and macOS ships GNU Make 3.81, where it expands to nothing.
+export GRPC_CERT_CONFIG
+export FLUXMQ_SERVICE_SERVER_CERT_CONFIG
+export URI_SAN_CERT_CONFIG
+
 define ANNOUNCE_BODY
 Version $(VERSION) of $(PACKAGE_NAME) has been released.
 
@@ -174,7 +180,7 @@ client_cert:
 # Function to generate gRPC certificates (server or client)
 # Usage: $(call gen_grpc_cert,cert_file_name,common_name)
 define gen_grpc_cert
-	$(file > $(CRT_LOCATION)/$(1).conf,$(subst <<SERVICE_NAME>>,$(2),$(GRPC_CERT_CONFIG)))
+	printf '%s\n' "$$GRPC_CERT_CONFIG" | sed -e 's|<<SERVICE_NAME>>|$(2)|' > $(CRT_LOCATION)/$(1).conf
 
 	openssl req -new -sha256 -newkey rsa:4096 -nodes \
 		-keyout $(CRT_LOCATION)/$(1).key \
@@ -206,7 +212,7 @@ endef
 
 # Usage: $(call gen_fluxmq_server_cert,cert_file_name)
 define gen_fluxmq_server_cert
-	$(file > $(CRT_LOCATION)/$(1).conf,$(FLUXMQ_SERVICE_SERVER_CERT_CONFIG))
+	printf '%s\n' "$$FLUXMQ_SERVICE_SERVER_CERT_CONFIG" > $(CRT_LOCATION)/$(1).conf
 
 	openssl req -new -sha256 -newkey rsa:4096 -nodes \
 		-keyout $(CRT_LOCATION)/$(1).key \
@@ -229,7 +235,7 @@ endef
 
 # Usage: $(call gen_uri_san_cert,cert_file_name,common_name,uri_san)
 define gen_uri_san_cert
-	$(file > $(CRT_LOCATION)/$(1).conf,$(subst <<URI_SAN>>,$(3),$(subst <<SERVICE_NAME>>,$(2),$(URI_SAN_CERT_CONFIG))))
+	printf '%s\n' "$$URI_SAN_CERT_CONFIG" | sed -e 's|<<SERVICE_NAME>>|$(2)|' -e 's|<<URI_SAN>>|$(3)|' > $(CRT_LOCATION)/$(1).conf
 
 	openssl req -new -sha256 -newkey rsa:4096 -nodes \
 		-keyout $(CRT_LOCATION)/$(1).key \

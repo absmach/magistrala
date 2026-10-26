@@ -154,7 +154,7 @@ jobs:
 
       - name: Run Bootstrap API tests
         if: steps.changes.outputs.bootstrap == 'true' && hashFiles('bootstrap/api/**') != ''
-        uses: schemathesis/action@v3.0.0
+        uses: schemathesis/action@v3.1.0
         with:
           schema: apidocs/openapi/bootstrap.yaml
           base-url: ${{ env.BOOTSTRAP_URL }}
@@ -170,7 +170,7 @@ jobs:
 
       - name: Run Certs API tests
         if: steps.changes.outputs.certs == 'true' && hashFiles('docker/addons/certs/docker-compose.yaml') != ''
-        uses: schemathesis/action@v3.0.0
+        uses: schemathesis/action@v3.1.0
         with:
           schema: apidocs/openapi/certs.yaml
           base-url: ${{ env.CERTS_URL }}
@@ -181,7 +181,7 @@ jobs:
 
       - name: Run Readers API tests
         if: steps.changes.outputs.readers == 'true' || steps.changes.outputs.stack == 'true'
-        uses: schemathesis/action@v3.0.0
+        uses: schemathesis/action@v3.1.0
         with:
           schema: apidocs/openapi/readers.yaml
           base-url: ${{ env.READERS_URL }}
